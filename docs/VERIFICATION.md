@@ -1,3 +1,15 @@
+# Etapa 003.1 — verificação desta tentativa (20/10/2026)
+
+- Vercel MCP: listagem do projeto na equipe exata recusada com 403 de autorização da equipe. Não é evidência de ausência do projeto. Sem CLI/credencial alternativa disponível. Criação, vínculo Git, variáveis, proteção, build remoto, deploy e URL HTTPS **não executados**.
+- Supabase MCP: histórico reconfirmado com sete migrations, sem reaplicação. Catálogo confirmou oito tabelas públicas com RLS habilitado. Quatro novas RPCs públicas continuam SECURITY DEFINER, owner app_executor, search_path vazio, EXECUTE authenticated=true/anon=false. Executor continua NOLOGIN, NOSUPERUSER, NOBYPASSRLS, sem USAGE auth e sem CREATE public.
+- Advisor de segurança reexecutado: seis WARN e três INFO. Quatro WARN são a fronteira privilegiada autenticada intencional, risco controlado por autorização explícita revisada e testes SQL históricos; homologação com JWT ainda necessária. Dois WARN são ACLs preexistentes de rls_auto_enable (owner postgres, search_path pg_catalog, retorno event_trigger): não corresponde a uma função comum de RPC, mas requer revisão de privilégios mínimos antes da produção. Três INFO são tabelas deliberadamente fechadas (convites, auditoria e recibos). Nenhuma mudança de permissão ou policy foi feita. Catálogo/Advisor não substituem prova de isolamento HTTP.
+- Remediações oficiais: [EXECUTE anônimo em SECURITY DEFINER](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable), [EXECUTE autenticado](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable), [RLS sem policy](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy).
+- Revisão do callback: usa origem configurada, code exchange PKCE e Cache-Control private/no-store; URLs de e-mail previstas correspondem aos dois callbacks documentados. Configuração Auth/SMTP remota não acessível pelas ferramentas disponíveis e não validada.
+- Testes reais de cadastro, e-mail, Auth/JWT, SSR, grupos/convidados, recuperação e isolamento no Preview **pendentes**. Sem URL de implantação, não há teste HTTPS ou browser Preview aprovado. Resultados das etapas anteriores abaixo são históricos.
+- Alterações desta tentativa limitadas à documentação; nenhum deploy, migration, dado fictício ou real criado. Etapa 003.1 não concluída. Retomar após conceder à conexão Vercel acesso à equipe; procedimentos em DEPLOYMENT.md.
+
+---
+
 # Verificação — Etapa 003 (20/10/2026)
 
 **Resultado: implementação verificada por unidades, SQL e navegador público; homologação Auth/SSR/e-mail real pendente.**

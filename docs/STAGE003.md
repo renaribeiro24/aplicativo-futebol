@@ -88,3 +88,7 @@ Esse script testa SDK/Auth/Data API reais, não o navegador SSR inteiro. Complet
 - Banco: somente a nova migration stage003_identity_workflows; mapeamento e hashes em supabase/development-migrations.json.
 - Testes: auth-flows, domain-actions, domain-validation; stage003.sql e runner SQL ampliado; script test-stage003-integration.mjs e template integration.env.example.
 - Documentação: README, AGENTS, PRODUCT, ARCHITECTURE, DATABASE, DECISIONS, DEPLOYMENT, VERIFICATION e este roteiro.
+
+## Etapa 003.1 — execução de implantação pendente
+
+Em 20/10/2026, a tentativa de inspecionar o projeto Vercel na equipe autorizada recebeu 403 por ausência de concessão à equipe. Sem projeto/URL confirmados, toda a jornada real deste documento continua pendente. Não interpretar os testes unitários e SQL anteriores como homologação de e-mail, JWT ou navegador. As sete migrations foram reconfirmadas por MCP, sem mudanças. Reconectar Vercel com acesso à equipe indicada e seguir [DEPLOYMENT.md](DEPLOYMENT.md), incluindo SMTP, alias estável, cookies PKCE e proteção do Preview, antes de liberar acesso a testadores fictícios.

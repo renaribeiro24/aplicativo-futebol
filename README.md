@@ -176,3 +176,7 @@ As migrations e o procedimento de revisão estão em `supabase/migrations/README
 ## Próxima etapa
 
 Homologar a Etapa 003 com Auth, e-mail e JWTs reais seguindo `docs/STAGE003.md`; revisar os avisos de segurança e as decisões de privacidade antes de produção. Ainda faltam o aceite de convites, reivindicação segura de convidados, anonimização/retenção, promoção transacional da espera e Storage. Vercel continua posterior. O estado da implantação de desenvolvimento e suas pendências estão em `docs/DEPLOYMENT.md`.
+
+## Preview Vercel — Etapa 003.1
+
+Implantação pendente: a conexão Vercel retornou 403 por falta de acesso à equipe renan-ribeiros-projects. Nenhum projeto, variável ou deploy foi criado nesta tentativa. Reconectar Vercel nas configurações de Apps e conceder acesso à equipe team_ZCVh2SDJPkrBvec05vrO0RTO. Configuração de Preview, callbacks exatos, SMTP e critérios de homologação estão em [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Não há URL de Preview confirmada nem Auth ponta a ponta homologado.
