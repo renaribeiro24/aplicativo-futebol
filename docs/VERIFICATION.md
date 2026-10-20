@@ -2,28 +2,29 @@
 
 Estado atual: cinco migrations implantadas em hpbvtqvbtyioqjyelrpb; integração remota **bloqueada** pela falta de USAGE de app_executor em auth. Consulte DEPLOYMENT.md para versões, diagnóstico, correção proposta e limites.
 
-| Verificação executada             | Resultado                                                                                                                           |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Auditoria Git/GitHub              | 83 arquivos iniciais elegíveis; remoto somente main no commit inicial, sem conflito; work/ e ambientes ignorados                    |
-| Varredura de segredos             | Nenhum padrão de token/chave privada/JWT/URL de banco com senha nos fontes elegíveis ou histórico inicial; repetida antes do commit |
-| npm ci inicial                    | Falhou no download do CLI (DNS fora do proxy); não tratado como sucesso                                                             |
-| npm ci com npm_config_https_proxy | Passou: 673 pacotes, instalador oficial com proxy suportado, TLS/checksum preservados                                               |
-| Supabase local oficial            | Tentado; bloqueado por public.ecr.aws Forbidden; não equivale a teste completo                                                      |
-| npm run db:test                   | Passou: cinco migrations, 70 asserções e duas corridas; authenticated/anon não privilegiados                                        |
-| Proposta auth-schema-bridge       | 70 asserções e duas corridas passaram em PostgreSQL descartável; não aplicada ao remoto                                             |
-| Aplicação remota                  | Cinco chamadas apply_migration bem-sucedidas; histórico conferido; SQL idêntico aos arquivos locais por MD5                         |
-| Catálogo remoto                   | Oito tabelas públicas + auditoria privada, todas com RLS; 63 constraints, 31 índices, ACLs e funções conferidos                     |
-| Smoke SQL remoto                  | FALHOU em auth.uid(): permission denied for schema auth. Fixtures revertidas; zero linhas de aplicação confirmadas depois           |
-| Advisors segurança                | Dois WARN na função preexistente rls_auto_enable; dois INFO de tabelas intencionalmente fechadas                                    |
-| Advisors desempenho               | 13 INFO de índices novos sem uso                                                                                                    |
-| Tipos oficiais                    | Gerados por MCP do schema remoto e aplicados aos clientes browser/server/proxy; sem interfaces Database manuais                     |
-| npm run lint                      | Passou                                                                                                                              |
-| npm run typecheck                 | Passou                                                                                                                              |
-| npm test                          | Passou: 5 arquivos, 27 testes                                                                                                       |
-| npm run build                     | Passou sem configuração e com .env.local publicável ativo                                                                           |
-| HTTP local do build configurado   | /, /login, /signup, manifesto e ícone: 200; /dashboard: 307 para login com no-store; /api/me: 401 com no-store                      |
-| HTTP Supabase remoto              | Tentado; proxy CONNECT 403. Liberação de rede solicitada                                                                            |
-| Auth/JWT real                     | Não executado; sem conectividade e credencial administrativa de teste disponível                                                    |
+| Verificação executada             | Resultado                                                                                                                             |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Auditoria Git/GitHub              | 83 arquivos iniciais elegíveis; remoto somente main no commit inicial, sem conflito; work/ e ambientes ignorados                      |
+| Varredura de segredos             | Nenhum padrão de token/chave privada/JWT/URL de banco com senha nos fontes elegíveis ou histórico inicial; repetida antes do commit   |
+| npm ci inicial                    | Falhou no download do CLI (DNS fora do proxy); não tratado como sucesso                                                               |
+| npm ci com npm_config_https_proxy | Passou: 673 pacotes, instalador oficial com proxy suportado, TLS/checksum preservados                                                 |
+| Supabase local oficial            | Tentado; bloqueado por public.ecr.aws Forbidden; não equivale a teste completo                                                        |
+| npm run db:test                   | Passou: cinco migrations, 70 asserções e duas corridas; authenticated/anon não privilegiados                                          |
+| Proposta auth-schema-bridge       | 70 asserções e duas corridas passaram em PostgreSQL descartável; não aplicada ao remoto                                               |
+| Aplicação remota                  | Cinco chamadas apply_migration bem-sucedidas; histórico conferido; SQL idêntico aos arquivos locais por MD5                           |
+| Catálogo remoto                   | Oito tabelas públicas + auditoria privada, todas com RLS; 63 constraints, 31 índices, ACLs e funções conferidos                       |
+| Smoke SQL remoto                  | FALHOU em auth.uid(): permission denied for schema auth. Fixtures revertidas; zero linhas de aplicação confirmadas depois             |
+| Advisors segurança                | Dois WARN na função preexistente rls_auto_enable; dois INFO de tabelas intencionalmente fechadas                                      |
+| Advisors desempenho               | 13 INFO de índices novos sem uso                                                                                                      |
+| Tipos oficiais                    | Gerados por MCP do schema remoto e aplicados aos clientes browser/server/proxy; sem interfaces Database manuais                       |
+| npm run lint                      | Passou                                                                                                                                |
+| npm run typecheck                 | Passou                                                                                                                                |
+| npm test                          | Passou: 5 arquivos, 27 testes                                                                                                         |
+| npm run build                     | Passou sem configuração e com .env.local publicável ativo                                                                             |
+| HTTP local do build configurado   | /, /login, /signup, manifesto e ícone: 200; /dashboard: 307 para login com no-store; /api/me: 401 com no-store                        |
+| HTTP Supabase remoto              | Tentado; proxy CONNECT 403. Liberação de rede solicitada                                                                              |
+| Auth/JWT real                     | Não executado; sem conectividade e credencial administrativa de teste disponível                                                      |
+| Push e PR                         | develop enviada; PR #1 rascunho aberto; clonagem nova confirmou 88 arquivos idênticos, todos os 83 originais presentes e main intacta |
 
 Uma execução inicial adicional do runner SQL encontrou o servidor temporário de inicialização já pronto e falhou quando ele encerrou; a espera agora exige o processo postgres definitivo como PID 1. O runner corrigido concluiu todas as verificações. Os resultados abaixo são históricos das etapas anteriores e não substituem os resultados atuais.
 
