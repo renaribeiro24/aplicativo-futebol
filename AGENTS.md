@@ -53,8 +53,16 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Execute `npm run db:test` para testes SQL: o runner cria e destrói seu próprio PostgreSQL local sem rede/portas e nunca usa URL remota. Não reutilizar esse bootstrap de Auth em migrations reais.
 - RLS de clientes deve ser testado com session_user/current_user authenticated ou anon, nunca só com service_role/postgres. Checagens privilegiadas de invariantes devem ficar separadas e identificadas.
 - Preserve owner único ativo, lock de grupo antes de autorizar mudanças de vínculo e lock partida → grupo para presença. Não criar escrita livre de papel/status/user_id/group_id.
-- app_executor não pode ter login/BYPASSRLS ou associação com papéis de cliente. private não pode ser exposto pelo PostgREST; wrappers públicos permanecem SECURITY INVOKER.
+- app_executor não pode ter login/BYPASSRLS ou associação com papéis de cliente. private não pode ser exposto pelo PostgREST; os oito wrappers anteriores permanecem SECURITY INVOKER. A Etapa 003 acrescenta apenas quatro APIs públicas SECURITY DEFINER de owner técnico, auth explícito e search_path vazio; novos helpers privados sem grants de cliente. Ver ADR-031.
 - Convites não expõem hash e não têm aceite público. Não adicionar claim de convidado sem prova/consentimento e nova decisão revisada.
 - `npm run db:types` usa exclusivamente Supabase local. Tipos oficiais de desenvolvimento já foram gerados por MCP e aplicados aos clientes; ver src/types/README.md. Não preencher Database à mão.
-- Seis migrations já foram aplicadas ao desenvolvimento por MCP; versões remotas diferem dos nomes locais. Conferir supabase/development-migrations.json e docs/DEPLOYMENT.md antes de qualquer push SQL. Não reaplicar.
+- Sete migrations já foram aplicadas ao desenvolvimento por MCP; versões remotas diferem dos nomes locais. Conferir supabase/development-migrations.json e docs/DEPLOYMENT.md antes de qualquer push SQL. Não reaplicar.
 - private.auth_user_id() é a única ponte para auth.uid() em implementações privadas. Proprietário postgres, sem argumentos/SELECT de tabelas, STABLE SECURITY DEFINER, search_path vazio e EXECUTE somente a postgres/app_executor. Não conceder USAGE de auth ou SELECT em auth.users ao executor; não expor a ponte a clientes.
+
+## Fluxos da Etapa 003
+
+- Onboarding usa ensure_my_identity: transação idempotente que não sobrescreve dados existentes; metadado display_name serve apenas de apresentação, nunca autorização. save_my_identity atualiza os dois registros próprios atomicamente sem aceitar IDs.
+- Grupos/convidados usam create_group_once/add_guest_once com UUID estável por submissão, vinculado ao ator e ao hash dos campos; nunca trocar a chave em retry de transporte. private.mutation_receipts não tem grants de cliente nem exposição na API. Não usar deduplicação por nome como identidade.
+- As novas APIs públicas limitam o contexto ao owner técnico NOLOGIN, não postgres/service role; mantêm checagens de usuário/grupo e não dão EXECUTE a anon ou aos novos helpers privados. Não generalizar os parâmetros para IDs de outra identidade.
+- Rotas /dashboard, /groups/* e /profile precisam de sessão no servidor, RLS e proxy sem cache público. Callback só usa origem configurada e destinos fixos.
+- Homologação Auth/JWT real da Etapa 003 permanece pendente; tests/integration.env.example e scripts/test-stage003-integration.mjs são exclusivamente para contas fictícias confirmadas. Conexão privilegiada do script só faz preflight/limpeza delimitada, nunca representa usuário nas provas HTTP.

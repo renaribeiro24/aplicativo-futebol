@@ -1,3 +1,37 @@
+# Verificação — Etapa 003 (20/10/2026)
+
+**Resultado: implementação verificada por unidades, SQL e navegador público; homologação Auth/SSR/e-mail real pendente.**
+
+| Verificação executada         | Resultado                                                                                                                                                |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Auditoria inicial             | Código anterior preservado; seis migrations e oito tabelas públicas com RLS confirmadas antes de alteração                                               |
+| Migration nova                | 20261020161609_stage003_identity_workflows.sql aplicada como MCP 20261020162554; histórico com sete registros                                            |
+| Rejeição automática           | Primeira proposta recusada por grants de novos helpers privados; revisão retirou esses grants                                                            |
+| Falha gerenciada              | Tentativa seguinte falhou em transferência de owner sem CREATE; ausência de novos objetos/histórico confirmada antes de corrigir                         |
+| SQL local                     | Sete migrations; 70 asserções anteriores, regressões de bridge e smoke Etapa 003 passaram                                                                |
+| Concorrência                  | Três cenários passaram: última vaga, duas submissões do mesmo convidado (um cadastro) e propriedade                                                      |
+| SQL remoto                    | stage003.sql PASS: onboarding/retry, owner inicial, slug duplicado, convidado/posição, isolamento e rollback de perfil/recibo                            |
+| Catálogo remoto               | Novos privados sem EXECUTE de cliente; recibos com RLS e sem SELECT; CREATE público final falso; zero linhas de perfis/grupos/recibos depois do rollback |
+| Tipos oficiais                | Regenerados por MCP do esquema remoto após a migration; sem Database manual                                                                              |
+| npm run lint                  | Passou                                                                                                                                                   |
+| npm run typecheck             | Passou                                                                                                                                                   |
+| npm test                      | Passou: 8 arquivos e 51 testes; SDK/Auth são mocks explicitamente identificados                                                                          |
+| npm run build                 | Passou; todas as novas rotas compiladas sem ignoreBuildErrors                                                                                            |
+| Formatação e whitespace       | Passaram                                                                                                                                                 |
+| Chromium público              | Seis páginas públicas em 390 claro/escuro e 1440 claro: sem overflow ou JS não tratado; labels e headings presentes                                      |
+| Rotas privadas sem sessão     | /dashboard, /groups/new, /groups/other-group, /profile redirecionaram para login, com no-store                                                           |
+| Callback inválido             | Recuperação sem código voltou a forgot-password?error=expired, destino fixo e no-store                                                                   |
+| Interface privada autenticada | Não homologada em navegador: nenhuma sessão falsa foi criada para screenshots                                                                            |
+| Advisor segurança             | 6 WARN (2 preexistentes + 4 APIs autenticadas intencionais), 3 INFO de deny-by-default; revisão em STAGE003.md                                           |
+| HTTPS Supabase                | Tentado no executor Codex: CONNECT 403, HTTP 000; sem desativar proxy                                                                                    |
+| Script real no Codespaces     | Preparado, sintaxe/precheck executados; Auth/JWT real não executado por falta de rede/contas/psql/conexão de limpeza                                     |
+
+O primeiro ensaio de navegador encontrou ausência de heading nas telas de Auth, corrigida com h1 semântico; o ensaio final passou. O script real não foi classificado como aprovado pelo sucesso de --check. Não repetir comandos de migration existentes, nem usar service role para demonstrar autorização de usuários. Critério de conclusão funcional exige executar a jornada real de STAGE003.md com cadastro, e-mail, cookies SSR, grupo e convidado.
+
+---
+
+# Histórico anterior
+
 # Verificação — Etapa 002.3 (20/10/2026)
 
 | Verificação executada        | Resultado                                                                                                                                 |

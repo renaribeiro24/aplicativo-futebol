@@ -168,6 +168,11 @@ try {
     "development SQL smoke OK: authenticated groups/guests/invitations, isolation, anonymous denial, rollback",
   );
 
+  sql(readFileSync(path.join(root, "tests/database/stage003.sql"), "utf8"));
+  console.log(
+    "stage003 SQL OK: identity, groups, guests, isolation, idempotency and rollback",
+  );
+
   // Two transactions compete for the same final seat. PostgreSQL row locks, not mocks.
   const lookup = `select g.id as ga,m.id as match_id,p.id as pc from public.groups g join public.matches m on m.group_id=g.id join public.players p on p.user_id='00000000-0000-4000-8000-000000000003' where g.slug='test-alpha' and m.title='Synthetic limited match' \\gset\n`;
   const first = sqlAsync(
@@ -192,6 +197,28 @@ try {
   console.log(
     "concurrency OK: two authenticated sessions compete for one seat; exactly one commits",
   );
+  const duplicateRequest = randomUUID();
+  const guestLookup =
+    "select id as ga from public.groups where slug='test-alpha' \\gset\n";
+  const duplicateGuestSql = `begin;\n${guestLookup}set session authorization authenticated; select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000001',true); select public.add_guest_once('${duplicateRequest}',:'ga','Synthetic concurrent guest','','defender');`;
+  const guestFirst = sqlAsync(
+    `${duplicateGuestSql} select pg_sleep(1); commit;`,
+  );
+  await sleep(250);
+  const guestSecond = sqlAsync(`${duplicateGuestSql} commit;`);
+  const guestResults = await Promise.all([guestFirst, guestSecond]);
+  if (guestResults.some((r) => r.code !== 0))
+    throw new Error("Concurrent guest retries failed");
+  if (
+    sql(
+      "select count(*) from public.players where name='Synthetic concurrent guest';",
+    ).stdout.trim() !== "1"
+  )
+    throw new Error("Concurrent retries duplicated a guest");
+  console.log(
+    "idempotency concurrency OK: two authenticated submissions with the same request create one guest",
+  );
+
   const ownershipLookup = `select g.id as ga,c.id as mc,d.id as md from public.groups g join public.group_members c on c.group_id=g.id join public.players cp on cp.id=c.player_id join public.group_members d on d.group_id=g.id join public.players dp on dp.id=d.player_id where g.slug='test-alpha' and cp.user_id='00000000-0000-4000-8000-000000000003' and dp.user_id='00000000-0000-4000-8000-000000000004' \\gset\n`;
   const actor =
     "set session authorization authenticated; select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000001',true);";

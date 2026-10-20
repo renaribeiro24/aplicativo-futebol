@@ -38,6 +38,12 @@
       "source_sha256": "dba7ab1996acd4c127d4b85517af73d11e5ea6608680bcf426d6e83c14a8eb83",
       "remote_version": "20261020160511",
       "remote_name": "20261020160133_auth_schema_bridge"
+    },
+    {
+      "source_file": "20261020161609_stage003_identity_workflows.sql",
+      "source_sha256": "6c099a5579f611e5a8aa4a7889812c83c6faf1347302d2c1db88d40d5b6e8035",
+      "remote_version": "20261020162554",
+      "remote_name": "20261020161609_stage003_identity_workflows"
     }
   ]
 }

@@ -16,7 +16,8 @@
     "db:test": "node scripts/test-database.mjs",
     "db:types": "node scripts/generate-database-types.mjs",
     "db:migrate:local": "supabase migration up --local",
-    "db:lint:local": "supabase db lint --local --schema public,private --fail-on warning"
+    "db:lint:local": "supabase db lint --local --schema public,private --fail-on warning",
+    "test:integration": "node scripts/test-stage003-integration.mjs"
   },
   "dependencies": {
     "@radix-ui/react-slot": "1.5.0",

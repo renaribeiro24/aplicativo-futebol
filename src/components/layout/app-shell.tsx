@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { LayoutDashboard, ArrowLeft, LockKeyhole } from "lucide-react";
 import { Brand } from "./brand";
-import { Badge } from "@/components/ui/badge";
+import { logout } from "@/features/auth/actions";
+import { Button } from "@/components/ui/button";
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen md:grid md:grid-cols-[240px_1fr]">
@@ -12,14 +13,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </p>
         <nav
           aria-label="Navegação da área reservada"
-          className="mt-4 space-y-2"
+          className="mt-4 flex flex-wrap gap-2 md:block md:space-y-2"
         >
           <Link
             href="/dashboard"
-            className="flex items-center gap-3 rounded-lg bg-accent px-3 py-3 text-sm font-medium text-accent-foreground"
+            className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium hover:bg-muted"
           >
             <LayoutDashboard className="size-4" aria-hidden="true" />
             Visão geral
+          </Link>
+          <Link
+            href="/groups/new"
+            className="block rounded-lg px-3 py-3 text-sm hover:bg-muted"
+          >
+            Criar grupo
+          </Link>
+          <Link
+            href="/profile"
+            className="block rounded-lg px-3 py-3 text-sm hover:bg-muted"
+          >
+            Meu perfil
           </Link>
           <Link
             href="/"
@@ -37,7 +50,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div>
         <header className="flex min-h-20 items-center justify-between gap-3 border-b bg-card px-5 sm:px-10">
           <p className="text-sm text-muted-foreground">Seu espaço de futebol</p>
-          <Badge variant="outline">Fundação técnica</Badge>
+          <form action={logout}>
+            <Button variant="outline" size="sm">
+              Sair da conta
+            </Button>
+          </form>
         </header>
         <main id="main-content" className="mx-auto max-w-5xl p-5 py-10 sm:p-10">
           {children}

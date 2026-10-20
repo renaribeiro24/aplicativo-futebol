@@ -2,7 +2,7 @@
 
 Aplicação web responsiva em português brasileiro para evoluir o gerenciamento de futebol amador e society. **Em Campo é um nome provisório.** O 4ª Força será o primeiro grupo, sem ser a marca global do produto. A aplicação foi projetada para múltiplos grupos independentes e múltiplos papéis por pessoa.
 
-A Etapa 001 criou a aplicação; a Etapa 002 acrescenta cinco migrations novas, RLS e operações administrativas transacionais. As cinco migrations foram aplicadas ao Supabase de desenvolvimento em 20/10/2026. A Etapa 002.3 aplicou uma sexta migration para corrigir o acesso ao helper Auth por ponte privada; smoke SQL remoto passou. Testes HTTP/JWT reais continuam pendentes: veja `docs/DEPLOYMENT.md`. Tipos oficiais remotos estão integrados. Nenhum dado real foi criado e nenhum deploy Vercel foi realizado. A UI continua sem CRUD de domínio.
+A Etapa 003 implementa autenticação, recuperação de senha, dashboard, grupos, convidados e perfil com persistência no Supabase de desenvolvimento. Sete migrations estão aplicadas, com tipos oficiais integrados. **A homologação ponta a ponta permanece pendente:** o executor Codex não alcança a API HTTP do Supabase; SQL remoto e testes locais passaram. Roteiro, rotas e configuração de Auth/SMTP em [docs/STAGE003.md](docs/STAGE003.md). Nenhum deploy Vercel ou dado real foi criado.
 
 ## Requisitos e stack
 
@@ -156,7 +156,7 @@ Para testar o banco sem credenciais, com Docker Linux disponível:
 npm run db:test
 ```
 
-O comando cria seu próprio PostgreSQL 17.6 fixado por digest, sem portas publicadas e sem rede, aplica as migrations em ordem, testa isolamento/constraints/rollback e duas corridas concorrentes, e remove o container mesmo em falha. O Docker pode precisar baixar a imagem. Não aceita URL, nome de projeto ou credenciais remotos. Fixtures são sintéticas e não são seeds da aplicação. O contrato de Auth desse ensaio é mínimo: não equivale à pilha Supabase completa.
+O comando cria seu próprio PostgreSQL 17.6 fixado por digest, sem portas publicadas e sem rede, aplica as migrations em ordem, testa isolamento/constraints/rollback, onboarding, idempotência e três corridas concorrentes, e remove o container mesmo em falha. O Docker pode precisar baixar a imagem. Não aceita URL, nome de projeto ou credenciais remotos. Fixtures são sintéticas e não são seeds da aplicação. O contrato de Auth desse ensaio é mínimo: não equivale à pilha Supabase completa.
 
 Para validar posteriormente na pilha **Supabase local**, usando instância de desenvolvimento própria:
 
@@ -169,10 +169,10 @@ npx supabase db advisors --local
 npm run db:types
 ```
 
-Todos os comandos acima são locais. `db:types` chama o gerador oficial com `--local --schema public` e grava atomicamente `src/types/database.types.ts` apenas se a introspecção tiver sucesso. Os tipos oficiais do projeto remoto já foram gerados e aplicados aos clientes browser/server/proxy. `npm run db:types` permanece local; veja `src/types/README.md` para regeneração remota. A UI atual usa somente Auth. Não substituir tipos gerados por interfaces manuais.
+Todos os comandos acima são locais. `db:types` chama o gerador oficial com `--local --schema public` e grava atomicamente `src/types/database.types.ts` apenas se a introspecção tiver sucesso. Os tipos oficiais do projeto remoto já foram gerados e aplicados aos clientes browser/server/proxy. `npm run db:types` permanece local; veja `src/types/README.md` para regeneração remota. A UI usa Auth e as APIs tipadas de domínio. Não substituir tipos gerados por interfaces manuais.
 
 As migrations e o procedimento de revisão estão em `supabase/migrations/README.md`. O teste local não presume tabelas remotas existentes; migrations falharão diante de colisões de nomes, em vez de sobrescrever tabelas. Não há script de deploy ou aplicação remota.
 
 ## Próxima etapa
 
-Revisar o schema e as decisões da Etapa 002 em `docs/DATABASE.md` e `docs/DECISIONS.md`; validar na pilha Supabase local completa; gerar tipos; configurar/testar Auth e cadastro de perfis/grupos antes do CRUD visual. Ainda faltam o aceite de convites, reivindicação segura de convidados, anonimização/retenção, promoção transacional da espera e Storage. Vercel continua posterior. O estado da implantação de desenvolvimento e suas pendências estão em `docs/DEPLOYMENT.md`.
+Homologar a Etapa 003 com Auth, e-mail e JWTs reais seguindo `docs/STAGE003.md`; revisar os avisos de segurança e as decisões de privacidade antes de produção. Ainda faltam o aceite de convites, reivindicação segura de convidados, anonimização/retenção, promoção transacional da espera e Storage. Vercel continua posterior. O estado da implantação de desenvolvimento e suas pendências estão em `docs/DEPLOYMENT.md`.

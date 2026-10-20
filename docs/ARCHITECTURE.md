@@ -4,7 +4,7 @@
 
 Fundação local Next.js App Router, React, TypeScript strict, Tailwind CSS e componentes shadcn/ui mantidos no repositório. Supabase será a infraestrutura de Auth, PostgreSQL e Storage; Vercel é o destino futuro. Não há dependência de serviços provisionados para abrir a interface ou compilar.
 
-A Etapa 002 implementa o schema em cinco migrations novas, com RLS, triggers de integridade e RPCs administrativas. Elas foram aplicadas ao desenvolvimento hpbvtqvbtyioqjyelrpb em 20/10/2026, via MCP oficial. Tipos oficiais remotos estão em src/types/database.types.ts e são usados pelos clientes. A sexta migration da Etapa 002.3 corrigiu a incompatibilidade de grant no schema gerenciado auth mediante ponte privada mínima. Smoke SQL remoto passou; Auth/API HTTP com JWTs reais continuam pendentes. Consulte DEPLOYMENT.md para estado atual, histórico e bloqueios. O frontend continua sem CRUD de domínio.
+A Etapa 002 implementa o schema em cinco migrations novas, com RLS, triggers de integridade e RPCs administrativas. Elas foram aplicadas ao desenvolvimento hpbvtqvbtyioqjyelrpb em 20/10/2026, via MCP oficial. Tipos oficiais remotos estão em src/types/database.types.ts e são usados pelos clientes. A sexta migration da Etapa 002.3 corrigiu a incompatibilidade de grant no schema gerenciado auth mediante ponte privada mínima. Smoke SQL remoto passou; Auth/API HTTP com JWTs reais continuam pendentes. Consulte DEPLOYMENT.md para estado atual, histórico e bloqueios. A Etapa 003 implementa dashboard, grupos, convidados e perfil por consultas/RPCs autenticadas; detalhes em STAGE003.md.
 
 ## Organização
 
@@ -92,3 +92,11 @@ Isso não valida o serviço Auth, JWTs HTTP, extensões completas, Storage ou de
 ## Ponte de identidade aplicada — Etapa 002.3
 
 Exceção mínima ao proprietário app_executor: somente private.auth_user_id() pertence a postgres, retorna auth.uid() sem argumentos ou SELECT de tabelas e tem SECURITY DEFINER STABLE/search_path vazio. Sua ACL permite EXECUTE apenas ao proprietário e a app_executor. As sete funções dependentes preservam owner/ACL e regras; chamadas indiretas retornam a identidade da sessão, sem permitir escolher outro usuário. app_executor permanece sem USAGE em auth e sem SELECT em auth.users. Smoke SQL remoto passou; não equivale a teste HTTP/JWT real. Definição completa em supabase/migrations/20261020160133_auth_schema_bridge.sql.
+
+## Etapa 003 — fluxo atual
+
+Auth via Server Actions e callback PKCE; getUser no servidor, SSR por requisição, redirects limitados à origem configurada e destinos fixos. Formulários usam useActionState com pending e mensagens acessíveis. Rotas de grupo/perfil também entram no proxy privado; não há cache público de sessão. Painéis usam Server Components e consultas com JWT e RLS, sem service role. loadIdentity prepara a identidade atomicamente antes das consultas, deduplicação por constraints, sem sobrescrever dados existentes.
+
+O domínio passou a ter módulos identity e groups, validações compartilhadas puras e quatro novas APIs públicas. Os novos wrappers são exceções explícitas SECURITY DEFINER de owner app_executor (NOLOGIN/NOBYPASSRLS), com auth_user_id() e delegação fixa a auxiliares privados sem grants de cliente. Os oito wrappers anteriores permanecem invoker. Essa escolha impede execução direta dos novos privados, mantendo autorização própria/grupo dentro das transações. Não usar essa exceção para consultas genéricas ou SQL dinâmico. Motivo, rejeição automática da primeira proposta e revisão estão em STAGE003.md e ADR-031.
+
+Onboarding e edição do perfil são atômicos. Grupo/convidado usam recibos privados por ator/requisição e hash, reutilizam as implementações administrativas anteriores e serializam retries. Nenhuma autorização vem do slug ou do metadata de apresentação. Storage, campeonatos e finanças não receberam implementação.

@@ -23,7 +23,9 @@ export default async function Login({
     <div className="mx-auto max-w-lg px-5 py-12 sm:py-20">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Bom ter você por aqui.</CardTitle>
+          <CardTitle className="text-2xl">
+            <h1>Bom ter você por aqui.</h1>
+          </CardTitle>
           <CardDescription>
             Entre para acessar seu espaço de futebol.
           </CardDescription>
@@ -37,6 +39,18 @@ export default async function Login({
             </p>
           )}
           <AuthForm mode="login" configured={configured} />
+          <Link
+            href="/confirm-email"
+            className="block text-center text-sm text-primary underline underline-offset-4"
+          >
+            Reenviar confirmação de e-mail
+          </Link>
+          <Link
+            href="/forgot-password"
+            className="block text-center text-sm text-primary underline underline-offset-4"
+          >
+            Esqueci minha senha
+          </Link>
           <p className="text-center text-sm text-muted-foreground">
             Ainda não tem conta?{" "}
             <Link

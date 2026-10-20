@@ -23,6 +23,8 @@ Mantidos: UUIDs, instantes timestamptz, identidade esportiva separada de acesso,
 
 ```mermaid
 erDiagram
+  AUTH_USERS ||--o{ MUTATION_RECEIPTS : solicita
+  GROUPS o|--o{ MUTATION_RECEIPTS : identifica
   AUTH_USERS ||--o| PROFILES : possui
   AUTH_USERS o|--o| PLAYERS : vincula
   GROUPS o|--o{ PLAYERS : origem_de_convidado
@@ -192,3 +194,11 @@ Referências consultadas: [RLS](https://supabase.com/docs/guides/database/postgr
 ## Ponte de identidade aplicada — Etapa 002.3
 
 Exceção mínima ao proprietário app_executor: somente private.auth_user_id() pertence a postgres, retorna auth.uid() sem argumentos ou SELECT de tabelas e tem SECURITY DEFINER STABLE/search_path vazio. Sua ACL permite EXECUTE apenas ao proprietário e a app_executor. As sete funções dependentes preservam owner/ACL e regras; chamadas indiretas retornam a identidade da sessão, sem permitir escolher outro usuário. app_executor permanece sem USAGE em auth e sem SELECT em auth.users. Smoke SQL remoto passou; não equivale a teste HTTP/JWT real. Definição completa em supabase/migrations/20261020160133_auth_schema_bridge.sql.
+
+## Etapa 003 — sétima migration
+
+20261020161609_stage003_identity_workflows.sql, aplicada como MCP 20261020162554. private.mutation_receipts: PK composta (actor_user_id FK auth.users RESTRICT, request_id UUID); operation CHECK create_group/add_guest; input_hash bytea SHA-256; group_id FK groups RESTRICT e result_id UUID; created_at timestamptz. Índice adicional apenas group_id, pois o PK já cobre busca por ator/requisição e FK do ator. RLS sem policies e zero grants a clientes. Não exposta pela Data API. Guarda hash dos campos, sem payload, senha ou token. Retenção e anonimização pendentes antes de produção; recibo não concede acesso.
+
+APIs novas: ensure_my_identity(text), save_my_identity(text,text,text,text), create_group_once(uuid,text,text,text,text), add_guest_once(uuid,uuid,text,text,text). Não recebem IDs de perfil/conta para edição. As duas primeiras restringem a auth_user_id(); convidados revalidam require_manager; grupo continua usando create_group_impl para owner atômico. Recibos são bloqueados e comparados por operação/payload; retries recuperam o resultado e erros revertem todas as escritas. add_guest_once grava posição junto ao player/vínculo existente; não edita identidade global alheia.
+
+As quatro novas entradas são SECURITY DEFINER com owner técnico app_executor, search_path vazio, checagem de identidade explícita e EXECUTE apenas authenticated. Novas implementações privadas têm EXECUTE revogado para clientes; não houve grants de schema Auth, leitura de auth.users ou CREATE público persistente. Os wrappers anteriores continuam invoker. Detalhes da revisão de risco e avisos esperados em STAGE003.md. Essa é uma fronteira de autorização explícita, não RLS genérico permissivo.

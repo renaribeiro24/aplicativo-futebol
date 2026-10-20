@@ -27,7 +27,10 @@ export async function refreshSession(
   if (
     (error || !data.user) &&
     (request.nextUrl.pathname === "/dashboard" ||
-      request.nextUrl.pathname.startsWith("/dashboard/"))
+      request.nextUrl.pathname.startsWith("/dashboard/") ||
+      request.nextUrl.pathname === "/groups" ||
+      request.nextUrl.pathname.startsWith("/groups/") ||
+      request.nextUrl.pathname === "/profile")
   ) {
     const redirect = NextResponse.redirect(new URL("/login", request.url));
     response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));

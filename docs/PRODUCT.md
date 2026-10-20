@@ -1,43 +1,24 @@
 # Produto
 
-## Visão
+Plataforma web responsiva em português brasileiro para organizar grupos de futebol amador e society. Em Campo é um nome provisório. O 4ª Força é somente um futuro tenant, sem marca ou privilégios globais; nenhum dado real foi criado.
 
-Aplicação web responsiva, em português brasileiro, para organizar grupos de futebol amador e society. Referências de mercado: Chega+ e Appito. O primeiro grupo previsto é o **4ª Força**, mas ele será um tenant comum, sem privilégios ou identidade visual globais. Nenhum dado desse grupo foi criado.
+Uma conta pode participar de vários grupos com papéis diferentes. O perfil de acesso é privado ao usuário. Nome esportivo, apelido e posição da identidade global são compartilhados somente com grupos autorizados. Convidados sem conta pertencem ao grupo de origem e não podem ser associados automaticamente a contas pelo nome/e-mail.
 
-**Em Campo** é um nome provisório para a interface, não uma decisão final de marca. Cores e tipografia usam tokens CSS; cada grupo poderá receber personalização em uma etapa futura.
+## Etapa 003 implementada, aguardando homologação
 
-## Pessoas e contextos
+- Cadastro, confirmação e reenvio de e-mail, login, logout, recuperação e redefinição de senha via Supabase Auth real.
+- Preparação atômica e repetível do perfil e jogador global; edição própria de apresentação e atributos esportivos.
+- Dashboard com saudação, grupos ativos do usuário, papel por grupo e estado vazio.
+- Criação de grupo com slug editável, descrição e fuso, proprietário único e operação transacional.
+- Página privada do grupo, contagem de vínculos ativos, elenco paginado e cadastro administrativo de convidados com posição.
+- Interface neutra, móvel e desktop, claro/escuro, mensagens e formulários acessíveis. Manifesto/ícones PWA existentes sem cache offline privado.
 
-- Uma conta autenticada pode organizar um grupo e ser participante de outro.
-- Um vínculo entre jogador e grupo concede acesso à conta vinculada; papéis são locais ao grupo.
-- Jogadores vinculados a uma conta têm identidade esportiva global, compartilhada apenas com grupos autorizados. Convidados sem conta são restritos ao grupo de origem; sua vinculação futura exigirá consentimento e prova de autorização.
-- O sistema não deduz acesso de um jogador pelo nome, e-mail digitado ou metadados editáveis.
+Persistência SQL foi testada no desenvolvimento. Cadastro/e-mail/recuperação e navegação autenticada completa ainda precisam de homologação real no Codespaces: o executor Codex não alcança a API HTTPS pelo proxy. Implementação não significa Auth/SMTP homologados. Consulte STAGE003.md.
 
-## Fundação entregue
+## Próximos módulos, fora desta entrega
 
-Página inicial, navegação pública, layouts público e reservado, dashboard provisório, estados de carregamento/erro, componentes UI, clientes Supabase, limites de sessão, configuração opcional de ambiente, manifesto e ícones PWA, ambiente Codespaces, testes e documentação. Fluxos de e-mail/senha preexistentes foram preservados como estrutura; não foram testados com um projeto real nesta execução.
+Aceite público de convites; saída/arquivamento e gestão de papéis na UI; reivindicação consentida de convidados; locais, agenda e presença na interface; promoção de espera; Storage com políticas específicas; estatísticas, rankings, campeonatos, cobrança e pagamentos. Nenhuma tela dessas funcionalidades foi apresentada como disponível.
 
-## Módulos previstos, ainda não implementados
+## Decisões de produto ainda abertas
 
-| Etapa proposta | Módulo                                                       | Dependência                                                 |
-| -------------- | ------------------------------------------------------------ | ----------------------------------------------------------- |
-| Próxima        | Banco, RLS, autenticação validada, perfis, grupos e vínculos | Revisão do esquema e projeto de desenvolvimento configurado |
-| Posterior      | Convites, jogadores convidados e locais                      | Vínculos e permissões testados                              |
-| Posterior      | Partidas e confirmação de presença                           | Grupos, jogadores e locais                                  |
-| Futuro         | Rankings, campeonatos, estatísticas                          | Regras esportivas aprovadas                                 |
-| Futuro         | Mensalidades, pagamentos, notificações                       | Requisitos financeiros e provedores definidos               |
-| Futuro         | PWA com experiência offline seletiva                         | Modelo de privacidade e invalidação aprovado                |
-
-O dashboard não apresenta contagens, grupos, pessoas ou resultados simulados. Os módulos futuros não têm botões que sugiram operações disponíveis.
-
-## Fora do escopo atual
-
-Telas de CRUD de domínio, criação do 4ª Força, aplicação remota de migrations, criação de buckets, deploy, pagamentos e sincronização offline. Não existe seleção de grupo ativa até o cadastro de grupos ser implementado.
-
-## Questões de produto em aberto
-
-Nome e marca; possibilidade de múltiplos proprietários; visibilidade do elenco entre membros; processo de reivindicação de jogador convidado; política de privacidade e retenção; confirmação de presença e cancelamento; regras de faltas; limites por plano e cobrança. Nenhuma dessas decisões será inferida de referências de mercado.
-
-## Etapa 002 — banco versionado
-
-Cinco migrations implementam entidades, RLS e operações administrativas, com testes SQL locais. Nenhuma tela administrativa, aceite público de convite ou consulta de dados de domínio foi adicionada à UI. As cinco migrations foram implantadas no desenvolvimento; a sexta migration da Etapa 002.3 corrigiu o acesso ao helper Auth e passou em smoke SQL remoto. Testes HTTP reais e CRUD de domínio ainda estão pendentes. Detalhes e limites em DATABASE.md e VERIFICATION.md.
+Nome/marca; retenção e anonimização; consentimento e reivindicação de convidados; políticas de elenco e privacidade; espera e cancelamento; regras esportivas e financeiras; limites de planos; personalização por grupo e política de uploads. O modelo atual mantém exatamente um proprietário ativo, sem permitir autoelevação nem gestão do proprietário por admin. Recibos de submissão são técnicos e privados; sua retenção será definida antes de produção.

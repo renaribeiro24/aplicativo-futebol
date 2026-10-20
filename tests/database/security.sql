@@ -52,7 +52,7 @@ update public.players set nickname='Guest nickname' where id=:'guest';
 select pg_temp.check_true((select nickname='Guest nickname' from public.players where id=:'guest'),'manager can edit a guest of the origin group');
 select pg_temp.check_true((select not rolcanlogin and not rolsuper and not rolbypassrls from pg_roles where rolname='app_executor'),'definer role has no login, superuser or BYPASSRLS');
 select pg_temp.check_true(not has_table_privilege('app_executor','auth.users','SELECT'),'definer role cannot read the Auth users table');
-select pg_temp.check_true((select count(*)=0 from pg_proc where pronamespace='public'::regnamespace and prosecdef),'no SECURITY DEFINER routines in the exposed schema');
+select pg_temp.check_true((select count(*)=0 from pg_proc where pronamespace='public'::regnamespace and prosecdef and (proname not in ('ensure_my_identity','save_my_identity','create_group_once','add_guest_once') or pg_get_userbyid(proowner)<>'app_executor' or proconfig is distinct from array['search_path=""']::text[] or has_function_privilege('anon',oid,'EXECUTE'))),'exposed definer routines limited to explicit authenticated application APIs');
 
 select pg_temp.expect_error(format('update public.players set user_id=%L where id=%L','00000000-0000-4000-8000-000000000001',:'guest'),'42501','cannot claim a guest by changing user_id');
 select pg_temp.expect_error(format('update public.venues set group_id=%L where id=%L',:'gb',:'va'),'42501','tenant identity is not client-editable');

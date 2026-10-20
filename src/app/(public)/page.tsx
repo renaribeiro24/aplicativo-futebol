@@ -39,7 +39,7 @@ export default function Home() {
         <div>
           <Badge variant="outline" className="mb-7 gap-2">
             <span className="size-1.5 rounded-full bg-primary" />
-            Em construção · Primeira etapa
+            Seu futebol em um só lugar
           </Badge>
           <h1 className="max-w-xl text-4xl leading-[1.12] font-semibold tracking-tight sm:text-6xl">
             Mais jogo.
@@ -62,8 +62,8 @@ export default function Home() {
             </Button>
           </div>
           <p className="mt-5 text-xs leading-5 text-muted-foreground">
-            Fundação disponível. Grupos, partidas e convites serão desenvolvidos
-            nas próximas etapas.
+            Crie seu grupo e reúna os jogadores. Partidas e convites chegam nas
+            próximas etapas.
           </p>
         </div>
         <div className="relative overflow-hidden rounded-3xl border bg-primary p-7 text-primary-foreground sm:p-10">

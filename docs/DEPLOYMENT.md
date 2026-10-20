@@ -1,3 +1,21 @@
+# Estado atual — Etapa 003 (20/10/2026)
+
+Implementação de autenticação, dashboard, grupos, convidados e perfil entregue no código; homologação ponta a ponta pendente. Somente o desenvolvimento hpbvtqvbtyioqjyelrpb foi alterado. A sétima migration, 20261020161609_stage003_identity_workflows.sql, foi aplicada oficialmente como 20261020162554. O SQL registrado e o arquivo local coincidem por MD5 982403d7f8908a2ec8213735c7d3f93f; SHA-256/mapeamento em supabase/development-migrations.json. As seis anteriores foram preservadas. Nenhum deploy ou merge em main.
+
+Nova tabela privada mutation_receipts e quatro novas APIs públicas para identidade própria atômica e operações idempotentes de grupo/convidado. Os novos auxiliares privados não têm EXECUTE para authenticated/anon, e a tabela não tem grants de cliente. Novas APIs são SECURITY DEFINER de app_executor com identidade explícita e escopo restrito; não utilizam postgres/service role para autorizar usuários. CREATE público temporário foi revogado no final da migration; nenhum grant em auth foi alterado. Tipos oficiais foram regenerados do remoto. Detalhes e justificativa em STAGE003.md/ADR-031.
+
+A primeira aplicação foi rejeitada pela revisão automática por novos grants privados; foi revista sem contornar a rejeição. A tentativa revisada falhou por CREATE necessário para transferir owner; inspeção confirmou rollback (seis migrations e ausência de objetos novos). O ajuste transacional de grant/revoke foi validado localmente e então aplicado com sucesso. Não houve repetição cega, alteração parcial remota nem reparo de histórico.
+
+Smoke SQL remoto stage003.sql passou: identidade repetível sem sobrescrever nome, grupo com owner único, slug duplicado rejeitado, convidado/posição com retries, edição própria atômica, isolamento e bloqueio administrativo/anônimo. Fixtures inteiramente revertidas; consultas confirmaram zero perfis, grupos e recibos após teste. Esses testes usam SET LOCAL ROLE/claims, não JWTs reais. O script de Auth/Data API real para Codespaces está em scripts/test-stage003-integration.mjs, com configuração fictícia em tests/integration.env.example e limpeza estritamente delimitada.
+
+Advisor de segurança: seis WARN, sendo os dois preexistentes de rls_auto_enable e quatro de SECURITY DEFINER autenticado nas novas APIs intencionais, revisadas e explicitamente autenticadas. Três INFO de tabelas deliberadamente fechadas: convites, auditoria e recibos. Não criar policies abertas para eliminar esses INFO. Roteiro de revisão/homologação em STAGE003.md. Recibos/PII e retenção devem ser definidos antes de produção.
+
+A configuração publicável local continua ignorada. A tentativa HTTPS real ao health retornou CONNECT 403 e HTTP 000 no executor Codex. Não se aplica ao Codespaces do usuário, que já demonstrou conectividade. Precheck sem revelar valores confirmou URL/publishable presentes, mas sem contas fictícias A/B, conexão privilegiada de limpeza ou psql neste executor. Não executar o script de integração sem esses pré-requisitos; --check não demonstra Auth aprovado.
+
+---
+
+# Histórico anterior
+
 # Estado atual — Etapa 002.3, 20/10/2026
 
 A correção autorizada foi aplicada exclusivamente em hpbvtqvbtyioqjyelrpb: arquivo supabase/migrations/20261020160133_auth_schema_bridge.sql, versão MCP 20261020160511, nome remoto 20261020160133_auth_schema_bridge. Histórico confirmado com seis migrations; nenhuma das cinco anteriores reaplicada ou editada. SQL completo do sexto registro comparado ao arquivo local por MD5: a8f7645946a007e0ec32ad1cb0ca5565. SHA-256 e correspondência de versões em supabase/development-migrations.json.

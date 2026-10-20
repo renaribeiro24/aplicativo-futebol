@@ -384,6 +384,16 @@ export type Database = {
         Args: { p_group_id: string; p_name: string; p_nickname?: string };
         Returns: string;
       };
+      add_guest_once: {
+        Args: {
+          p_group_id: string;
+          p_name: string;
+          p_nickname: string;
+          p_position: string;
+          p_request_id: string;
+        };
+        Returns: string;
+      };
       create_group: {
         Args: {
           p_description?: string;
@@ -391,6 +401,16 @@ export type Database = {
           p_name: string;
           p_slug: string;
           p_timezone?: string;
+        };
+        Returns: string;
+      };
+      create_group_once: {
+        Args: {
+          p_description: string;
+          p_name: string;
+          p_request_id: string;
+          p_slug: string;
+          p_timezone: string;
         };
         Returns: string;
       };
@@ -404,6 +424,7 @@ export type Database = {
         };
         Returns: string;
       };
+      ensure_my_identity: { Args: { p_display_name: string }; Returns: string };
       list_invitations: {
         Args: { p_group_id: string };
         Returns: {
@@ -418,6 +439,15 @@ export type Database = {
       };
       revoke_invitation: {
         Args: { p_group_id: string; p_invitation_id: string };
+        Returns: undefined;
+      };
+      save_my_identity: {
+        Args: {
+          p_display_name: string;
+          p_name: string;
+          p_nickname: string;
+          p_position: string;
+        };
         Returns: undefined;
       };
       set_member_role: {
