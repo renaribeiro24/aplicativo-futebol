@@ -5,7 +5,7 @@ do $$
 declare
   a uuid := gen_random_uuid(); b uuid := gen_random_uuid();
   ga uuid; gb uuid; pa uuid; pb uuid; ma uuid; mb uuid;
-  va uuid; vb uuid; game uuid; attendance uuid;
+  va uuid; vb uuid; game uuid; attendance uuid; guest uuid; invitation uuid;
   suffix text := replace(gen_random_uuid()::text, '-', '');
 begin
   insert into auth.users(id) values (a), (b);
@@ -13,6 +13,15 @@ begin
   perform set_config('request.jwt.claim.sub',a::text,true);
   insert into public.profiles(display_name) values ('Synthetic deployment A');
   ga := public.create_group('Synthetic deployment A','smoke-a-'||suffix);
+  guest := public.add_guest(ga,'Synthetic deployment guest');
+  invitation := public.create_invitation(ga,md5(suffix)||md5(suffix),'player',clock_timestamp()+interval '1 day',1);
+  if not exists(select 1 from public.list_invitations(ga) where id=invitation) then
+    raise exception 'Authorized invitation listing failed';
+  end if;
+  begin
+    perform private.auth_user_id();
+    raise exception 'Client directly called bridge';
+  exception when insufficient_privilege then null; end;
   select id into pa from public.players where user_id=a;
   select id into ma from public.group_members where group_id=ga and player_id=pa;
   insert into public.venues(group_id,name) values (ga,'Synthetic venue A') returning id into va;

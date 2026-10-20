@@ -4,7 +4,7 @@
 
 Fundação local Next.js App Router, React, TypeScript strict, Tailwind CSS e componentes shadcn/ui mantidos no repositório. Supabase será a infraestrutura de Auth, PostgreSQL e Storage; Vercel é o destino futuro. Não há dependência de serviços provisionados para abrir a interface ou compilar.
 
-A Etapa 002 implementa o schema em cinco migrations novas, com RLS, triggers de integridade e RPCs administrativas. Elas foram aplicadas ao desenvolvimento hpbvtqvbtyioqjyelrpb em 20/10/2026, via MCP oficial. Tipos oficiais remotos estão em src/types/database.types.ts e são usados pelos clientes. O teste SQL remoto revelou incompatibilidade de grant no schema gerenciado auth; uma correção adicional permanece proposta, sem aplicação. Consulte DEPLOYMENT.md para estado atual, histórico e bloqueios. O frontend continua sem CRUD de domínio.
+A Etapa 002 implementa o schema em cinco migrations novas, com RLS, triggers de integridade e RPCs administrativas. Elas foram aplicadas ao desenvolvimento hpbvtqvbtyioqjyelrpb em 20/10/2026, via MCP oficial. Tipos oficiais remotos estão em src/types/database.types.ts e são usados pelos clientes. A sexta migration da Etapa 002.3 corrigiu a incompatibilidade de grant no schema gerenciado auth mediante ponte privada mínima. Smoke SQL remoto passou; Auth/API HTTP com JWTs reais continuam pendentes. Consulte DEPLOYMENT.md para estado atual, histórico e bloqueios. O frontend continua sem CRUD de domínio.
 
 ## Organização
 
@@ -88,3 +88,7 @@ Isso não valida o serviço Auth, JWTs HTTP, extensões completas, Storage ou de
 - [Tailwind: Next.js](https://tailwindcss.com/docs/installation/framework-guides/nextjs)
 - [shadcn/ui: Next.js](https://ui.shadcn.com/docs/installation/next)
 - [Dev Containers](https://containers.dev/implementors/json_reference/)
+
+## Ponte de identidade aplicada — Etapa 002.3
+
+Exceção mínima ao proprietário app_executor: somente private.auth_user_id() pertence a postgres, retorna auth.uid() sem argumentos ou SELECT de tabelas e tem SECURITY DEFINER STABLE/search_path vazio. Sua ACL permite EXECUTE apenas ao proprietário e a app_executor. As sete funções dependentes preservam owner/ACL e regras; chamadas indiretas retornam a identidade da sessão, sem permitir escolher outro usuário. app_executor permanece sem USAGE em auth e sem SELECT em auth.users. Smoke SQL remoto passou; não equivale a teste HTTP/JWT real. Definição completa em supabase/migrations/20261020160133_auth_schema_bridge.sql.

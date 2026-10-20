@@ -2,7 +2,7 @@
 
 Aplicação web responsiva em português brasileiro para evoluir o gerenciamento de futebol amador e society. **Em Campo é um nome provisório.** O 4ª Força será o primeiro grupo, sem ser a marca global do produto. A aplicação foi projetada para múltiplos grupos independentes e múltiplos papéis por pessoa.
 
-A Etapa 001 criou a aplicação; a Etapa 002 acrescenta cinco migrations novas, RLS e operações administrativas transacionais. As cinco migrations foram aplicadas ao Supabase de desenvolvimento em 20/10/2026. Uma incompatibilidade de grant no schema Auth impede considerar as RPCs prontas: veja `docs/DEPLOYMENT.md`. Tipos oficiais remotos estão integrados. Nenhum dado real foi criado e nenhum deploy Vercel foi realizado. A UI continua sem CRUD de domínio.
+A Etapa 001 criou a aplicação; a Etapa 002 acrescenta cinco migrations novas, RLS e operações administrativas transacionais. As cinco migrations foram aplicadas ao Supabase de desenvolvimento em 20/10/2026. A Etapa 002.3 aplicou uma sexta migration para corrigir o acesso ao helper Auth por ponte privada; smoke SQL remoto passou. Testes HTTP/JWT reais continuam pendentes: veja `docs/DEPLOYMENT.md`. Tipos oficiais remotos estão integrados. Nenhum dado real foi criado e nenhum deploy Vercel foi realizado. A UI continua sem CRUD de domínio.
 
 ## Requisitos e stack
 

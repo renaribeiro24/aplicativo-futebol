@@ -111,6 +111,34 @@ try {
     .sort();
   if (!migrations.length) throw new Error("No versioned migrations found");
   for (const name of migrations) {
+    if (name.endsWith("_auth_schema_bridge.sql")) {
+      // Reproduce hosted Supabase: migration administrator cannot delegate auth USAGE.
+      sql("revoke usage on schema auth from app_executor;");
+      const migration = readFileSync(
+        path.join(root, "supabase/migrations", name),
+        "utf8",
+      );
+      // Fail AFTER CREATE/REPLACE to prove the single statement rolls all DDL back.
+      const broken = migration.replace(
+        "  if pg_catalog.has_function_privilege('anon'",
+        "  if true or pg_catalog.has_function_privilege('anon'",
+      );
+      const rejected = docker(sqlArgs, broken, true);
+      if (
+        rejected.status === 0 ||
+        !rejected.stderr.includes("Unexpected bridge execute permissions")
+      )
+        throw new Error("Expected bridge postcondition rejection");
+      if (
+        sql(
+          "select to_regprocedure('private.auth_user_id()') is null;",
+        ).stdout.trim() !== "t"
+      )
+        throw new Error("Failed bridge migration left committed DDL");
+      console.log(
+        "migration rollback OK: forced postcondition error leaves no bridge; real preconditions recheck all original functions",
+      );
+    }
     sql(
       `BEGIN;\n${readFileSync(path.join(root, "supabase/migrations", name), "utf8")}\nCOMMIT;`,
     );
@@ -123,6 +151,21 @@ try {
   const assertions = (result.stderr.match(/NOTICE:\s+ok -/g) ?? []).length;
   console.log(
     `security OK: ${assertions} SQL assertions (non-privileged authenticated/anon sessions)`,
+  );
+
+  sql(readFileSync(path.join(root, "tests/database/auth-bridge.sql"), "utf8"));
+  console.log(
+    "auth bridge OK: no auth USAGE/SELECT, exact identity/null handling, direct client execution denied",
+  );
+
+  sql(
+    readFileSync(
+      path.join(root, "tests/database/development-smoke.sql"),
+      "utf8",
+    ),
+  );
+  console.log(
+    "development SQL smoke OK: authenticated groups/guests/invitations, isolation, anonymous denial, rollback",
   );
 
   // Two transactions compete for the same final seat. PostgreSQL row locks, not mocks.

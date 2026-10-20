@@ -1,3 +1,30 @@
+# Verificação — Etapa 002.3 (20/10/2026)
+
+| Verificação executada        | Resultado                                                                                                                                 |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Estado inicial               | Exatamente cinco migrations; sete fontes/ACLs esperadas; bridge ausente                                                                   |
+| Migration incremental        | 20261020160133_auth_schema_bridge.sql, DDL estático explícito, pré/pós-condições, atomicidade em um DO                                    |
+| Banco local                  | Seis migrations, 70 asserções, regressão da bridge, smoke e duas corridas passaram                                                        |
+| Compatibilidade Auth         | Testes locais sem USAGE em auth para app_executor passaram                                                                                |
+| Falha segura                 | Erro forçado após DDL reverteu a bridge e todas as substituições; pré-condições da execução real confirmaram restauração                  |
+| Aplicação remota             | Sucesso via apply_migration; histórico com seis registros, sexta versão 20261020160511                                                    |
+| Integridade SQL remoto/local | MD5 do statements[1] igual ao arquivo: a8f7645946a007e0ec32ad1cb0ca5565                                                                   |
+| Smoke SQL remoto             | PASS: grupo, convidado, convite, isolamento, administração, presença e anonimato; fixtures revertidas                                     |
+| Bridge SQL remoto            | PASS: UUID correto/null, sem grants no Auth, acesso direto negado aos clientes                                                            |
+| Limite do teste auxiliar     | Primeira tentativa com SET SESSION AUTHORIZATION recusada no remoto; adaptado a SET LOCAL ROLE, passou; não é teste de JWT real           |
+| Catálogo pós-aplicação       | Owner/ACL/volatilidade/search_path preservados nas sete funções; bridge postgres/app_executor somente; auth USAGE/SELECT continuam falsos |
+| Dados temporários            | Zero registros nas oito tabelas e na auditoria após rollback                                                                              |
+| Advisor segurança            | Sem novos avisos; dois WARN preexistentes de rls_auto_enable, dois INFO de deny-by-default                                                |
+| npm run check                | Lint, typecheck, 27 testes e build passaram                                                                                               |
+| Formatação                   | Passou                                                                                                                                    |
+| HTTP/Auth/JWT real           | Não executado: limitação de rede do executor e ausência de provisionamento seguro de contas de teste                                      |
+
+Os resultados SQL usam papéis/claims de sessão, sem credenciais privilegiadas representando usuários em requisições HTTP. GoTrue/PostgREST não foram exercitados por esses testes. A ponte libera a implementação SQL da Etapa 003; não representa homologação completa da autenticação.
+
+---
+
+# Histórico anterior
+
 # Verificação — Etapa 002.2 (20/10/2026)
 
 Estado atual: cinco migrations implantadas em hpbvtqvbtyioqjyelrpb; integração remota **bloqueada** pela falta de USAGE de app_executor em auth. Consulte DEPLOYMENT.md para versões, diagnóstico, correção proposta e limites.

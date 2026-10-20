@@ -32,6 +32,12 @@
       "source_sha256": "594f2b22b5d710fc0e01fffd23ebd64d8a9fdccfe2ba6b9a4c5d617f46e6955e",
       "remote_version": "20261020150339",
       "remote_name": "20261019205222_access_policies"
+    },
+    {
+      "source_file": "20261020160133_auth_schema_bridge.sql",
+      "source_sha256": "dba7ab1996acd4c127d4b85517af73d11e5ea6608680bcf426d6e83c14a8eb83",
+      "remote_version": "20261020160511",
+      "remote_name": "20261020160133_auth_schema_bridge"
     }
   ]
 }

@@ -40,4 +40,4 @@ Nome e marca; possibilidade de múltiplos proprietários; visibilidade do elenco
 
 ## Etapa 002 — banco versionado
 
-Cinco migrations implementam entidades, RLS e operações administrativas, com testes SQL locais. Nenhuma tela administrativa, aceite público de convite ou consulta de dados de domínio foi adicionada à UI. As cinco migrations foram implantadas no desenvolvimento; uma incompatibilidade de acesso ao schema Auth bloqueia RPCs até correção adicional. Detalhes e limites em DATABASE.md e VERIFICATION.md.
+Cinco migrations implementam entidades, RLS e operações administrativas, com testes SQL locais. Nenhuma tela administrativa, aceite público de convite ou consulta de dados de domínio foi adicionada à UI. As cinco migrations foram implantadas no desenvolvimento; a sexta migration da Etapa 002.3 corrigiu o acesso ao helper Auth e passou em smoke SQL remoto. Testes HTTP reais e CRUD de domínio ainda estão pendentes. Detalhes e limites em DATABASE.md e VERIFICATION.md.

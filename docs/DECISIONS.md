@@ -77,3 +77,11 @@ As cinco migrations desta etapa são novas e ainda não fazem parte de um histó
 - ADR-028 (adotada): develop preserva todas as fontes das duas etapas; PR rascunho para main enquanto houver bloqueio de integração. Sem merge automático e sem deploy Vercel.
 
 As afirmações anteriores de banco remoto intocado e tipos ainda pendentes descrevem o estado das Etapas 001/002. O estado atual está em DEPLOYMENT.md e no início de VERIFICATION.md. Etapa 003 pode ser preparada, mas autenticação/CRUD de grupos ainda dependem da correção e de testes Auth/API reais.
+
+## Etapa 002.3 — ponte privada de identidade
+
+ADR-026 aprovada e implementada em 20/10/2026 pela migration 20261020160133_auth_schema_bridge.sql; versão MCP 20261020160511. A ponte private.auth_user_id() usa exclusivamente auth.uid(), sem argumentos/consultas de tabelas, com owner postgres, SECURITY DEFINER STABLE e search_path vazio. EXECUTE somente do proprietário e app_executor. O executor não recebe USAGE em auth ou SELECT em auth.users. Acesso indireto ocorre somente pelo contexto das sete implementações privadas existentes, cujas regras/ACLs/proprietários foram preservados; retorna a identidade do request, não identidade do proprietário da função.
+
+Definições explícitas CREATE OR REPLACE substituem a proposta de edição dinâmica. Um único DO com DDL estático torna criação, alterações e pré/pós-condições atômicas. Guardas conferem assinatura, proprietário, fonte esperada, ACLs, volatilidade e search_path das sete funções; falham diante de divergências ou ponte preexistente. Hashes MD5 de fonte detectam divergência de estado, não são mecanismo criptográfico de autorização. Pós-condições verificam ausência de novos grants no Auth e allowlist de EXECUTE da ponte. Os cinco arquivos anteriores permanecem inalterados.
+
+A correção libera o desenvolvimento da Etapa 003 no nível SQL. Homologação de autenticação depende de testes Auth/API HTTP com JWTs reais; o proxy do executor Codex continua uma limitação distinta do Codespaces. Avisos preexistentes de rls_auto_enable permanecem fora desta autorização.

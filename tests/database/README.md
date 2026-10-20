@@ -9,3 +9,5 @@
 - O runner também abre duas conexões em cada corrida: última vaga e transferências concorrentes. Exatamente uma transação deve vencer.
 
 O ensaio não inicia GoTrue/Auth, PostgREST, Storage nem extensões Supabase. Testes HTTP com JWTs reais de desenvolvimento, db lint/advisors e geração de tipos na pilha completa permanecem necessários. Não usar service_role para validar isolamento.
+
+Etapa 002.3: o runner aplica seis migrations. Antes da bridge, revoga USAGE de auth ao executor para reproduzir a restrição hospedada; injeta uma falha de pós-condição para provar rollback de DDL e então aplica a migration real, cujas pré-condições revalidam as sete funções originais. auth-bridge.sql cobre identidade/null e ACLs; development-smoke.sql cria fixtures aleatórias, exercita grupos/convidados/convites e reverte tudo. Esses dois testes também podem ser executados pelo MCP no desenvolvimento expressamente autorizado. Usam SET LOCAL ROLE por compatibilidade com postgres não superuser; security.sql mantém SET SESSION AUTHORIZATION não privilegiado no ensaio local. Nenhum desses scripts é teste de JWT/HTTP real.

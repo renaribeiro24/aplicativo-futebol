@@ -2,7 +2,7 @@
 
 ## Estado e diferenças da proposta inicial
 
-**As cinco migrations foram aplicadas ao desenvolvimento em 20/10/2026.** O teste remoto identificou falta de USAGE de app_executor em auth: RPCs que chamam auth.uid() estão bloqueadas até a correção adicional ser aprovada/aplicada. Ver DEPLOYMENT.md e VERIFICATION.md. Não há dados reais ou seed de produto. `supabase/config.toml` expõe somente `public`, não `private`, e desabilita seed.
+**As cinco migrations foram aplicadas ao desenvolvimento em 20/10/2026.** A sexta migration da Etapa 002.3 corrigiu as chamadas ao helper Auth por private.auth_user_id(), sem conceder USAGE em auth ao executor. Smoke SQL remoto passou, sem equivaler a testes HTTP/JWT. Ver DEPLOYMENT.md e VERIFICATION.md. Não há dados reais ou seed de produto. `supabase/config.toml` expõe somente `public`, não `private`, e desabilita seed.
 
 A especificação do Prompt 002 substitui propostas ainda não aprovadas da Etapa 001:
 
@@ -188,3 +188,7 @@ FKs históricas usam RESTRICT: conta Auth que possui player/autoria/auditoria n�
 O bootstrap de testes reproduz apenas auth.users(id), auth.uid() e os papéis necessários: não é o serviço Auth nem PostgREST/Storage completos. Antes da implantação será necessário validar também em Supabase local com suas extensões, default privileges e versão de PostgreSQL, rodar db lint/advisors, gerar tipos e fazer testes HTTP com JWTs reais de desenvolvimento. Nenhum teste usa service role para demonstrar RLS.
 
 Referências consultadas: [RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [segurança da API](https://supabase.com/docs/guides/api/securing-your-api), [changelog](https://supabase.com/changelog), [constraints PostgreSQL](https://www.postgresql.org/docs/current/ddl-constraints.html).
+
+## Ponte de identidade aplicada — Etapa 002.3
+
+Exceção mínima ao proprietário app_executor: somente private.auth_user_id() pertence a postgres, retorna auth.uid() sem argumentos ou SELECT de tabelas e tem SECURITY DEFINER STABLE/search_path vazio. Sua ACL permite EXECUTE apenas ao proprietário e a app_executor. As sete funções dependentes preservam owner/ACL e regras; chamadas indiretas retornam a identidade da sessão, sem permitir escolher outro usuário. app_executor permanece sem USAGE em auth e sem SELECT em auth.users. Smoke SQL remoto passou; não equivale a teste HTTP/JWT real. Definição completa em supabase/migrations/20261020160133_auth_schema_bridge.sql.

@@ -1,3 +1,5 @@
+> **Atualização Etapa 002.3:** seis migrations aplicadas ao desenvolvimento. A sexta é 20261020160133_auth_schema_bridge.sql (MCP 20261020160511), sem alterações nos cinco arquivos originais. O histórico abaixo registra as etapas anteriores. Conferir ../development-migrations.json e ../../docs/DEPLOYMENT.md antes de qualquer operação; não reaplicar.
+
 > **Estado em 20/10/2026:** as cinco migrations abaixo foram aplicadas ao desenvolvimento hpbvtqvbtyioqjyelrpb por MCP. As versões geradas pelo MCP estão em ../development-migrations.json. Não executar db push contra esse projeto com os nomes locais sem reconciliar o histórico: veja ../../docs/DEPLOYMENT.md. Os procedimentos futuros abaixo descrevem a preparação original, não autorização para reaplicação.
 
 # Migrations — Etapa 002

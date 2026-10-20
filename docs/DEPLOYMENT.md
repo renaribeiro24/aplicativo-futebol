@@ -1,3 +1,25 @@
+# Estado atual — Etapa 002.3, 20/10/2026
+
+A correção autorizada foi aplicada exclusivamente em hpbvtqvbtyioqjyelrpb: arquivo supabase/migrations/20261020160133_auth_schema_bridge.sql, versão MCP 20261020160511, nome remoto 20261020160133_auth_schema_bridge. Histórico confirmado com seis migrations; nenhuma das cinco anteriores reaplicada ou editada. SQL completo do sexto registro comparado ao arquivo local por MD5: a8f7645946a007e0ec32ad1cb0ca5565. SHA-256 e correspondência de versões em supabase/development-migrations.json.
+
+A bridge private.auth_user_id() é a única função privada que chama auth.uid(). Sem argumentos, retorna somente UUID da sessão, não consulta tabelas, é STABLE SECURITY DEFINER com search_path vazio. Owner postgres; ACL final {postgres=X/postgres,app_executor=X/postgres}. Sem EXECUTE de PUBLIC/anon/authenticated/service_role. O acesso indireto ocorre nas implementações autorizadas existentes, com a identidade do request preservada; não permite selecionar identidade de outra conta. A ponte não oferece operações de tabela nem SQL dinâmico. Clientes não podem assumir app_executor ou alterar o helper.
+
+As sete funções foram substituídas por definições explícitas, mantendo owner app_executor, definer, assinaturas, volatilidade, search_path e ACLs. current_player_id, group_role e can_read_player continuam STABLE; audit_membership, create_group_impl, add_guest_impl e create_invitation_impl continuam VOLATILE. As seis funções anteriormente executáveis por authenticated preservam esse grant, com verificações de identidade/grupo; audit_membership continua restrita ao executor. Wrappers públicos continuam invoker. app_executor continua sem USAGE em auth e sem SELECT em auth.users; nenhuma permissão nesse schema foi concedida.
+
+A migration usa um único DO com DDL estático para atomicidade, pré/pós-condições de estado e recusa de reaplicação. Localmente, erro injetado após criação/substituição reverteu todo o DDL; a aplicação real subsequente validou os corpos e privilégios originais restaurados. O arquivo da antiga proposta foi convertido em referência à implementação definitiva; sua substituição dinâmica não foi usada.
+
+Testes locais passaram: seis migrations, 70 asserções, regressões de identidade/null/ACL, smoke de domínio e dois testes concorrentes; executor sem USAGE em auth. Lint, typecheck, 27 testes unitários, build e formatação passaram. Nenhuma imagem da pilha oficial Supabase completa foi iniciada nesta etapa; seu bloqueio anterior de registro está no histórico abaixo.
+
+Pelo MCP remoto passaram development-smoke.sql e auth-bridge.sql: criação de grupo/convidado/convite por current_user authenticated com claims sintéticas, isolamento A/B, proteção de papel/proprietário, convites, locais entre grupos, elegibilidade/duplicidade de presença, transferência atômica, rejeição anônima e de execução direta da bridge. Dados aleatórios permaneceram em transações revertidas. Consulta posterior confirmou zero linhas nas oito tabelas e na auditoria. Isso é teste SQL de papéis/claims, não autenticação HTTP ou JWT real. O primeiro ensaio remoto do teste auxiliar foi recusado por SET SESSION AUTHORIZATION, indisponível ao postgres gerenciado; a versão portátil usa SET LOCAL ROLE e passou. O ensaio local security.sql continua com sessão não privilegiada.
+
+Advisor de segurança após a sexta migration: mesmos dois WARN de ACLs na função preexistente public.rls_auto_enable e dois INFO de RLS sem policies nas tabelas intencionalmente inacessíveis. Nenhum aviso novo da bridge. Esses WARN não foram corrigidos porque alterações nessa função não fazem parte da autorização. Revisar suas ACLs antes de homologação, sem abrir políticas de dados. HTTP/Auth/JWT real continua dependente de execução no Codespaces ou de HTTPS permitido no executor Codex, com contas fictícias confirmadas ou credencial de provisionamento segura; não classificado como aprovado.
+
+O bloqueio SQL para iniciar a Etapa 003 foi resolvido. Telas de cadastro de perfil/grupo e dashboard funcional ainda são trabalho da próxima etapa. Não declarar Auth end-to-end homologado antes dos testes HTTP. Não houve merge, deploy, dado real ou alteração de outro projeto. PR #1 permanece rascunho.
+
+---
+
+# Histórico das etapas anteriores (estado anterior à correção)
+
 # Implantação de desenvolvimento — 20/10/2026
 
 ## Resultado atual
