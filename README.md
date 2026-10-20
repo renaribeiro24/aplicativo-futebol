@@ -2,7 +2,7 @@
 
 Aplicação web responsiva em português brasileiro para evoluir o gerenciamento de futebol amador e society. **Em Campo é um nome provisório.** O 4ª Força será o primeiro grupo, sem ser a marca global do produto. A aplicação foi projetada para múltiplos grupos independentes e múltiplos papéis por pessoa.
 
-A Etapa 003 implementa autenticação, recuperação de senha, dashboard, grupos, convidados e perfil com persistência no Supabase de desenvolvimento. Sete migrations estão aplicadas, com tipos oficiais integrados. **A homologação ponta a ponta permanece pendente:** o executor Codex não alcança a API HTTP do Supabase; SQL remoto e testes locais passaram. Roteiro, rotas e configuração de Auth/SMTP em [docs/STAGE003.md](docs/STAGE003.md). Nenhum deploy Vercel ou dado real foi criado.
+A Etapa 003 implementa autenticação, recuperação de senha, dashboard, grupos, convidados e perfil com persistência no Supabase de desenvolvimento. Sete migrations estão aplicadas, com tipos oficiais integrados. **A homologação ponta a ponta permanece pendente:** o executor Codex não alcança a API HTTP do Supabase; SQL remoto e testes locais passaram. Roteiro, rotas e configuração de Auth/SMTP em [docs/STAGE003.md](docs/STAGE003.md). Preview Vercel implantado; nenhum dado real foi criado.
 
 ## Requisitos e stack
 
@@ -175,8 +175,12 @@ As migrations e o procedimento de revisão estão em `supabase/migrations/README
 
 ## Próxima etapa
 
-Homologar a Etapa 003 com Auth, e-mail e JWTs reais seguindo `docs/STAGE003.md`; revisar os avisos de segurança e as decisões de privacidade antes de produção. Ainda faltam o aceite de convites, reivindicação segura de convidados, anonimização/retenção, promoção transacional da espera e Storage. Vercel continua posterior. O estado da implantação de desenvolvimento e suas pendências estão em `docs/DEPLOYMENT.md`.
+Homologar a Etapa 003 com Auth, e-mail e JWTs reais seguindo `docs/STAGE003.md`; revisar os avisos de segurança e as decisões de privacidade antes de produção. Ainda faltam o aceite de convites, reivindicação segura de convidados, anonimização/retenção, promoção transacional da espera e Storage. Preview Vercel disponível com homologação funcional pendente. O estado da implantação de desenvolvimento e suas pendências estão em `docs/DEPLOYMENT.md`.
 
 ## Preview Vercel — Etapa 003.1
 
-Implantação pendente: a conexão Vercel retornou 403 por falta de acesso à equipe renan-ribeiros-projects. Nenhum projeto, variável ou deploy foi criado nesta tentativa. Reconectar Vercel nas configurações de Apps e conceder acesso à equipe team_ZCVh2SDJPkrBvec05vrO0RTO. Configuração de Preview, callbacks exatos, SMTP e critérios de homologação estão em [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Não há URL de Preview confirmada nem Auth ponta a ponta homologado.
+**Implantação concluída; homologação permanece pendente.** [Abrir Preview de develop](https://aplicativo-futebol-git-develop-renan-ribeiros-projects.vercel.app), protegido por Vercel Authentication.
+
+Projeto exclusivo aplicativo-futebol, ID `prj_F4qeSw3UsqZzXj5cA89XSY5PgGnt`, na equipe autorizada renan-ribeiros-projects. Repositório vinculado, produção main e Preview develop; Next.js/Node 24, npm ci e npm run build. Build READY e respostas HTTPS públicas verificadas. As três variáveis estão somente em Preview, com Supabase de desenvolvimento e origem do alias estável.
+
+Configuração Auth/SMTP e confirmação/login/grupos/convidados reais ainda precisam de homologação com duas contas fictícias. Callbacks exatos, impacto sobre Codespaces, auditoria e incidente de deploy cancelado estão em [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md); evidências em [docs/VERIFICATION.md](docs/VERIFICATION.md). PR #1 permanece em rascunho, sem merge.

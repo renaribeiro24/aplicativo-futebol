@@ -1,31 +1,79 @@
-# Etapa 003.1 — Preview bloqueado por autorização da equipe (20/10/2026)
+# Etapa 003.1 — Preview implantado; homologação funcional pendente
 
-A listagem autenticada `GET /v10/projects`, explicitamente na equipe `team_ZCVh2SDJPkrBvec05vrO0RTO` (`renan-ribeiros-projects`), retornou **403 forbidden: Not authorized**, solicitando nova concessão de acesso à equipe. Não é o bloqueio HTTPS do proxy do executor. Não foi possível confirmar se `aplicativo-futebol` já existe; nenhum projeto foi criado ou modificado, incluindo `futebol-app` e `futebol-app-3xl7`. CLI Vercel ausente, sem VERCEL_TOKEN e sem arquivo de autenticação CLI nos caminhos convencionais. Não há alternativa autenticada disponível neste executor.
+Execução em 20/10/2026. Este registro substitui o bloqueio anterior de autorização da equipe: a conexão autenticada agora conseguiu listar e criar o projeto.
 
-**Intervenção necessária:** nas configurações de Apps do ChatGPT, reconectar Vercel e autorizar a equipe indicada. Se a equipe exigir instalação/aprovação de administrador, concluir essa concessão na Vercel. SSO isoladamente não concede acesso à equipe. Não fornecer tokens em mensagens. Após a concessão, repetir a listagem exata antes de qualquer criação para evitar duplicidade.
+## Projeto e implantação
 
-## Configuração prevista, ainda não aplicada
+- Projeto exclusivo: aplicativo-futebol; ID `prj_F4qeSw3UsqZzXj5cA89XSY5PgGnt`.
+- Equipe: renan-ribeiros-projects (`team_ZCVh2SDJPkrBvec05vrO0RTO`).
+- GitHub: renaribeiro24/aplicativo-futebol; produção vinculada a main; Preview executado de develop. PR #1 continua em rascunho, sem merge.
+- Raiz: repositório; framework Next.js; Node 24.x; instalação `npm ci`; build `npm run build` (`next build --webpack`).
+- Alias estável de develop: https://aplicativo-futebol-git-develop-renan-ribeiros-projects.vercel.app.
+- Deployment Preview validado: `dpl_3YCNKLneVfmhTBPNc6vVXLKgjeda`; URL única: https://aplicativo-futebol-7p8jyu8it-renan-ribeiros-projects.vercel.app.
+- Commit de código: `a6fb0b44fd24e8fc469c913b116a8e93465baf1c`. Estado READY, aliasError=null. Construção e disponibilização em aproximadamente 62 segundos.
+- Nenhuma operação foi dirigida aos projetos futebol-app ou futebol-app-3xl7.
 
-- Projeto exclusivo `aplicativo-futebol`, repositório `renaribeiro24/aplicativo-futebol`, raiz do repositório, framework Next.js, Node 24.x, instalação `npm ci`, build `npm run build`.
-- Produção: branch `main`; nenhum deploy de produção autorizado. Preview: `develop`. Não usar promoção, merge ou deploy automático da main nesta etapa. Na criação/vinculação, desabilitar o deploy inicial quando a ferramenta o oferecer e solicitar explicitamente Preview de develop. A main ainda não contém a implementação completa.
-- Somente Preview: NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY do desenvolvimento `hpbvtqvbtyioqjyelrpb`; NEXT_PUBLIC_SITE_URL será a origem HTTPS real do alias estável de develop, obtido da implantação, nunca um hostname presumido. Não configurar service role/secret no aplicativo. Nenhuma variável foi gravada na Vercel nesta tentativa.
-- Manter proteção de Preview disponível no plano e verificar acesso de cada testador. Avaliar no navegador se o desafio Vercel preserva query/cookies no retorno do e-mail. Não desabilitar proteção global nem colocar credenciais de bypass em callbacks. Se houver impedimento, registrar o fluxo específico antes de mudar a configuração.
+Incidente da integração: a primeira chamada explícita com target=preview retornou target=production. Foi cancelada imediatamente e o estado CANCELED foi confirmado (`dpl_4b8a4NJJngWizD8Qey4mowteUWRG`); não foi concluída nem promovida. A documentação atual do MCP orienta **omitir target para Preview**. A chamada corrigida produziu target=null e somente alias da branch develop. Não há liberação de produção nesta etapa.
 
-## Supabase Auth: configuração exata após obter a origem
+## Variáveis e proteção
 
-No [painel de URLs de Auth](https://supabase.com/dashboard/project/hpbvtqvbtyioqjyelrpb/auth/url-configuration), definir Site URL como a mesma origem HTTPS estável usada em NEXT_PUBLIC_SITE_URL. Adicionar somente essa origem seguida de `/auth/callback` e `/auth/callback?flow=recovery` à lista de redirecionamentos; substituir a origem pelo alias efetivamente retornado pela Vercel, sem wildcard. Essas configurações **não foram inspecionadas ou alteradas**: a conexão Supabase disponível não fornece gestão de configuração Auth/SMTP.
+As três variáveis foram configuradas como encrypted, exclusivamente em target preview, e reconferidas sem descriptografar valores:
 
-A aplicação já envia emailRedirectTo para confirmação/reenvio e redirectTo para recuperação, usa troca PKCE por code e redireciona somente para a origem configurada. O usuário deve iniciar e concluir o fluxo no mesmo navegador e alias estável, que possui o cookie do verificador PKCE. Acessar a URL única de outro deploy e depois retornar ao alias estável pode perder esse cookie; os testes devem começar pelo alias estável. Não trocar para redirect arbitrário vindo da requisição.
+| Variável | Estado |
+| --- | --- |
+| NEXT_PUBLIC_SUPABASE_URL | Projeto de desenvolvimento hpbvtqvbtyioqjyelrpb |
+| NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY | Chave moderna publishable ativa obtida do projeto; valor não publicado |
+| NEXT_PUBLIC_SITE_URL | Origem HTTPS do alias estável de develop acima |
 
-O Site URL é global ao projeto Supabase de desenvolvimento. A estratégia proposta é usar Preview como destino padrão de homologação. Codespaces continua possível com NEXT_PUBLIC_SITE_URL local configurado para sua origem HTTPS real e callbacks exatos adicionais autorizados. Templates de e-mail devem preservar o destino enviado pelo SDK via ConfirmationURL/RedirectTo; um template fixado em SiteURL pode mandar o teste do Codespaces para Preview e quebrar PKCE. Conferir templates reais antes de homologar; não desabilitar confirmação de e-mail.
+Nenhuma service_role, secret key, senha ou token administrativo foi configurado. NEXT_PUBLIC é incorporado ao cliente; encrypted protege o armazenamento na Vercel, não torna uma variável pública secreta. Production e Development não receberam essas variáveis.
 
-## E-mail e roteiro restante
+Vercel Authentication permaneceu habilitada em all_except_custom_domains. Nenhum domínio personalizado ou regra ampla de bypass foi criado. As leituras HTTP de verificação usaram a integração autenticada disponível. Testadores precisam de acesso à proteção Vercel antes de iniciar o fluxo. Ainda é necessário verificar no navegador se o retorno de e-mail preserva query, cookies e PKCE ao atravessar a proteção; não remover a proteção global para contornar falhas.
 
-SMTP real **não verificado**. Conferir em Auth a confirmação habilitada, templates de confirmação/recuperação, remetente e limites. O serviço padrão Supabase tem restrições de destinatários e limites, não deve ser presumido suficiente para testadores externos. Se necessário, escolher SMTP externo (por exemplo Resend ou Amazon SES) e configurar host, porta, usuário, senha, endereço e nome do remetente, domínio verificado e autenticação DNS conforme o provedor. Nenhuma credencial foi inventada/configurada. Usar caixas fictícias controladas com recebimento real; não criar e-mails de jogadores reais.
+## Supabase Auth — configuração necessária, ainda não aplicada
 
-Após autorização: criar/reutilizar o projeto, configurar Preview, obter alias estável, ajustar Site URL/callbacks, redeploy se as variáveis mudarem, conferir logs e HTTPS com conteúdo real da aplicação. Só então executar o checklist de STAGE003.md: cadastro, recebimento/confirmação de e-mail, login, dashboard, grupo/owner, convidado/elenco, perfil, logout, recuperação e isolamento A/B, em celular/desktop e tema escuro. Usar acesso autenticado à proteção Vercel quando necessário. Nenhum desses testes de Preview foi executado nesta tentativa.
+A integração Supabase disponível permite banco/advisors, mas não oferece gestão de configuração Auth/SMTP. Não foi possível inspecionar ou alterar Site URL, allowlist, confirmação, templates ou SMTP atuais.
 
-Referências consultadas: [Vercel MCP e projetos Git](https://vercel.com/docs/agent-resources/vercel-mcp/tools/projects), [proteção de implantações](https://vercel.com/docs/deployment-protection), [redirecionamentos Supabase](https://supabase.com/docs/guides/auth/redirect-urls), [SMTP](https://supabase.com/docs/guides/auth/auth-smtp).
+Em https://supabase.com/dashboard/project/hpbvtqvbtyioqjyelrpb/auth/url-configuration:
+
+- Site URL: https://aplicativo-futebol-git-develop-renan-ribeiros-projects.vercel.app
+- Redirect URL: https://aplicativo-futebol-git-develop-renan-ribeiros-projects.vercel.app/auth/callback
+- Redirect URL: https://aplicativo-futebol-git-develop-renan-ribeiros-projects.vercel.app/auth/callback?flow=recovery
+
+Permitir somente essas URLs exatas e os callbacks exatos dos Codespaces efetivamente usados, sem wildcard geral. Manter confirmação de e-mail habilitada. No painel de e-mail, conferir templates de confirmação/reenvio e recuperação, preservando o destino enviado pelo SDK via ConfirmationURL/RedirectTo.
+
+Site URL é global ao projeto. Estratégia escolhida: Preview como origem padrão de homologação; Codespaces usa NEXT_PUBLIC_SITE_URL da própria origem HTTPS e callbacks exatos adicionais. Templates fixados em SiteURL podem mandar Codespaces para Preview e perder o verificador PKCE. Começar e terminar cada fluxo no mesmo navegador e na mesma origem. A URL única do deploy não deve ser usada para iniciar cadastro se o retorno aponta ao alias estável.
+
+Inspeção do código confirmou: emailRedirectTo explícito para cadastro/reenvio; redirectTo com flow=recovery para recuperação; exchangeCodeForSession no callback; destinos fixos dashboard/reset-password; origem validada sem caminho/query/credenciais; getUser no servidor; clientes SSR por requisição; proxy preserva cookies de refresh e no-store. Não houve alteração dessas funcionalidades.
+
+## SMTP e contas fictícias
+
+Estado atual do SMTP e entrega de mensagens: **não verificado**. Cadastro, reenvio e recuperação usam os métodos reais do SDK, mas a entrega não foi comprovada. O SMTP padrão Supabase restringe destinatários aos membros autorizados da organização e tem limites baixos; não presumir que atende testadores externos.
+
+Se necessário, configurar serviço externo compatível, como Resend ou Amazon SES, em https://supabase.com/dashboard/project/hpbvtqvbtyioqjyelrpb/auth/smtp. Campos: host, porta, usuário, senha SMTP, e-mail e nome do remetente; domínio remetente verificado e SPF/DKIM/DMARC conforme o provedor. Desabilitar rastreamento de links que altere os URLs de Auth. Não inventar credenciais nem publicá-las. Não foi contratado/configurado serviço nesta execução.
+
+São necessárias duas caixas controladas de usuários fictícios, com recebimento real. Não usar dados do 4ª Força. Credenciais devem ficar em secrets do Codespaces, nunca em commits ou chat.
+
+## Verificação e disponibilidade
+
+Build e HTTPS foram comprovados; detalhes em VERIFICATION.md. Home e formulários públicos respondem com conteúdo real. API sem sessão recusa acesso, e dashboard sem sessão leva ao login.
+
+**Implantação concluída; homologação permanece pendente.** Cadastro/recebimento/confirmação, login autenticado, dashboard privado, grupo/owner, convidado/elenco, perfil, logout, recuperação e isolamento A/B ainda precisam ser executados pelo roteiro STAGE003.md. Também permanecem pendentes celular/desktop/escuro no Preview e interação da proteção com callbacks reais. Não declarar disponibilidade funcional para testadores externos até concluir configuração de Auth/SMTP e essa jornada.
+
+O executor local não conseguiu conectar ao proxy ao clonar o repositório. A execução remota pela Vercel e a documentação via GitHub autenticado evitaram esse bloqueio sem alterar rede/segurança. Testes locais não foram reexecutados nesta alteração documental. Não foram aplicadas migrations nem criados registros de jogadores.
+
+## Auditoria de segurança
+
+Advisor reconfirmado: seis WARN e três INFO.
+
+| Achado | Classificação e decisão |
+| --- | --- |
+| Quatro RPCs autenticadas SECURITY DEFINER da Etapa 003 | Risco moderado inerente ao privilégio; fronteira intencional. Catálogo confirmou owner app_executor, search_path vazio, EXECUTE somente owner/authenticated, auth_user_id explícito e delegação fixa. app_executor sem LOGIN, SUPERUSER ou BYPASSRLS. Não há evidência crítica nesses wrappers; testes JWT reais de autorização ainda pendentes. |
+| Dois WARN de rls_auto_enable para anon/authenticated | Higiene de privilégio pendente; potencial impacto alto do owner postgres, mas função retorna event_trigger e é ligada ao evento ensure_rls, não uma RPC normal de domínio. Corpo usa pg_event_trigger_ddl_commands e identificadores escapados; search_path pg_catalog. Não foi demonstrada exploração crítica. Avaliar revogação de EXECUTE de PUBLIC/anon/authenticated em mudança dedicada, com teste de criação de tabela/event trigger e Data API. Nenhum grant alterado aqui. |
+| Três INFO de RLS sem policy | Baixo risco de exposição por este achado: membership_events, mutation_receipts e group_invitations deliberadamente fechadas. Não adicionar policies permissivas. |
+
+Referências de remediação: [RPC autenticada](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable), [RPC anônima](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable), [RLS sem policy](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy). Retenção/PII e revisão final permanecem anteriores à produção.
+
+Documentação atual consultada via integrações: [MCP deployments](https://vercel.com/docs/agent-resources/vercel-mcp/tools/deployments), [Deployment Protection](https://vercel.com/docs/deployment-protection), [Supabase SMTP](https://supabase.com/docs/guides/auth/auth-smtp), [redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls). O changelog markdown não pôde ser obtido pelo executor sem conectividade; nenhuma funcionalidade Supabase nova foi implementada.
 
 ---
 

@@ -1,3 +1,34 @@
+# Etapa 003.1 — verificação do Preview (20/10/2026)
+
+**Implantação concluída; homologação funcional permanece pendente.** Evidências abaixo são HTTP e build reais, não sessões fictícias nem teste ponta a ponta de e-mail.
+
+- Projeto `prj_F4qeSw3UsqZzXj5cA89XSY5PgGnt`, Preview `dpl_3YCNKLneVfmhTBPNc6vVXLKgjeda`, develop no commit `a6fb0b4`.
+- Vercel executou npm ci e npm run build; Next.js 16.4.2 webpack, TypeScript e geração das páginas concluídos; Build Completed [54s], Deployment completed, READY em cerca de 62s e aliasError=null.
+- Avisos de instalação/configuração npm foram registrados (cache-dir, dependência node-domexception depreciada e política install-scripts); não impediram o build. Não foram feitas atualizações de dependências nesta tarefa.
+- Três variáveis verificadas como encrypted, somente Preview; nenhum valor real foi publicado.
+- Proteção Vercel Authentication mantida; consultas HTTPS por integração autenticada. Alias: https://aplicativo-futebol-git-develop-renan-ribeiros-projects.vercel.app.
+- Consulta de runtime logs de error/fatal na janela de 15 minutos do Preview não encontrou registros. Isso não prova ausência de falhas em fluxos ainda não executados.
+
+| Requisição HTTPS | Resultado observado |
+| --- | --- |
+| / | 200, título Em Campo, conteúdo público real em pt-BR |
+| /login e /signup | 200, formulários reais sem aviso de configuração ausente |
+| /forgot-password e /confirm-email | 200, formulários e instruções PKCE |
+| /api/me sem sessão | 401; ferramenta não trouxe corpo/cabeçalhos dessa resposta |
+| /dashboard sem sessão | Ferramenta seguiu redirect e recebeu login 200; x-matched-path=/login, sem conteúdo privado |
+| /auth/callback sem code | Login com mensagem de confirmação inválida |
+| /auth/callback?flow=recovery sem code | Recuperação com mensagem de link inválido/expirado |
+
+As respostas HTML de autenticação inspecionadas tinham Cache-Control private/no-store, HSTS e noindex. A ferramenta segue redirects: os 200 finais dos callbacks/dashboard não são códigos HTTP do redirect original. A primeira consulta ao alias durante o build mostrou a tela Vercel de deployment cancelado; ela não foi contada como sucesso. As consultas após READY retornaram a aplicação.
+
+Código de Auth, callback, validação de origem, cliente SSR e proxy foi lido via GitHub. Advisor e catálogo PostgreSQL foram consultados sem mutação. Resultado e classificação de riscos em DEPLOYMENT.md. Nenhuma migration foi reaplicada.
+
+Não executados: cadastro/recebimento/confirmação/reenvio real; login/logout de conta fictícia; dashboard autenticado; grupo/owner; convidado/elenco; perfil; recuperação real; isolamento JWT A/B; navegador celular/desktop/tema escuro no Preview; preservação de cookies PKCE através da proteção. Sem ferramenta de navegador interativo e sem contas/caixas de teste disponíveis. Configuração atual Auth/SMTP não é exposta pelo MCP Supabase disponível.
+
+Executor local não conseguiu conectar ao proxy para clonar; lint/typecheck/Vitest/format:check locais não foram reexecutados nesta mudança documental. Resultados históricos abaixo continuam históricos. PR #1 mantido em rascunho; main não recebeu merge.
+
+---
+
 # Etapa 003.1 — verificação desta tentativa (20/10/2026)
 
 - Vercel MCP: listagem do projeto na equipe exata recusada com 403 de autorização da equipe. Não é evidência de ausência do projeto. Sem CLI/credencial alternativa disponível. Criação, vínculo Git, variáveis, proteção, build remoto, deploy e URL HTTPS **não executados**.

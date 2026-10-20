@@ -89,6 +89,12 @@ Esse script testa SDK/Auth/Data API reais, não o navegador SSR inteiro. Complet
 - Testes: auth-flows, domain-actions, domain-validation; stage003.sql e runner SQL ampliado; script test-stage003-integration.mjs e template integration.env.example.
 - Documentação: README, AGENTS, PRODUCT, ARCHITECTURE, DATABASE, DECISIONS, DEPLOYMENT, VERIFICATION e este roteiro.
 
-## Etapa 003.1 — execução de implantação pendente
+## Etapa 003.1 — Preview implantado; homologação pendente
 
-Em 20/10/2026, a tentativa de inspecionar o projeto Vercel na equipe autorizada recebeu 403 por ausência de concessão à equipe. Sem projeto/URL confirmados, toda a jornada real deste documento continua pendente. Não interpretar os testes unitários e SQL anteriores como homologação de e-mail, JWT ou navegador. As sete migrations foram reconfirmadas por MCP, sem mudanças. Reconectar Vercel com acesso à equipe indicada e seguir [DEPLOYMENT.md](DEPLOYMENT.md), incluindo SMTP, alias estável, cookies PKCE e proteção do Preview, antes de liberar acesso a testadores fictícios.
+Em 20/10/2026, a integração Vercel passou a acessar a equipe autorizada. Foi criado somente aplicativo-futebol (`prj_F4qeSw3UsqZzXj5cA89XSY5PgGnt`), vinculado ao repositório correto, com main como branch de produção e Preview develop. As três variáveis foram configuradas exclusivamente em Preview; proteção Vercel Authentication mantida.
+
+Preview estável: https://aplicativo-futebol-git-develop-renan-ribeiros-projects.vercel.app. Deployment `dpl_3YCNKLneVfmhTBPNc6vVXLKgjeda` READY; build e páginas públicas HTTPS verificados. Ausência de sessão recusa /api/me e leva dashboard ao login. Callbacks sem código válido exibem o caminho de recuperação adequado.
+
+**Nenhum dos 13 passos autenticados/e-mail/grupos acima foi homologado nesta execução.** Sem contas fictícias/caixas controladas e sem acesso da integração à configuração Auth/SMTP. Celular/desktop/escuro e retorno do e-mail através da proteção também permanecem pendentes no Preview. Não confundir os testes SQL anteriores com JWT real ou navegação autenticada.
+
+Consultar [DEPLOYMENT.md](DEPLOYMENT.md) para URLs exatas de callback e recuperação, Site URL global/impacto no Codespaces, SMTP, auditoria atual e incidente da chamada de deploy cancelada. [VERIFICATION.md](VERIFICATION.md) registra as respostas realmente observadas. Nenhuma migration, dado real ou permissão sensível foi alterada; PR #1 segue em rascunho.
