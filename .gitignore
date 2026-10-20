@@ -34,3 +34,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# temporary verification assets
+/work/
+
+# environment files (keep only the public template)
+.env.*
+!.env.example
+
+# local test output
+/test-results/
+/playwright-report/
