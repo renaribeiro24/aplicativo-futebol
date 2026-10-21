@@ -49,6 +49,43 @@ O runner cobre owners A/B e a rejeição de promover convidado por setter genér
 
 4ª Força, seus jogadores e Grupo Teste 2 devem permanecer intactos. A autorização desta tentativa não permite limpeza desses registros. Sem merge/main, produção, DNS, Resend ou mudanças de RLS. A suíte remota e os critérios críticos continuam pendentes até evidências reais.
 
+## Verificação do executor e auditoria npm — 21/10/2026
+
+Esta execução ocorreu no Codex em /workspace/work/borafute, **não no Codespaces /workspaces/aplicativo-futebol**, que não está anexado a este executor. Branch local develop; cópia reconstruída com arquivos staged/modificados/untracked e sem checkout Git convencional. Nenhuma alteração local descartada. Lockfile local tem Git SHA c72cd8d0b835445b15380f4116a9a21bd18134a5, igual ao remoto; @supabase/ssr@0.12.7 instalado. Não é possível certificar os secrets ou estado do Codespaces a partir deste ambiente.
+
+Precheck exato com --env-file=work/stage0032.test.env executado. Ausentes: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, TEST_USER_A_EMAIL, TEST_USER_A_PASSWORD, TEST_USER_B_EMAIL e TEST_USER_B_PASSWORD. As outras três variáveis estão presentes. Inspeção de readiness confirmou zero secrets/runtime variables configurados no executor. Nenhum valor de credencial foi impresso. Suíte JWT real interrompida antes de autenticação e mutações. Sem novo teste HTTP ao Supabase: política continua sem autorização para esse host; tentativa anterior CONNECT 403 documentada acima. Não contornar o proxy; executar os comandos no terminal do Codespaces com as nove variáveis presentes.
+
+### Auditoria de dependências somente leitura
+
+Executado npm audit --omit=dev --audit-level=moderate --json: exit 0, **zero achados**. Auditoria completa adicional reproduziu **11 pacotes sinalizados: 1 moderado, 9 altos, 1 crítico**, exit 1. Registro consultado: https://registry.npmjs.org/. Os onze são devDependencies diretas/transitivas no lockfile; não são onze falhas independentes. Relatórios brutos permanecem em work/ ignorado. Nenhuma versão, package.json ou lockfile alterado.
+
+| Dependência instalada           | Severidade npm | Caminho/alcance                                                                                                          | Correção disponível observada                                                                        |
+| ------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| tar 7.5.11                      | Crítica        | Transitiva do CLI Supabase; parsing/descompressão de arquivos, ferramenta/instalação, fora da árvore runtime de produção | tar 7.5.22 disponível, acima das faixas afetadas publicadas; npm propõe supabase 2.121.0             |
+| supabase 2.81.3                 | Moderada       | CLI de desenvolvimento; herda tar, não o SDK usado no app                                                                | npm indica 2.121.0; metadados dessa versão não listam tar como dependência direta                    |
+| braces 3.0.3                    | Alta           | Stack exhaustion por padrões profundamente aninhados; ferramentas de glob                                                | Latest 3.0.3 ainda afetada; nenhuma versão corrigida publicada identificada                          |
+| micromatch 4.0.8                | Alta           | Propagação de braces, dev                                                                                                | Sem versão corrigida certificada enquanto a cadeia afetada persistir                                 |
+| fast-glob 3.3.1/3.3.3           | Alta           | Propagação de micromatch, lint/geradores                                                                                 | Sem correção segura certificada; npm sugere downgrade do pai shadcn                                  |
+| @next/eslint-plugin-next 16.4.2 | Alta           | Propagação de fast-glob, lint                                                                                            | npm sugere eslint-config-next 14.2.35, downgrade incompatível a avaliar; não aplicar automaticamente |
+| eslint-config-next 16.4.2       | Alta           | Dependência direta de lint                                                                                               | Mesma sugestão 14.2.35; nenhuma atualização compatível corrigida certificada                         |
+| @shadcn/registry 0.2.0          | Alta           | Propagação de fast-glob, gerador                                                                                         | npm sugere downgrade de shadcn para 1.0.0; não tratado como correção aprovada                        |
+| shadcn 4.22.1                   | Alta           | CLI/gerador de componentes, não componentes locais em runtime                                                            | npm sugere 1.0.0, downgrade; precisa revisão antes de qualquer mudança                               |
+| @ts-morph/common 0.27.0         | Alta           | Propagação de fast-glob, ferramentas                                                                                     | npm marca fixAvailable=true sem versão exata; versão corrigida não certificada                       |
+| ts-morph 26.0.0                 | Alta           | Propagação de @ts-morph/common, ferramentas                                                                              | npm marca fixAvailable=true sem versão exata; versão corrigida não certificada                       |
+
+Principais advisories: [braces DoS](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm), [tar descompressão/parse DoS](https://github.com/advisories/GHSA-23hp-3jrh-7fpw), [tar recursão](https://github.com/advisories/GHSA-r292-9mhp-454m). tar também acumula avisos de file smuggling, tipos PAX e loops/exceções. A classificação crítica é a reportada pelo npm; não demonstra execução remota no aplicativo. Nenhum caminho de upload/extração pelo app foi demonstrado nesta inspeção.
+
+Zero achados em --omit=dev significa ausência de advisories conhecidos na árvore consultada, não certificação de segurança do app. DevDependencies podem executar em npm ci, postinstall, build e CI, portanto o risco operacional não deve ser ignorado. Nesta cópia local a instalação anterior omitiu scripts; isso não descreve a instalação executada pelo proprietário no Codespaces.
+
+### Plano de correção proposto — não executado
+
+1. Priorizar o CLI Supabase/tar: avaliar atualização fixa para supabase 2.121.0 em alteração isolada, revisar requisitos/instalador/CLI e resolver lockfile; confirmar ausência de tar vulnerável na árvore final. Se mantido o CLI atual, avaliar override tar 7.5.22 somente após compatibilidade com consumidor e testes, não aplicar às cegas.
+2. Investigar a necessidade de manter o CLI shadcn instalado, considerando que componentes gerados são locais. Avaliar remoção da ferramenta ou atualização compatível quando a cadeia braces estiver corrigida; não fazer downgrade para shadcn 1.0.0 só para reduzir contagem.
+3. Manter eslint-config-next compatível com Next 16; aguardar/avaliar correção upstream ou substituição compatível da cadeia de glob. Não forçar braces para versão inexistente nem regredir lint para Next 14.
+4. Antes de aplicar, apresentar alteração exata de package.json/lockfile e compatibilidade. Após autorização, executar instalação limpa, audit completa/produção, lint, typecheck, unidades, SQL quando pertinente e build. Não usar npm audit fix --force.
+
+Mudança desta tentativa exclusivamente documental. JWT real/Data API/RPC/SSR e interface privada permanecem pendentes. Execute a suíte no Codespaces conforme roteiro acima e registre somente saída sanitizada. Etapa 003.2 **não concluída**; nenhuma alteração em dados existentes, main, produção, DNS, Resend ou RLS.
+
 ## Autenticação
 
 Revisados cadastro/confirmação, login/logout, recuperação/reset, callback PKCE, proxy, sessão SSR e rotas privadas. Mantidos getUser no servidor, destinos fixos, origem configurada e Cache-Control private/no-store. Nenhuma URL externa fornecida pelo usuário é aceita como destino. Confirmação de e-mail não foi desabilitada.
