@@ -26,14 +26,16 @@ Correção do executor: agora registra conta A/B, etapa e código/status/nome/me
 
 ### Retomada no Codespaces — 21/10/2026
 
-O ambiente atual está em `develop`, contém o commit `3cd2f9a` e foi sincronizado com `origin/develop` sem descartar commits. O `--check` executado com `work/stage0032.test.env` informou presença para todas as nove variáveis obrigatórias. Isso valida somente configuração presente, não a validade das credenciais. A sondagem HTTPS ao health do Supabase recebeu HTTP 401 sem chave; o host estava alcançável, mas isso não é evidência de autenticação.
+O ambiente atual está em `develop`, contém o commit `3cd2f9a` e foi sincronizado com `origin/develop` sem descartar commits. O `--check` executado inicialmente com `work/stage0032.test.env` informou presença para todas as nove variáveis obrigatórias. Após o proprietário confirmar atualização/reinício, o `--check` foi executado novamente e as nove variáveis continuavam presentes. Isso valida somente configuração presente, não a validade das credenciais. A sondagem HTTPS ao health do Supabase recebeu HTTP 401 sem chave; o host estava alcançável, mas isso não é evidência de autenticação.
 
-A suíte completa foi executada **uma única vez**, em 21/10/2026, e falhou na fase `authentication`, na conta B, durante `signInWithPassword`: `invalid_credentials`, HTTP 400, `Invalid login credentials`. O login real da conta A foi aceito; a leitura `getUser` de A e B e a comparação de identidades/JWTs distintos não foram alcançadas. Run `c8a34dae-31c0-44d0-9d89-db2aa4adb5a7`; manifesto privado `work/stage0032-c8a34dae-31c0-44d0-9d89-db2aa4adb5a7.json`. O manifesto registra zero grupos, jogadores e requisições criados. Nenhuma fixture ou alteração de dados foi realizada; 4ª Força, Grupo Teste 2 e jogadores existentes não foram tocados.
+A primeira execução completa falhou na fase `authentication`, na conta B, durante `signInWithPassword`: `invalid_credentials`, HTTP 400, `Invalid login credentials`. O login real da conta A foi aceito; a leitura `getUser` de A e B e a comparação de identidades/JWTs distintos não foram alcançadas. Run `c8a34dae-31c0-44d0-9d89-db2aa4adb5a7`; manifesto privado `work/stage0032-c8a34dae-31c0-44d0-9d89-db2aa4adb5a7.json`.
+
+Após a confirmação do proprietário de que atualizou a configuração da conta B e reiniciou o Codespace, foi feita uma única nova tentativa. Ela falhou novamente na autenticação B, com o mesmo código/status/mensagem. O login A foi aceito também nessa tentativa; as verificações `getUser`, comparação de JWTs e todas as fases posteriores permaneceram sem execução. Run `f128dacd-62c0-42ca-b7d8-1cc5796551c2`; manifesto privado `work/stage0032-f128dacd-62c0-42ca-b7d8-1cc5796551c2.json`. Ambos os manifestos registram zero grupos, jogadores e requisições criados. Nenhuma fixture ou alteração de dados foi realizada; 4ª Força, Grupo Teste 2 e jogadores existentes não foram tocados.
 
 | Verificação da suíte | Resultado observado |
 | --- | --- |
-| Login A | PASS — `signInWithPassword` aceito; `getUser` não executado |
-| Login B | FAIL — `invalid_credentials` (HTTP 400) |
+| Login A | PASS — `signInWithPassword` aceito nas duas tentativas; `getUser` não executado |
+| Login B | FAIL — `invalid_credentials` (HTTP 400) nas duas tentativas |
 | JWTs reais distintos | PENDENTE — não demonstrado, pois B não autenticou e a comparação não foi executada |
 | Isolamento de grupos / leituras cruzadas | PENDENTE — não executado |
 | Supabase Data API | PENDENTE — não executada |
@@ -41,9 +43,9 @@ A suíte completa foi executada **uma única vez**, em 21/10/2026, e falhou na f
 | Bloqueio de escrita cruzada / autoelevação | PENDENTE — não executado |
 | Permissões legítimas de proprietários | PENDENTE — não executadas |
 | Proteção das rotas SSR | PENDENTE — não executada |
-| Integridade dos dados nesta tentativa | PASS — manifesto sem fixtures/requisições; suíte parou antes de qualquer mutação |
+| Integridade dos dados nas tentativas | PASS — ambos os manifestos sem fixtures/requisições; as suítes pararam antes de qualquer mutação |
 
-Resultado da execução: um checkpoint de login aprovado (A), um reprovado (B) e todos os checkpoints posteriores não executados; o runner não fornece uma contagem global de asserts. Classificação da falha: **autenticação**, sem evidência de falha de RLS, autorização ou conectividade. Não repetir a suíte até que o proprietário confirme a conta B pelo fluxo normal e atualize `TEST_USER_B_PASSWORD` no secret/arquivo efetivamente usado, se necessário; após alterar Codespaces Secrets, reiniciar o Codespace. Nenhuma senha foi alterada por esta execução. A etapa continua bloqueada e não está aprovada.
+Resultado agregado: dois checkpoints de login A aprovados, dois logins B reprovados e nenhum checkpoint posterior executado; o runner não fornece uma contagem global de asserts. Classificação da falha: **autenticação**, sem evidência de falha de RLS, autorização ou conectividade. Não repetir novamente sem nova confirmação explícita e diagnóstico da conta B pelo fluxo normal; conferir se o secret `TEST_USER_B_PASSWORD` efetivamente usado corresponde à credencial ativa e se a conta está confirmada. Nenhuma senha foi alterada pelo runner. A etapa continua bloqueada e não está aprovada.
 
 ### Preparação no Codespaces
 
