@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { getAuthCookieOptions } from "@/lib/supabase/cookies";
 
 // Real installed SDK/SSR storage against a synthetic Auth transport.
 // No network, real account, credential, email or provider token is involved.
@@ -64,6 +65,7 @@ function harness() {
       "sb_publishable_fixture",
       {
         global: { fetch: fetcher },
+        cookieOptions: getAuthCookieOptions(),
         cookies: {
           getAll: () => [...jar].map(([name, value]) => ({ name, value })),
           setAll: (values) =>
@@ -88,6 +90,7 @@ function harness() {
 }
 
 describe("installed SSR PKCE recovery storage (synthetic Auth)", () => {
+  afterEach(() => vi.unstubAllEnvs());
   it("persists the verifier before the response and exchanges it in a new SSR client", async () => {
     const h = harness();
     await h.start();
@@ -159,5 +162,19 @@ describe("installed SSR PKCE recovery storage (synthetic Auth)", () => {
     expect(
       (await h.client().auth.exchangeCodeForSession("fixture-1")).error,
     ).toBeNull();
+  });
+  it("keeps verifier and session cookies Secure on the HTTPS site", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://www.borafute.com.br");
+    const h = harness();
+    await h.start();
+    expect(
+      (await h.client().auth.exchangeCodeForSession("fixture-0")).error,
+    ).toBeNull();
+    expect(h.written.length).toBeGreaterThan(0);
+    for (const { options } of h.written) {
+      expect(options.secure).toBe(true);
+      expect(options.sameSite).toBe("lax");
+      expect(options.domain).toBeUndefined();
+    }
   });
 });

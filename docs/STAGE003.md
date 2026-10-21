@@ -1,3 +1,9 @@
+# Auditoria de segurança — 21/10/2026
+
+**Etapa 003.2 não concluída.** Relatório atual em [STAGE0032.md](STAGE0032.md): cookies Secure endurecidos, 74 testes unitários, SQL/RLS local e seis corridas passaram; 32 verificações públicas/preparação no Chromium. Isolamento JWT real A/B e interface privada autenticada pendentes por ausência de contas fictícias configuradas. Homologação funcional prévia informada pelo proprietário está registrada separadamente. Nenhuma migration, exclusão remota, DNS, Resend ou produção alterada. O alias www continua exigindo atenção a cada novo Preview; procedimento oficial de associação à develop no relatório. Registros abaixo são históricos.
+
+---
+
 # Etapa 003 — implementação entregue, homologação pendente
 
 ## Jornada e rotas

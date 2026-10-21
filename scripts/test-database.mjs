@@ -219,6 +219,78 @@ try {
     "idempotency concurrency OK: two authenticated submissions with the same request create one guest",
   );
 
+  // Stage 003.2: actual concurrent PostgreSQL transactions, disposable DB only.
+  const createGroupSql = (actorId, requestId, slug) =>
+    `begin; set session authorization authenticated; select set_config('request.jwt.claim.sub','${actorId}',true); select public.create_group_once('${requestId}','Synthetic concurrent group','${slug}','','America/Sao_Paulo');`;
+  const userA = "00000000-0000-4000-8000-000000000001";
+  const userB = "00000000-0000-4000-8000-000000000002";
+  const groupRequest = randomUUID();
+  const repeatedGroup = createGroupSql(userA, groupRequest, "stage32-retry");
+  const repeatFirst = sqlAsync(
+    `${repeatedGroup} select pg_sleep(0.5); commit;`,
+  );
+  await sleep(100);
+  const repeatResults = await Promise.all([
+    repeatFirst,
+    sqlAsync(`${repeatedGroup} commit;`),
+  ]);
+  if (repeatResults.some((r) => r.code !== 0))
+    throw new Error("Concurrent group retry failed");
+  if (
+    sql(
+      "select count(*) from public.groups where slug='stage32-retry';",
+    ).stdout.trim() !== "1"
+  )
+    throw new Error("Concurrent group retry duplicated a group");
+  console.log(
+    "group concurrency OK: same actor/request/payload creates one group",
+  );
+
+  const collisionFirst = sqlAsync(
+    `${createGroupSql(userA, randomUUID(), "stage32-collision")} select pg_sleep(0.5); commit;`,
+  );
+  await sleep(100);
+  const collisionResults = await Promise.all([
+    collisionFirst,
+    sqlAsync(
+      `${createGroupSql(userB, randomUUID(), "stage32-collision")} commit;`,
+    ),
+  ]);
+  if (
+    collisionResults.filter((r) => r.code === 0).length !== 1 ||
+    !collisionResults.some((r) => r.stderr.includes("duplicate key value"))
+  )
+    throw new Error(
+      "Concurrent slug collision did not reject exactly one request",
+    );
+  console.log(
+    "group concurrency OK: different actors competing for one slug have one winner",
+  );
+
+  const distinctResults = await Promise.all([
+    sqlAsync(
+      `${createGroupSql(userA, randomUUID(), "stage32-distinct-a")} commit;`,
+    ),
+    sqlAsync(
+      `${createGroupSql(userB, randomUUID(), "stage32-distinct-b")} commit;`,
+    ),
+  ]);
+  if (distinctResults.some((r) => r.code !== 0))
+    throw new Error("Independent concurrent groups failed");
+  const validOwners = sql(
+    `select count(*) from public.groups g where g.slug in ('stage32-retry','stage32-collision','stage32-distinct-a','stage32-distinct-b') and (select count(*) from public.group_members m where m.group_id=g.id and m.role='owner' and m.status='active')=1;`,
+  ).stdout.trim();
+  if (validOwners !== "4")
+    throw new Error("Concurrent group creation left an invalid owner count");
+  const matchingOwners = sql(
+    `select count(*) from public.groups g join public.group_members m on m.group_id=g.id and m.role='owner' and m.status='active' join public.players p on p.id=m.player_id where (g.slug='stage32-distinct-a' and p.user_id='${userA}') or (g.slug='stage32-distinct-b' and p.user_id='${userB}');`,
+  ).stdout.trim();
+  if (matchingOwners !== "2")
+    throw new Error("Concurrent group creation assigned the wrong owner");
+  console.log(
+    "group concurrency OK: independent groups commit with the correct unique active owner",
+  );
+
   const ownershipLookup = `select g.id as ga,c.id as mc,d.id as md from public.groups g join public.group_members c on c.group_id=g.id join public.players cp on cp.id=c.player_id join public.group_members d on d.group_id=g.id join public.players dp on dp.id=d.player_id where g.slug='test-alpha' and cp.user_id='00000000-0000-4000-8000-000000000003' and dp.user_id='00000000-0000-4000-8000-000000000004' \\gset\n`;
   const actor =
     "set session authorization authenticated; select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000001',true);";

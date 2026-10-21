@@ -1,3 +1,4 @@
+import { getAuthCookieOptions } from "./cookies";
 import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import type { Database } from "@/types/database.types";
@@ -7,6 +8,7 @@ export async function createClient() {
   const store = await cookies();
   const { url, key } = requireSupabaseConfig();
   return createServerClient<Database>(url, key, {
+    cookieOptions: getAuthCookieOptions(),
     cookies: {
       getAll: () => store.getAll(),
       setAll(values) {
