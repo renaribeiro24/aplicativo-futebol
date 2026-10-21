@@ -1,3 +1,67 @@
+# Correção temporária do domínio BoraFute — 21/10/2026
+
+## Estado atual
+
+Operação autorizada pelo proprietário: servir o Preview de develop em https://www.borafute.com.br, sem produção. Somente o projeto aplicativo-futebol (`prj_F4qeSw3UsqZzXj5cA89XSY5PgGnt`) da equipe `team_ZCVh2SDJPkrBvec05vrO0RTO` foi alterado.
+
+| Recurso              | Antes                                                                                                             | Depois                                                                                                     |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| www.borafute.com.br  | Domínio verificado no projeto, gitBranch=null, sem produção ativa; consulta retornou 404 no lookup da implantação | Alias explícito para Preview READY de develop                                                              |
+| borafute.com.br      | Verificado, redirect=www.borafute.com.br, redirectStatusCode=308                                                  | Cadastro preservado, sem alteração                                                                         |
+| main                 | 3d0b7c3d6f53125b7cf5a218e2d0af07f9b4508c                                                                          | Sem merge/push ou deploy desta branch                                                                      |
+| Proteção             | Vercel Authentication all_except_custom_domains                                                                   | Mantida; domínios personalizados já eram exceção                                                           |
+| NEXT_PUBLIC_SITE_URL | Preview geral aponta ao alias vercel.app                                                                          | Override exclusivo Preview/develop para https://www.borafute.com.br; valores de outros escopos preservados |
+
+Preview associado: `dpl_Fx22RJ7cBjY4cZv4SqjSCNzkptwC`, URL https://aplicativo-futebol-rkkplywjn-renan-ribeiros-projects.vercel.app. Fonte develop no commit `1390d491623ba0ab75632a55b7614ae8b1487358`, target=null (Preview), READY e aliasError=null. A compilação foi concluída em aproximadamente um minuto. Não há promoção, deploy de produção, alteração DNS, registrador, zonas, e-mail, chaves ou Supabase nesta operação.
+
+A associação inicial ao Preview anterior removeu o erro de www; depois o domínio foi reassociado ao Preview novo, reconstruído com o override da origem. Nenhum domínio precisou ser removido, recriado ou adicionado novamente. Outros projetos e demais domínios deste projeto foram preservados.
+
+## Mecanismo utilizado e limite importante
+
+A documentação oficial disponibiliza PATCH /v9/projects/{idOrName}/domains/{domain} com gitBranch=develop para a associação permanente à branch. Porém a integração desta sessão não expõe essa operação, e não há CLI Vercel autenticada/credencial configurada no executor. Não houve tentativa destrutiva de remover/recriar o domínio.
+
+Foi usada a operação oficial de alias POST /v2/deployments/{id}/aliases, equivalente a vercel alias set, atribuindo www diretamente ao Preview READY. **É uma associação temporária a uma implantação específica, não um vínculo automático à branch.** O cadastro do domínio continua gitBranch=null. Próximos pushes em develop podem atualizar o alias vercel.app sem atualizar www.
+
+Para manutenção, usar o painel Vercel → projeto correto → Settings → Domains → editar www e associar à branch develop, ou a API PATCH oficial com corpo `{"gitBranch":"develop"}` na mesma equipe. Essa atualização não exige remover domínio/DNS. Se ficar indisponível, reassociar www manualmente ao novo Preview READY com a operação de alias, após conferir projeto, equipe, origem e target Preview. Nunca usar promote ou --prod para essa manutenção.
+
+Quando houver futura autorização de produção, revisar a associação temporária e o override Preview/develop em uma operação separada; não presumir que um deploy main deve tomar esse alias sem revisão.
+
+## Autenticação, SSR e PKCE
+
+Código de actions e callback reconferido na branch remota. Cadastro/reenvio usam emailRedirectTo fixo; recuperação usa redirectTo fixo com flow=recovery; origem vem de getSiteOrigin(NEXT_PUBLIC_SITE_URL). Callback troca code via exchangeCodeForSession, com destinos dashboard/reset-password ou mensagens de erro e no-store. Nenhum código de runtime foi alterado e nenhum next externo foi introduzido.
+
+O override de NEXT_PUBLIC_SITE_URL foi criado somente em Preview e gitBranch=develop, antes do novo build. URL/chave Supabase não foram alteradas nem impressas; as três variáveis constam nos escopos Preview/Production, sem alteração de Production.
+
+Configuração necessária para revisão no Supabase (não alterada; o MCP disponível não expõe leitura/gestão de URL Configuration/templates/SMTP):
+
+- Site URL desejada: https://www.borafute.com.br
+- Redirect URL: https://www.borafute.com.br/auth/callback
+- Redirect URL: https://www.borafute.com.br/auth/callback?flow=recovery
+
+Preservar callbacks exatos ativos de desenvolvimento/Codespaces, sem curingas amplos. Manter confirmação de e-mail habilitada e templates com ConfirmationURL que preserve o redirect enviado pelo SDK. Não inventar /auth/confirm ou token_hash: o callback implementado recebe code.
+
+**Iniciar e concluir os novos fluxos no www e no mesmo navegador.** Um link iniciado no alias vercel.app antes da mudança pode não encontrar seu verificador PKCE em www; solicitar novo link a partir de www. A mudança do hostname não transfere cookies. Nenhum cookie compartilhado de domínio foi configurado.
+
+Vercel Authentication continua habilitada para URLs abrangidas por all_except_custom_domains. Pela regra já existente, www pode ser aberto sem login Vercel; a sessão da aplicação e RLS continuam obrigatórias. Essa exposição decorre da associação de um domínio personalizado à configuração existente, não de desativação da proteção. Nenhuma configuração de proteção foi ampliada/desabilitada. As verificações HTTP usaram a integração Vercel autenticada; não provam por si sós uma navegação anônima completa.
+
+## Verificação HTTPS e limites
+
+Após a associação, a integração autenticada recebeu conteúdo real em www, home e /login, /signup, /forgot-password: HTTP 200, sem DEPLOYMENT_NOT_FOUND. Telas de autenticação responderam com Cache-Control private/no-store. A marca visual ainda é Em Campo, conforme o código atual; não foi feito rebranding.
+
+Callbacks sem code válido também foram consultados: /auth/callback levou ao login e /auth/callback?flow=recovery à recuperação, ambos com mensagem de erro e no-store. A ferramenta segue redirects; o 200 final não é o status original do redirect. Isso não testa confirmação/recuperação reais.
+
+O domínio raiz mantém redirect=www e status 308 no cadastro. **O 308 em tráfego HTTPS não foi validado neste executor.** O web_fetch da integração falhou em lookup_deployment para o domínio somente de redirect, antes de obter resposta do site; esse 404 da ferramenta não é prova de um 404 HTTP do domínio. O curl via proxy foi bloqueado em CONNECT com 403. Não contornar a política de rede. Conferir no navegador/rede autorizada que https://borafute.com.br retorna 308 com Location para www, incluindo preservação de caminhos/query.
+
+Confirmação/recuperação com e-mails reais, cookies PKCE e sessão autenticada continuam pendentes; nenhum cadastro, senha ou dado de jogador foi usado neste ensaio. Retestes devem começar no www com contas fictícias controladas. Etapa 003 não homologada por esta correção de domínio.
+
+Somente documentação de implantação foi alterada no GitHub. O commit documental pode disparar outro Preview pelo Git, mas www permanece fixado à implantação acima até uma nova operação de alias/branch. Testes locais de aplicação não foram repetidos porque não houve alteração de código; o build Vercel e os testes HTTPS são as evidências desta tarefa.
+
+Referências: [Update a project domain](https://vercel.com/docs/rest-api/projects/update-a-project-domain), [Alias CLI](https://vercel.com/docs/cli/alias), [Deployment Protection](https://vercel.com/docs/deployment-protection).
+
+---
+
+# Histórico de implantação anterior
+
 # Etapa 003.1 — Preview implantado; homologação funcional pendente
 
 Execução em 20/10/2026. Este registro substitui o bloqueio anterior de autorização da equipe: a conexão autenticada agora conseguiu listar e criar o projeto.
@@ -19,11 +83,11 @@ Incidente da integração: a primeira chamada explícita com target=preview reto
 
 As três variáveis foram configuradas como encrypted, exclusivamente em target preview, e reconferidas sem descriptografar valores:
 
-| Variável | Estado |
-| --- | --- |
-| NEXT_PUBLIC_SUPABASE_URL | Projeto de desenvolvimento hpbvtqvbtyioqjyelrpb |
+| Variável                             | Estado                                                                 |
+| ------------------------------------ | ---------------------------------------------------------------------- |
+| NEXT_PUBLIC_SUPABASE_URL             | Projeto de desenvolvimento hpbvtqvbtyioqjyelrpb                        |
 | NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY | Chave moderna publishable ativa obtida do projeto; valor não publicado |
-| NEXT_PUBLIC_SITE_URL | Origem HTTPS do alias estável de develop acima |
+| NEXT_PUBLIC_SITE_URL                 | Origem HTTPS do alias estável de develop acima                         |
 
 Nenhuma service_role, secret key, senha ou token administrativo foi configurado. NEXT_PUBLIC é incorporado ao cliente; encrypted protege o armazenamento na Vercel, não torna uma variável pública secreta. Production e Development não receberam essas variáveis.
 
@@ -65,11 +129,11 @@ O executor local não conseguiu conectar ao proxy ao clonar o repositório. A ex
 
 Advisor reconfirmado: seis WARN e três INFO.
 
-| Achado | Classificação e decisão |
-| --- | --- |
-| Quatro RPCs autenticadas SECURITY DEFINER da Etapa 003 | Risco moderado inerente ao privilégio; fronteira intencional. Catálogo confirmou owner app_executor, search_path vazio, EXECUTE somente owner/authenticated, auth_user_id explícito e delegação fixa. app_executor sem LOGIN, SUPERUSER ou BYPASSRLS. Não há evidência crítica nesses wrappers; testes JWT reais de autorização ainda pendentes. |
-| Dois WARN de rls_auto_enable para anon/authenticated | Higiene de privilégio pendente; potencial impacto alto do owner postgres, mas função retorna event_trigger e é ligada ao evento ensure_rls, não uma RPC normal de domínio. Corpo usa pg_event_trigger_ddl_commands e identificadores escapados; search_path pg_catalog. Não foi demonstrada exploração crítica. Avaliar revogação de EXECUTE de PUBLIC/anon/authenticated em mudança dedicada, com teste de criação de tabela/event trigger e Data API. Nenhum grant alterado aqui. |
-| Três INFO de RLS sem policy | Baixo risco de exposição por este achado: membership_events, mutation_receipts e group_invitations deliberadamente fechadas. Não adicionar policies permissivas. |
+| Achado                                                 | Classificação e decisão                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Quatro RPCs autenticadas SECURITY DEFINER da Etapa 003 | Risco moderado inerente ao privilégio; fronteira intencional. Catálogo confirmou owner app_executor, search_path vazio, EXECUTE somente owner/authenticated, auth_user_id explícito e delegação fixa. app_executor sem LOGIN, SUPERUSER ou BYPASSRLS. Não há evidência crítica nesses wrappers; testes JWT reais de autorização ainda pendentes.                                                                                                                                    |
+| Dois WARN de rls_auto_enable para anon/authenticated   | Higiene de privilégio pendente; potencial impacto alto do owner postgres, mas função retorna event_trigger e é ligada ao evento ensure_rls, não uma RPC normal de domínio. Corpo usa pg_event_trigger_ddl_commands e identificadores escapados; search_path pg_catalog. Não foi demonstrada exploração crítica. Avaliar revogação de EXECUTE de PUBLIC/anon/authenticated em mudança dedicada, com teste de criação de tabela/event trigger e Data API. Nenhum grant alterado aqui. |
+| Três INFO de RLS sem policy                            | Baixo risco de exposição por este achado: membership_events, mutation_receipts e group_invitations deliberadamente fechadas. Não adicionar policies permissivas.                                                                                                                                                                                                                                                                                                                    |
 
 Referências de remediação: [RPC autenticada](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable), [RPC anônima](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable), [RLS sem policy](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy). Retenção/PII e revisão final permanecem anteriores à produção.
 
