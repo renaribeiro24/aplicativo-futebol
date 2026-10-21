@@ -16,6 +16,14 @@ Resultado: faltam NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 
 Sondagem sem credenciais a /auth/v1/health: HTTP 000; execução normal não alcançou o proxy e a tentativa com acesso de rede do executor recebeu CONNECT 403. Política vigente não permite o host Supabase. Não foi tentado contornar o proxy. Nenhum usuário, grupo ou convidado remoto foi criado/alterado/excluído.
 
+### Diagnóstico posterior no Codespaces — 21/10/2026
+
+O precheck confirmou as nove variáveis obrigatórias. Uma execução integral, sem repetição, autenticou a conta A e falhou na conta B durante `signInWithPassword`: `invalid_credentials`, HTTP 400, `Invalid login credentials`. Não houve rate limit; a fase de criação de identidade/fixtures não foi alcançada, portanto nenhuma linha foi criada ou alterada. O manifesto dessa execução registra somente a conta, etapa e erro técnico sanitizado.
+
+A resposta genérica do Supabase não permite concluir se a causa da conta B é e-mail/senha incorretos, conta inexistente ou outro estado de autenticação, incluindo confirmação pendente conforme a configuração do projeto. O proprietário deve verificar a conta B pelo fluxo normal do aplicativo, confirmar que o endereço correto foi confirmado e, se necessário, usar o fluxo normal de recuperação de senha. Nenhuma senha foi redefinida e nenhum controle foi contornado. Não executar novamente até resolver essa verificação; se o provedor indicar rate limit em tentativa futura, aguardar a janela informada antes de nova execução.
+
+Correção do executor: agora registra conta A/B, etapa e código/status/nome/mensagem de erro de autenticação, removendo credenciais, e-mails e tokens; testes locais cobrem a sanitização e diagnósticos de rate limit/conectividade. A suíte JWT completa segue pendente até que a conta B autentique normalmente.
+
 ### Preparação no Codespaces
 
 1. Abrir o repositório correto, selecionar develop e atualizar por fast-forward. Usar Node 24/npm 11 e npm ci. Confirmar conectividade HTTPS ao projeto Supabase e a https://www.borafute.com.br, mantendo verificação TLS.
@@ -39,7 +47,7 @@ Se usar secrets de ambiente, preencher também o arquivo com os mesmos valores o
 node --env-file=work/stage0032.test.env scripts/test-stage0032-integration.mjs
 ```
 
-Não usar tee de tráfego, DEBUG de Auth, dumps de cookies ou impressão de variáveis. O runner já suprime detalhes do provedor. Guardar somente resultado PASS/FAIL, fase, identificador de execução e caminho do manifesto. Em falha, não repetir cegamente: revisar a fase e os registros desta execução.
+Não usar tee de tráfego, DEBUG de Auth, dumps de cookies ou impressão de variáveis. Em falha de autenticação, o runner registra no manifesto e na saída apenas a conta A/B, etapa, código/status/nome e mensagem técnica sanitizada; valores de credenciais, e-mails, JWTs e cookies são omitidos ou redigidos. Guardar somente resultado PASS/FAIL, fase, identificador de execução e caminho do manifesto. Em falha, não repetir cegamente: revisar a fase e os registros desta execução; diante de limite de requisições, interromper e aguardar a janela indicada pelo provedor antes de qualquer nova tentativa.
 
 ### Evidência exigida para encerramento
 

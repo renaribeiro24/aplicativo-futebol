@@ -5,6 +5,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { createServerClient } from "@supabase/ssr";
+import { describeAuthFailure } from "./stage0032-auth-diagnostics.mjs";
 
 const required = [
   "NEXT_PUBLIC_SUPABASE_URL",
@@ -54,6 +55,7 @@ const state = {
   requests: [],
   result: "started",
   phase: "authentication",
+  authentication: {},
 };
 mkdirSync("work", { recursive: true });
 const manifest = `work/stage0032-${run}.json`;
@@ -157,20 +159,64 @@ try {
     [a, "A"],
     [b, "B"],
   ]) {
-    ok(
-      await s.db.auth.signInWithPassword({
+    state.authentication = { account: label, step: "signInWithPassword" };
+    save();
+    let signIn;
+    try {
+      signIn = await s.db.auth.signInWithPassword({
         email: process.env[`TEST_USER_${label}_EMAIL`],
         password: process.env[`TEST_USER_${label}_PASSWORD`],
-      }),
-      `login ${label}`,
-    );
+      });
+    } catch (error) {
+      state.authentication.error = describeAuthFailure(error, [
+        process.env[`TEST_USER_${label}_EMAIL`],
+        process.env[`TEST_USER_${label}_PASSWORD`],
+      ]);
+      save();
+      throw new Error("Authentication request failed");
+    }
+    if (signIn.error) {
+      state.authentication.error = describeAuthFailure(signIn.error, [
+        process.env[`TEST_USER_${label}_EMAIL`],
+        process.env[`TEST_USER_${label}_PASSWORD`],
+      ]);
+      save();
+      throw new Error("Supabase rejected authentication");
+    }
   }
-  const userA = ok(await a.db.auth.getUser(), "get user A").user;
-  const userB = ok(await b.db.auth.getUser(), "get user B").user;
+  async function getAuthUser(s, label) {
+    state.authentication = { account: label, step: "getUser" };
+    save();
+    let result;
+    try {
+      result = await s.db.auth.getUser();
+    } catch (error) {
+      state.authentication.error = describeAuthFailure(error, [
+        process.env[`TEST_USER_${label}_EMAIL`],
+        process.env[`TEST_USER_${label}_PASSWORD`],
+      ]);
+      save();
+      throw new Error("Authentication user lookup failed");
+    }
+    if (result.error) {
+      state.authentication.error = describeAuthFailure(result.error, [
+        process.env[`TEST_USER_${label}_EMAIL`],
+        process.env[`TEST_USER_${label}_PASSWORD`],
+      ]);
+      save();
+      throw new Error("Supabase rejected authentication user lookup");
+    }
+    return result.data.user;
+  }
+  const userA = await getAuthUser(a, "A");
+  const userB = await getAuthUser(b, "B");
+  state.authentication = { account: "A/B", step: "distinctConfirmedAccounts" };
+  save();
   assert(
     userA && userB && userA.id !== userB.id,
     "Use two distinct confirmed synthetic accounts",
   );
+  state.authentication = {};
   state.phase = "identity";
   save();
   // Idempotent onboarding does not overwrite preexisting names/profiles.
@@ -348,6 +394,9 @@ try {
     JSON.stringify({
       result: "FAIL",
       phase: state.phase,
+      ...(state.phase === "authentication" && state.authentication.account
+        ? { authentication: state.authentication }
+        : {}),
       run,
       manifest,
       cleanup: "none; fixtures retained",
