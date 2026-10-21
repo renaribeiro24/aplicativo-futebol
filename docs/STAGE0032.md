@@ -1,6 +1,37 @@
 # Etapa 003.2 — auditoria de segurança e estabilização
 
-Data: 21/10/2026. **Não concluída: testes essenciais com JWT real A/B pendentes.** Nenhuma vulnerabilidade crítica foi demonstrada pela revisão disponível; isso não representa certificação de ausência de vulnerabilidades.
+Data: 21/10/2026. **Não concluída: a execução JWT real autenticou A/B e passou as verificações de identidade, isolamento e permissões, mas falhou na fase SSR.** A auditoria de dependências também reporta um alerta crítico em dependência de desenvolvimento. Isso não representa certificação de ausência de vulnerabilidades.
+
+## Execução real no Codespaces — 21/10/2026
+
+Ambiente confirmado: Codespaces reconstruído, usuário `node`, Node.js v24.21.0, npm 11.19.0, dependências instaladas, branch `develop`. As branches `backup/recovery-3cd2f9a` e `backup/recovery-develop` existem. Após `git fetch origin`, os quatro commits locais foram preservados e o único commit remoto (`c470585`) foi integrado sem conflitos por merge; nenhum commit foi descartado.
+
+O precheck executado exatamente com `node --env-file=work/stage0032.test.env scripts/test-stage0032-integration.mjs --check` confirmou presença para os nove parâmetros obrigatórios. A saída continha somente indicadores de presença, sem valores. Em seguida, a suíte real foi executada uma única vez, sem JWTs simulados:
+
+```sh
+node --env-file=work/stage0032.test.env scripts/test-stage0032-integration.mjs
+```
+
+Run `8467145b-fb16-4cbd-89f5-3cf149b3a830`; resultado agregado **FAIL**, fase `ssr`. As contas A e B autenticaram por senha e `getUser` confirmou identidades distintas. A execução passou por onboarding idempotente; criação idempotente dos grupos e convidados sintéticos; leituras sem acesso cruzado; rejeição de RPC e escrita direta cruzadas; rejeição de RPC anônima e de autoelevação de convidado; e invariantes de owner e convidado. Essas verificações usaram sessões JWT reais na Data API/RPC, não claims simuladas.
+
+A falha foi reportada somente como fase `ssr`; o runner não registra qual resposta/status ou asserção individual falhou. Portanto, não há evidência suficiente para atribuir a falha a `/api/me`, acesso SSR ao próprio grupo ou ocultação SSR do grupo alheio. Não houve nova tentativa. Não se declara aprovação de SSR nem conclusão da suíte.
+
+O manifesto privado `work/stage0032-8467145b-fb16-4cbd-89f5-3cf149b3a830.json` registra duas fixtures sintéticas de grupo e duas de jogador/convidado, além de seis IDs de requisição. O runner não executa exclusões nem restaura perfis; as fixtures permanecem para revisão/limpeza autorizada. A execução não teve como alvo 4ª Força, Grupo Teste 2 nem seus dados. Nenhum token, cookie, e-mail ou senha foi incluído neste registro.
+
+- **Precheck:** PASS — nove parâmetros presentes; valores não exibidos.
+- **Autenticação A/B e identidades distintas:** PASS — login real e `getUser` para ambas.
+- **Onboarding, Data API e RPCs de criação/idempotência:** PASS.
+- **Isolamento de leituras e rejeição de escrita/RPC cruzadas:** PASS.
+- **Owner único, vínculo do convidado e bloqueio de autoelevação:** PASS.
+- **RPC anônima:** PASS — acesso rejeitado.
+- **Rotas SSR:** FAIL — fase reportada; asserção específica não registrada.
+- **Preservação dos dados reais:** PASS — somente fixtures sintéticas; sem exclusões.
+
+### npm audit desta retomada — separado dos testes funcionais
+
+`npm audit --json` na árvore completa reportou **11 pacotes afetados: 1 crítico, 9 altos e 1 moderado**. Todos pertencem às ferramentas de desenvolvimento diretas ou transitivas; não houve alerta na saída desta execução que identificasse pacote runtime de produção. Pacotes diretos sinalizados: `eslint-config-next` (alto), `shadcn` (alto) e `supabase` CLI (moderado). Entre os transitivos estão `tar` (crítico), `braces`, `fast-glob`, `micromatch`, `@next/eslint-plugin-next`, `@shadcn/registry`, `@ts-morph/common` e `ts-morph` (altos).
+
+O npm sugeriu atualizações que incluem mudanças major/downgrades em ferramentas; nenhuma foi aplicada. Não foi executado `npm audit fix`, alteração forçada, nem modificado `package.json` ou lockfile. Os alertas permanecem pendentes de avaliação de compatibilidade e correção segura; a classificação do npm é de dependências, não evidência de exploração no aplicativo.
 
 ## Nova tentativa de execução JWT — 21/10/2026
 
