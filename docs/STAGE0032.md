@@ -2,6 +2,46 @@
 
 Data: 21/10/2026. **Não concluída: a execução JWT real autenticou A/B e passou as verificações de identidade, isolamento e permissões, mas falhou na fase SSR.** A auditoria de dependências também reporta um alerta crítico em dependência de desenvolvimento. Isso não representa certificação de ausência de vulnerabilidades.
 
+## Diagnóstico SSR e sincronização — 21/10/2026
+
+GitHub confirmou develop em 5dbe621b2a9d51530e303853be19d71c1a39c6de, incluindo os commits antes locais. Inspeção feita em cópia independente atualizada por blobs GitHub em /workspace/work/ssr-fix, preservando a cópia anterior e os arquivos privados do Codespaces. O Codespaces e o manifesto privado da execução 8467145b-fb16-4cbd-89f5-3cf149b3a830 não estão anexados a este executor. Nenhum resultado real novo foi inventado e a suíte completa não foi repetida.
+
+### Defeito comprovado no executor, causa histórica ainda não confirmada
+
+A asserção antiga exigia HTTP 404 para /groups/[slug] alheio. O código usa notFound() após consultas assíncronas e possui app/loading.tsx. A documentação da versão instalada explica que, após começar streaming, notFound() mantém HTTP 200 e injeta noindex. Referências: [not-found](https://nextjs.org/docs/app/api-reference/file-conventions/not-found), [loading/status codes](https://nextjs.org/docs/app/api-reference/file-conventions/loading#status-codes); também conferido em node_modules/next/dist/docs/01-app/03-api-reference/04-functions/not-found.md.
+
+Reprodução local isolada, sem Auth/dados: Next 16.4.2, loading boundary, rota dinâmica aguardando uma operação e chamando notFound(). HTTPS remoto não foi envolvido; requisição HTTP localhost retornou 200, meta robots noindex e instrução React de boundary com digest NEXT_HTTP_ERROR_FALLBACK;404. O HTML pode conter apenas o shell e a instrução para renderização no cliente, sem h1 final. Isso demonstra uma expectativa incorreta no runner, mas **não prova que a execução histórica falhou nessa asserção**: ela também poderia ter falhado antes em /api/me ou no grupo próprio.
+
+Correção restrita ao executor/observabilidade; aplicação, SSR Supabase, cookies, proxy, RLS e controles de sessão inalterados:
+
+- scripts/stage0032-ssr.mjs, com declaração de tipos, centraliza seis checkpoints (três por conta), interrompendo na primeira falha.
+- /api/me exige 200 e ID correspondente; grupo próprio exige 200 com heading do grupo sintético, rejeitando telas genéricas, preparação e erros.
+- Grupo alheio exige resultado not-found sem heading do grupo: 404 ou 200 acompanhado de noindex e heading not-found real ou boundary 404 específico do Next/React. 200 genérico, componente not-found apenas pré-carregado ou texto solto com o digest não são aceitos. A detecção do boundary está vinculada à versão do framework e deve ser revisada ao atualizar Next/React.
+- Relatório por checkpoint: conta A/B, cenário, rota parametrizada, status observado/esperado, categoria, tipo de redirect, marcador 404 conhecido e indicação heurística de proteção Vercel. Não persiste HTML, headers, Location, cookies, JWT, IDs de usuário ou mensagens brutas de exceção.
+- Categorias distinguem rejeição de sessão (401/redirect login), proteção Vercel identificável, redirect inesperado, acesso negado, indisponibilidade/configuração, erro servidor, JSON/identidade inválidos e conectividade/timeout. São observações, não atribuição automática de causa raiz.
+- Modo --ssr-only RUN_UUID autentica novamente A/B, valida identidades distintas e reutiliza slugs sintéticos do manifesto original; não executa as fases de onboarding/mutação/Data API/RPC da suíte. Cria outro manifesto privado e não sobrescreve o original. As páginas continuam usando seus guardas e onboarding idempotente normal. Nenhuma fixture é excluída.
+
+### Validação necessária no Codespaces — somente SSR
+
+Com develop atualizado, secrets válidos, contas confirmadas e o manifesto original preservado:
+
+```sh
+node --env-file=work/stage0032.test.env scripts/test-stage0032-integration.mjs --check
+node --env-file=work/stage0032.test.env scripts/test-stage0032-integration.mjs --ssr-only 8467145b-fb16-4cbd-89f5-3cf149b3a830
+```
+
+Executar o segundo comando uma única vez, com os nove campos presentes e conectividade. A entrada exige UUID válido, manifesto na fase ssr, dois grupos e slugs audit-0032-a/b correspondentes ao run. Se faltarem manifesto/fixtures ou o grupo tiver sido renomeado, parar e revisar; não recriar fixtures cegamente nem expor seu conteúdo.
+
+Resultado deve conter mode=ssr_only e ssr com até seis relatórios sanitizados. PASS só quando todos os seis passarem. Um resultado streamed_not_found confirma a semântica da resposta atual, não recupera o status perdido da execução histórica. Se houver FAIL, guardar cenário/status/categoria/redirect e novo run/manifesto; não repetir automaticamente. Corpo privado e credenciais não devem ser compartilhados. Bloqueio Vercel requer revisar a proteção/associação existente sem desabilitá-la ou atualizar alias automaticamente. SSR-only não substitui navegador autenticado nem prova adicional de membro comum.
+
+### Verificações e dependências
+
+Formatação, lint, typecheck, 93 testes unitários em 13 arquivos e build passaram nesta correção. O precheck local indicou ausência das nove variáveis na cópia independente; nenhum teste JWT/SSR remoto foi iniciado. Testes novos usam transporte sintético para validar a observabilidade, não JWT real. Reprodução local de streaming não foi apresentada como homologação Supabase.
+
+Auditoria somente leitura repetida: npm audit --omit=dev --audit-level=moderate --json retornou zero achados; npm audit --json reproduziu 11 pacotes (1 crítico, 9 altos, 1 moderado). Crítico tar na árvore dev do CLI Supabase; sem evidência de runtime de produção afetado nessa árvore, mas ferramentas/instalação/CI continuam expostas. npm indica supabase 2.121.0 como correção para o CLI atual. Avaliar atualização isolada fixada e suas mudanças de CLI/instalador, instalação limpa, auditorias, comandos locais e regressões antes de aplicar; alternativa tar 7.5.22 somente após compatibilidade comprovada. Cadeia braces/micromatch/fast-glob nas ferramentas requer correção upstream ou revisão compatível; não aplicar downgrades automáticos de shadcn/eslint-config-next. Nenhuma dependência/lockfile alterado e nenhum audit fix executado.
+
+Etapa 003.2 permanece incompleta: falta o resultado SSR real detalhado e tratamento das pendências de segurança, além da interface privada autenticada e cenários essenciais remanescentes. Histórico abaixo preservado; registros antigos de ausência dos commits/contas não descrevem o estado GitHub atual.
+
 ## Execução real no Codespaces — 21/10/2026
 
 Ambiente confirmado: Codespaces reconstruído, usuário `node`, Node.js v24.21.0, npm 11.19.0, dependências instaladas, branch `develop`. As branches `backup/recovery-3cd2f9a` e `backup/recovery-develop` existem. Após `git fetch origin`, os quatro commits locais foram preservados e o único commit remoto (`c470585`) foi integrado sem conflitos por merge; nenhum commit foi descartado.
@@ -63,18 +103,18 @@ A primeira execução completa falhou na fase `authentication`, na conta B, dura
 
 Após a confirmação do proprietário de que atualizou a configuração da conta B e reiniciou o Codespace, foi feita uma única nova tentativa. Ela falhou novamente na autenticação B, com o mesmo código/status/mensagem. O login A foi aceito também nessa tentativa; as verificações `getUser`, comparação de JWTs e todas as fases posteriores permaneceram sem execução. Run `f128dacd-62c0-42ca-b7d8-1cc5796551c2`; manifesto privado `work/stage0032-f128dacd-62c0-42ca-b7d8-1cc5796551c2.json`. Ambos os manifestos registram zero grupos, jogadores e requisições criados. Nenhuma fixture ou alteração de dados foi realizada; 4ª Força, Grupo Teste 2 e jogadores existentes não foram tocados.
 
-| Verificação da suíte | Resultado observado |
-| --- | --- |
-| Login A | PASS — `signInWithPassword` aceito nas duas tentativas; `getUser` não executado |
-| Login B | FAIL — `invalid_credentials` (HTTP 400) nas duas tentativas |
-| JWTs reais distintos | PENDENTE — não demonstrado, pois B não autenticou e a comparação não foi executada |
-| Isolamento de grupos / leituras cruzadas | PENDENTE — não executado |
-| Supabase Data API | PENDENTE — não executada |
-| RPCs e permissões | PENDENTE — não executadas |
-| Bloqueio de escrita cruzada / autoelevação | PENDENTE — não executado |
-| Permissões legítimas de proprietários | PENDENTE — não executadas |
-| Proteção das rotas SSR | PENDENTE — não executada |
-| Integridade dos dados nas tentativas | PASS — ambos os manifestos sem fixtures/requisições; as suítes pararam antes de qualquer mutação |
+| Verificação da suíte                       | Resultado observado                                                                              |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| Login A                                    | PASS — `signInWithPassword` aceito nas duas tentativas; `getUser` não executado                  |
+| Login B                                    | FAIL — `invalid_credentials` (HTTP 400) nas duas tentativas                                      |
+| JWTs reais distintos                       | PENDENTE — não demonstrado, pois B não autenticou e a comparação não foi executada               |
+| Isolamento de grupos / leituras cruzadas   | PENDENTE — não executado                                                                         |
+| Supabase Data API                          | PENDENTE — não executada                                                                         |
+| RPCs e permissões                          | PENDENTE — não executadas                                                                        |
+| Bloqueio de escrita cruzada / autoelevação | PENDENTE — não executado                                                                         |
+| Permissões legítimas de proprietários      | PENDENTE — não executadas                                                                        |
+| Proteção das rotas SSR                     | PENDENTE — não executada                                                                         |
+| Integridade dos dados nas tentativas       | PASS — ambos os manifestos sem fixtures/requisições; as suítes pararam antes de qualquer mutação |
 
 Resultado agregado: dois checkpoints de login A aprovados, dois logins B reprovados e nenhum checkpoint posterior executado; o runner não fornece uma contagem global de asserts. Classificação da falha: **autenticação**, sem evidência de falha de RLS, autorização ou conectividade. Não repetir novamente sem nova confirmação explícita e diagnóstico da conta B pelo fluxo normal; conferir se o secret `TEST_USER_B_PASSWORD` efetivamente usado corresponde à credencial ativa e se a conta está confirmada. Nenhuma senha foi alterada pelo runner. A etapa continua bloqueada e não está aprovada.
 
