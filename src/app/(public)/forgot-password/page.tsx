@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { recoveryMessage } from "@/features/auth/recovery-errors";
 import { SetupNotice } from "@/components/layout/setup-notice";
 import AuthForm from "@/features/auth/auth-form";
 import { getSupabaseConfig } from "@/lib/supabase/config";
@@ -33,7 +34,7 @@ export default async function Forgot({
           {!getSupabaseConfig() && <SetupNotice />}
           {query.error && (
             <p role="alert" className="text-sm text-destructive">
-              O link é inválido, já foi utilizado ou expirou. Solicite um novo.
+              {recoveryMessage(query.error)}
             </p>
           )}
           <AuthForm mode="forgot" configured={Boolean(getSupabaseConfig())} />

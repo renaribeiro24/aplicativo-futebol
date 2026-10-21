@@ -98,3 +98,7 @@ Preview estável: https://aplicativo-futebol-git-develop-renan-ribeiros-projects
 **Nenhum dos 13 passos autenticados/e-mail/grupos acima foi homologado nesta execução.** Sem contas fictícias/caixas controladas e sem acesso da integração à configuração Auth/SMTP. Celular/desktop/escuro e retorno do e-mail através da proteção também permanecem pendentes no Preview. Não confundir os testes SQL anteriores com JWT real ou navegação autenticada.
 
 Consultar [DEPLOYMENT.md](DEPLOYMENT.md) para URLs exatas de callback e recuperação, Site URL global/impacto no Codespaces, SMTP, auditoria atual e incidente da chamada de deploy cancelada. [VERIFICATION.md](VERIFICATION.md) registra as respostas realmente observadas. Nenhuma migration, dado real ou permissão sensível foi alterada; PR #1 segue em rascunho.
+
+## Recuperação de senha — diagnóstico posterior (21/10/2026)
+
+Tratamento de erros do callback corrigido, com categorias públicas seguras e encaminhamento de sb_flow_id quando disponível; código, hipóteses e limites em [RECOVERY-DIAGNOSIS.md](RECOVERY-DIAGNOSIS.md). Testes do SDK SSR real contra Auth sintético cobrem cookies, falta de verificador, sobrescrita e uso único. Nenhum teste com definição efetiva de senha e login real foi concluído; Etapa 003 permanece não homologada. Não confundir a autenticação observada numa primeira abertura com a conclusão de updateUser/login. Atualizar o alias www para o Preview da correção antes de ensaiar com uma conta fictícia controlada.

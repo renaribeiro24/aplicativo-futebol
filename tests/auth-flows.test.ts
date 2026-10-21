@@ -44,7 +44,9 @@ function form(values: Record<string, string>) {
 }
 describe("Auth flows (provider mocked; not real JWTs)", () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
     vi.clearAllMocks();
+    vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://app.test");
     m.signIn.mockResolvedValue({ error: null });
     m.signUp.mockResolvedValue({ data: { session: null }, error: null });
@@ -174,7 +176,7 @@ describe("Auth flows (provider mocked; not real JWTs)", () => {
     });
   });
   it("handles expired recovery codes", async () => {
-    m.exchange.mockResolvedValue({ error: { code: "expired" } });
+    m.exchange.mockResolvedValue({ error: { code: "flow_state_expired" } });
     const r = await GET(
       new NextRequest(
         "https://app.test/auth/callback?code=fixture&flow=recovery",
@@ -183,5 +185,154 @@ describe("Auth flows (provider mocked; not real JWTs)", () => {
     expect(r.headers.get("location")).toBe(
       "https://app.test/forgot-password?error=expired",
     );
+  });
+  it.each([
+    "https://www.borafute.com.br",
+    "https://aplicativo-futebol-git-develop-renan-ribeiros-projects.vercel.app",
+  ])(
+    "keeps email flows and callbacks on the configured origin %s",
+    async (origin) => {
+      vi.stubEnv("NEXT_PUBLIC_SITE_URL", origin);
+      await signup(
+        {},
+        form({
+          name: "Synthetic",
+          email: "a@b.test",
+          password: "fixture-pass",
+        }),
+      );
+      expect(m.signUp).toHaveBeenCalledWith(
+        expect.objectContaining({
+          options: expect.objectContaining({
+            emailRedirectTo: `${origin}/auth/callback`,
+          }),
+        }),
+      );
+      await resendConfirmation({}, form({ email: "a@b.test" }));
+      expect(m.resend).toHaveBeenCalledWith({
+        type: "signup",
+        email: "a@b.test",
+        options: { emailRedirectTo: `${origin}/auth/callback` },
+      });
+      await requestPasswordReset({}, form({ email: "a@b.test" }));
+      expect(m.recovery).toHaveBeenCalledWith("a@b.test", {
+        redirectTo: `${origin}/auth/callback?flow=recovery`,
+      });
+      const confirmed = await GET(
+        new NextRequest(
+          "https://untrusted.test/auth/callback?code=fixture&next=https://evil.test",
+        ),
+      );
+      expect(confirmed.headers.get("location")).toBe(`${origin}/dashboard`);
+      const recovered = await GET(
+        new NextRequest(
+          "https://untrusted.test/auth/callback?code=fixture&flow=recovery&next=//evil.test",
+        ),
+      );
+      expect(recovered.headers.get("location")).toBe(
+        `${origin}/reset-password`,
+      );
+      expect(recovered.headers.get("cache-control")).toContain("no-store");
+    },
+  );
+  it("does not reuse a redeemed recovery link even with a valid session", async () => {
+    m.exchange.mockResolvedValueOnce({ error: null });
+    m.exchange.mockResolvedValueOnce({
+      error: { code: "flow_state_not_found" },
+    });
+    const req = () =>
+      new NextRequest(
+        "https://app.test/auth/callback?flow=recovery&code=single-use-fixture",
+      );
+    expect((await GET(req())).headers.get("location")).toBe(
+      "https://app.test/reset-password",
+    );
+    expect((await GET(req())).headers.get("location")).toBe(
+      "https://app.test/forgot-password?error=expired",
+    );
+    expect(m.user).not.toHaveBeenCalled();
+  });
+  it.each(["bad_code_verifier", "pkce_code_verifier_not_found"])(
+    "classifies %s as context rather than expiry",
+    async (code) => {
+      m.exchange.mockResolvedValue({
+        error: { code, message: "sensitive-provider-fixture" },
+      });
+      const r = await GET(
+        new NextRequest(
+          "https://app.test/auth/callback?flow=recovery&code=fixture",
+        ),
+      );
+      expect(r.headers.get("location")).toBe(
+        "https://app.test/forgot-password?error=context",
+      );
+      expect(console.warn).toHaveBeenCalledWith(
+        "auth_callback_recovery_failed",
+        { reason: "context" },
+      );
+      expect(JSON.stringify(vi.mocked(console.warn).mock.calls)).not.toContain(
+        "sensitive-provider-fixture",
+      );
+    },
+  );
+  it("does not exchange when the provider returns an error", async () => {
+    const r = await GET(
+      new NextRequest(
+        "https://app.test/auth/callback?flow=recovery&code=unused-fixture&error=access_denied&error_code=otp_expired&error_description=private-fixture",
+      ),
+    );
+    expect(r.headers.get("location")).toBe(
+      "https://app.test/forgot-password?error=expired",
+    );
+    expect(m.exchange).not.toHaveBeenCalled();
+    expect(JSON.stringify(vi.mocked(console.warn).mock.calls)).not.toContain(
+      "private-fixture",
+    );
+  });
+  it("handles a service failure without declaring the link expired", async () => {
+    m.exchange.mockRejectedValue(new Error("private-provider-fixture"));
+    const r = await GET(
+      new NextRequest(
+        "https://app.test/auth/callback?flow=recovery&code=fixture",
+      ),
+    );
+    expect(r.headers.get("location")).toBe(
+      "https://app.test/forgot-password?error=unavailable",
+    );
+    expect(r.headers.get("cache-control")).toContain("no-store");
+  });
+  it.each(["token_hash=fixture&type=recovery", "code=fixture&sb_flow_id=bad"])(
+    "rejects unsupported callback data without consuming a code: %s",
+    async (query) => {
+      const r = await GET(
+        new NextRequest(
+          `https://app.test/auth/callback?flow=recovery&${query}`,
+        ),
+      );
+      expect(r.headers.get("location")).toBe(
+        "https://app.test/forgot-password?error=invalid",
+      );
+      expect(m.exchange).not.toHaveBeenCalled();
+    },
+  );
+  it("passes an explicit SDK flow id instead of the shared verifier", async () => {
+    const r = await GET(
+      new NextRequest(
+        "https://app.test/auth/callback?flow=recovery&code=fixture&sb_flow_id=0123456789abcdef",
+      ),
+    );
+    expect(m.exchange).toHaveBeenCalledWith("fixture", {
+      flowId: "0123456789abcdef",
+    });
+    expect(r.headers.get("location")).toBe("https://app.test/reset-password");
+  });
+  it("accepts recovery type metadata with a PKCE code without switching to OTP", async () => {
+    const r = await GET(
+      new NextRequest(
+        "https://app.test/auth/callback?flow=recovery&type=recovery&code=fixture",
+      ),
+    );
+    expect(m.exchange).toHaveBeenCalledWith("fixture");
+    expect(r.headers.get("location")).toBe("https://app.test/reset-password");
   });
 });

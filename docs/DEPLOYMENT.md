@@ -1,3 +1,15 @@
+# Recuperação de senha — correção do callback (21/10/2026)
+
+Estado atual do diagnóstico em [RECOVERY-DIAGNOSIS.md](RECOVERY-DIAGNOSIS.md). As consultas Auth encontraram bad_code_verifier em duas trocas PKCE e três registros One-time token not found; agregados não correlacionam uma conta/pedido nem provam scanners. Teste do SDK SSR real com transporte Auth sintético confirmou persistência de cookie em pedido isolado, reproduziu sobrescrita ao iniciar dois pedidos sem identificador e confirmou correlação por flowId explícito.
+
+Correção: callback distingue categorias seguras de contexto PKCE, expiração/consumo, formato inválido e serviço indisponível. Trata erros do provedor antes de trocar code, preserva no-store e destinos fixos e encaminha sb_flow_id válido ao SDK quando presente. A geração automática desse parâmetro não foi habilitada sem revisão de Site URL/allowlist. Não houve mudança administrativa de Supabase/Resend ou enfraquecimento de PKCE. Mensagens orientam usar apenas o último e-mail no navegador/origem que iniciou o pedido.
+
+**Não afirmar que a causa de todos os erros foi eliminada.** Correlação de pedidos sem sb_flow_id, template real, rastreamento/scanners e observação dos cookies do navegador continuam pendentes. A homologação exige salvar nova senha e fazer login com ela; mocks e HTTPS público não atendem esse gate.
+
+Depois do push em develop, aguardar Preview READY e conferir/reatribuir www.borafute.com.br ao deployment do commit da correção antes dos testes. O alias temporário não segue novos pushes automaticamente. main e produção não devem ser alteradas/promovidas. O histórico de alias abaixo continua histórico, não identifica necessariamente o commit mais recente.
+
+---
+
 # Correção temporária do domínio BoraFute — 21/10/2026
 
 ## Estado atual

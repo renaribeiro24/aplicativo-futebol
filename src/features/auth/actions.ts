@@ -119,7 +119,7 @@ export async function requestPasswordReset(
   }
   return {
     message:
-      "Se houver uma conta elegível, você receberá um link para redefinir a senha. Abra-o neste mesmo navegador.",
+      "Se houver uma conta elegível, você receberá um link para redefinir a senha. Abra somente o e-mail mais recente neste mesmo navegador e endereço do site. Evite solicitar outro link antes de concluir.",
   };
 }
 export async function resetPassword(
