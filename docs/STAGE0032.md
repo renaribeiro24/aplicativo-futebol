@@ -86,6 +86,18 @@ Zero achados em --omit=dev significa ausência de advisories conhecidos na árvo
 
 Mudança desta tentativa exclusivamente documental. JWT real/Data API/RPC/SSR e interface privada permanecem pendentes. Execute a suíte no Codespaces conforme roteiro acima e registre somente saída sanitizada. Etapa 003.2 **não concluída**; nenhuma alteração em dados existentes, main, produção, DNS, Resend ou RLS.
 
+## Retomada após correção da conta B — 21/10/2026
+
+O proprietário informou execução anterior com login A bem-sucedido, login B recusado com invalid_credentials/HTTP 400 e interrupção antes de criar grupos/jogadores ou testar isolamento. Informou também que corrigiu a senha B. Esses resultados são relato do proprietário; não há nova execução JWT verificada nesta retomada.
+
+Executor acessível: Codex /workspace, sem Codespaces /workspaces/aplicativo-futebol anexado, sem secrets/runtime variables configurados. --check executado no arquivo ignorado local: faltam NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, TEST_USER_A_EMAIL, TEST_USER_A_PASSWORD, TEST_USER_B_EMAIL e TEST_USER_B_PASSWORD; três demais campos presentes. Suíte real não iniciada; nenhum manifesto novo, fixture remota ou teste de isolamento produzido. Não atribuir FAIL de segurança a um teste não executado.
+
+GitHub consultado: develop em c0413eee3907016cf593db02881043e92c064297 antes deste registro; PR #1 Draft. Busca de 3cd2f9a retornou No commit found for SHA (422). Não foi recriado módulo de diagnóstico nem feito push do commit ausente às cegas. Necessário verificar sua existência local no Codespaces e sincronizar sem force.
+
+No terminal do Codespaces: conferir branch/status/log e git show --stat 3cd2f9a; se o commit existir na develop local, revisar git fetch origin e divergência antes de git push origin develop. Se houver divergência com os registros documentais remotos, preservar alterações e integrar com revisão; não resetar/forçar push. Confirmar que TEST_USER_B_PASSWORD foi atualizado no secret ou arquivo efetivamente carregado; se atualizado como secret, reiniciar o Codespaces. Variável exportada tem precedência sobre --env-file. Não imprimir valores. Executar --check e, somente com nove campos presentes/contas confirmadas, executar a suíte uma única vez. Em FAIL, guardar fase/run/manifesto e diagnóstico sanitizado, sem repetição automática.
+
+Resultado desta retomada: zero cenários JWT aprovados, zero reprovados, suíte bloqueada antes de login; cenário anterior A PASS/B FAIL não foi reexecutado nem convertido em aprovação. Pendentes JWT distinto A/B, Data API/RPC/RLS, proteção SSR e integridade, além das demais verificações essenciais já listadas. 4ª Força e Grupo Teste 2 preservados. Etapa 003.2 não concluída.
+
 ## Autenticação
 
 Revisados cadastro/confirmação, login/logout, recuperação/reset, callback PKCE, proxy, sessão SSR e rotas privadas. Mantidos getUser no servidor, destinos fixos, origem configurada e Cache-Control private/no-store. Nenhuma URL externa fornecida pelo usuário é aceita como destino. Confirmação de e-mail não foi desabilitada.
