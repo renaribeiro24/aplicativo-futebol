@@ -1,3 +1,17 @@
+# Preview de segurança — 21/10/2026
+
+Commit de código 2c0447dc9af4652c1e026d7185bbd64103b7a99f enviado exclusivamente à develop. Preview dpl_Gf8Px4vi8NhfP8viPajE5TXBzHA2 ficou READY, target=null. O alias www.borafute.com.br foi atualizado de dpl_HaXCLVNWJ4iBDnm2NfcpfudNBrbM para esse Preview. A associação continua fixa; não houve vínculo automático à branch, promoção ou implantação de produção.
+
+Verificação HTTPS por integração autenticada: home/login/signup responderam 200, sem DEPLOYMENT_NOT_FOUND ou aviso de Supabase ausente. Login/signup mantêm private/no-store. Isso não valida login, entrega de e-mail ou JWT A/B. Testes essenciais e classificação dos sete WARN/três INFO estão em [STAGE0032.md](STAGE0032.md). Proteção existente preservada; DNS, Resend e main intactos.
+
+---
+
+# Auditoria de segurança — 21/10/2026
+
+**Etapa 003.2 não concluída.** Relatório atual em [STAGE0032.md](STAGE0032.md): cookies Secure endurecidos, 74 testes unitários, SQL/RLS local e seis corridas passaram; 32 verificações públicas/preparação no Chromium. Isolamento JWT real A/B e interface privada autenticada pendentes por ausência de contas fictícias configuradas. Homologação funcional prévia informada pelo proprietário está registrada separadamente. Nenhuma migration, exclusão remota, DNS, Resend ou produção alterada. O alias www continua exigindo atenção a cada novo Preview; procedimento oficial de associação à develop no relatório. Registros abaixo são históricos.
+
+---
+
 # Recuperação de senha — correção do callback (21/10/2026)
 
 Estado atual do diagnóstico em [RECOVERY-DIAGNOSIS.md](RECOVERY-DIAGNOSIS.md). As consultas Auth encontraram bad_code_verifier em duas trocas PKCE e três registros One-time token not found; agregados não correlacionam uma conta/pedido nem provam scanners. Teste do SDK SSR real com transporte Auth sintético confirmou persistência de cookie em pedido isolado, reproduziu sobrescrita ao iniciar dois pedidos sem identificador e confirmou correlação por flowId explícito.
