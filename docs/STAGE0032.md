@@ -2,6 +2,14 @@
 
 Estado em 22/10/2026: **etapa ainda aberta**. Auth/JWT, Data API/RPC e seis cenários SSR reais aprovados; crítico de dependências corrigido. Critérios remanescentes e riscos na consolidação abaixo.
 
+## Aceite temporário de risco — dependências de desenvolvimento (22/10/2026)
+
+**Decisão explícita do responsável pelo projeto:** aprovado o aceite temporário dos nove avisos de severidade alta do `npm audit` restritos às dependências de desenvolvimento descritas neste relatório, até **05/11/2026**, com reavaliação antecipada se houver atualização compatível ou mudança de exposição/uso.
+
+**Limites e controles do aceite:** não inclui vulnerabilidades de produção, novos achados ou eventuais riscos administrativos do Supabase; não autoriza merge na `main`, publicação em produção ou relaxamento de RLS/autenticação. Manter dependências travadas; evitar execução de geradores, registries e glob patterns não confiáveis, especialmente com secrets; revisar permissões de CI e ferramentas antes de executar código não revisado. Mitigações documentadas não equivalem a comprovação de controles efetivamente aplicados.
+
+**Monitoramento:** reexecutar `npm audit` e `npm audit --omit=dev` até 05/11/2026; reavaliar imediatamente ao surgir correção compatível ou mudar o cenário de exposição. Se um alerta alcançar produção, o aceite não se aplica e requer nova avaliação. O aceite encerra apenas a decisão de risco residual das ferramentas de desenvolvimento; a **Etapa 003.2 permanece aberta** pelas verificações SSR reforçada, membro comum com JWT real e matriz privada de interface, além das revisões administrativas documentadas.
+
 ## Retomada da homologação final — 22/10/2026
 
 **As quatro pendências não foram aprovadas nesta retomada.** develop confirmado no GitHub em 5e7f470. Executor disponível /workspace/work/close32, sem /workspaces/aplicativo-futebol anexado e sem secrets/runtime variables configurados (readiness atual consultada). --check na cópia independente mostrou as nove variáveis ausentes; não foi iniciado login nem SSR remoto. O arquivo privado do Codespaces não foi lido/copied e o manifesto original não está acessível aqui. Não confundir ausência de acesso do executor com falha dos controles do produto.
