@@ -9,7 +9,7 @@ A Etapa 003 implementa autenticação, recuperação de senha, dashboard, grupos
 - Node.js 24.x e npm 11.x (Node 24 inclui npm compatível; `.nvmrc` disponível).
 - Next.js 16.4.2 App Router, React 19.3.1 e TypeScript 6.0.3 strict.
 - Tailwind CSS 4.3.3, componentes shadcn/ui locais, Supabase JS 2.118.0 e SSR 0.12.7.
-- ESLint 9.39.5, Vitest 5.0.5, Prettier 3.9.10 e Supabase CLI 2.81.3 (devDependency).
+- ESLint 9.39.5, Vitest 5.0.5, Prettier 3.9.10 e Supabase CLI 2.121.0 (devDependency).
 - Dependências exatas no package.json e resolução reproduzível no package-lock.json. TypeScript 7 anterior não atendia à faixa do parser de lint; ESLint 10 não atendia aos peers dos plugins do eslint-config-next. A linha ESLint 9 é a combinação compatível atual usada aqui; npm emite aviso de fim de suporte dessa linha. Atualizar o conjunto de plugins assim que suportar ESLint 10 é uma pendência de ferramentas, não silenciar peers ou usar --force.
 
 As referências consultadas e decisões estão em `docs/ARCHITECTURE.md` e `docs/DECISIONS.md`.

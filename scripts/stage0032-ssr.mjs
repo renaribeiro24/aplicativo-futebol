@@ -38,6 +38,7 @@ export async function checkSsr({ origin, sessions, onCheck, fetcher = fetch }) {
         redirect: "none",
         category: "connectivity",
         vercelProtection: false,
+        privateDataPresent: false,
         passed: false,
       };
       try {
@@ -84,6 +85,9 @@ export async function checkSsr({ origin, sessions, onCheck, fetcher = fetch }) {
             body,
           );
         const ownContent = heading(body, s.ownName);
+        report.privateDataPresent =
+          scenario === "foreign_group" &&
+          s.forbiddenMarkers.some((marker) => body.includes(marker));
         if (report.vercelProtection) report.category = "deployment_protection";
         else if (response.status >= 300 && response.status < 400)
           report.category =
@@ -109,7 +113,10 @@ export async function checkSsr({ origin, sessions, onCheck, fetcher = fetch }) {
         } else {
           // Next.js can stream the shell before notFound(); HTTP stays 200.
           report.passed =
-            [200, 404].includes(response.status) && notFound && !ownContent;
+            [200, 404].includes(response.status) &&
+            notFound &&
+            !ownContent &&
+            !report.privateDataPresent;
           report.category = report.passed
             ? response.status === 200
               ? "streamed_not_found"

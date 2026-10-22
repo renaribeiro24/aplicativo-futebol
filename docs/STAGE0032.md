@@ -1,6 +1,80 @@
 # Etapa 003.2 — auditoria de segurança e estabilização
 
-Data: 21/10/2026. **Não concluída: a execução JWT real autenticou A/B e passou as verificações de identidade, isolamento e permissões, mas falhou na fase SSR.** A auditoria de dependências também reporta um alerta crítico em dependência de desenvolvimento. Isso não representa certificação de ausência de vulnerabilidades.
+Estado em 22/10/2026: **etapa ainda aberta**. Auth/JWT, Data API/RPC e seis cenários SSR reais aprovados; crítico de dependências corrigido. Critérios remanescentes e riscos na consolidação abaixo.
+
+## Consolidação técnica — 22/10/2026
+
+**Parecer atual: etapa ainda aberta.** Auth/JWT, Data API/RPC e os seis checkpoints SSR têm evidência real; o alerta crítico de dependências foi corrigido. Permanecem validações essenciais e decisões de risco discriminadas abaixo. Continuar desenvolvimento não equivale a autorizar publicação.
+
+### Evidência SSR recebida do proprietário
+
+Captura do terminal Codespaces, após fast-forward para 32fd804, mostra nove variáveis presentes e execução única do modo ssr_only com o manifesto de origem 8467145b-fb16-4cbd-89f5-3cf149b3a830. Resultado PASS, run e0b9b9f3-9c86-4940-a1f7-7be5ec2842d9, manifesto privado work/stage0032-e0b9b9f3-9c86-4940-a1f7-7be5ec2842d9.json. Não houve acesso ao arquivo privado neste executor; a fonte dessa evidência é a saída sanitizada apresentada pelo proprietário.
+
+| Checkpoint real SSR                                                              | A    | B    |
+| -------------------------------------------------------------------------------- | ---- | ---- |
+| /api/me: HTTP 200, identidade correspondente                                     | PASS | PASS |
+| Grupo próprio: HTTP 200 e conteúdo esperado                                      | PASS | PASS |
+| Grupo alheio: HTTP 200, noindex/boundary not-found, NEXT_HTTP_ERROR_FALLBACK;404 | PASS | PASS |
+
+**Seis aprovados, zero reprovados nessa execução isolada.** Nenhum redirect nem bloqueio Vercel foi indicado. A exigência antiga de HTTP 404 em todos os casos era incorreta para notFound() após streaming. O resultado histórico da execução integral não foi recuperado: ela continua registrada como FAIL agregado na fase ssr; a execução posterior fornece evidência nova.
+
+Reforço do executor neste fechamento: acessos ao grupo alheio agora reprovam também se o corpo contiver o ID do convidado daquele grupo ou o nome sintético dos convidados, mesmo junto a uma boundary not-found válida. Só persiste privateDataPresent=true/false, nunca os marcadores ou o HTML. Testes unitários injetam essas informações em uma resposta com marcador 404 e comprovam rejeição. O manifesto usado em --ssr-only deve conter dois IDs sintéticos válidos. Isso amplia a cobertura de ausência de dados, não prova ausência de toda possível forma de vazamento. **A captura anterior não continha esse novo checkpoint explícito; não atribuir sua aprovação retroativamente.**
+
+### Dependências: correção aplicada e auditoria atual
+
+Antes: npm audit --json reproduziu 11 pacotes afetados (1 crítico, 9 altos, 1 moderado); npm audit --omit=dev --json, zero achados. O CLI supabase@2.81.3 fixava tar@7.5.11: simples atualização transitiva não bastava.
+
+Atualizado exclusivamente o CLI de desenvolvimento para **supabase@2.121.0**, versão exata. A nova distribuição usa shim Node e pacotes opcionais por plataforma, removendo o instalador antigo e a dependência tar. Instalação limpa npm ci passou no executor Linux/Node 24/npm 11; supabase --version confirmou 2.121.0. Help de gen types, migration up e db lint preserva as flags --local, --schema e --fail-on usadas pelos scripts. Nenhum comando remoto, migration real ou geração de tipos foi executado por esse CLI. A pilha Supabase local completa não foi iniciada; integração real de geração de tipos/lint nessa pilha continua não certificada. Node/npm e SDKs de Auth/SSR/runtime inalterados.
+
+Depois: **npm audit --json: 9 altos, 0 críticos, 0 moderados**; **npm audit --omit=dev --json: zero achados**. tar não existe mais no lockfile. Nenhum audit fix --force, downgrade ou override aplicado. package.json/lockfile e versão informativa do README atualizados.
+
+Os nove alertas altos abaixo são pacotes sinalizados da mesma cadeia de desenvolvimento, não nove explorações independentes:
+
+| Pacote afetado           | Versão        | Caminho de dependência / alcance                           |
+| ------------------------ | ------------- | ---------------------------------------------------------- |
+| braces                   | 3.0.3         | micromatch → braces; DoS por padrão profundamente aninhado |
+| micromatch               | 4.0.8         | fast-glob → micromatch → braces                            |
+| fast-glob                | 3.3.1 / 3.3.3 | ESLint Next ou ferramentas shadcn → fast-glob              |
+| @next/eslint-plugin-next | 16.4.2        | eslint-config-next → plugin → fast-glob                    |
+| eslint-config-next       | 16.4.2        | Dependência direta de lint; propaga a cadeia anterior      |
+| @shadcn/registry         | 0.2.0         | shadcn → registry → fast-glob                              |
+| shadcn                   | 4.22.1        | CLI/gerador direto, com fast-glob/registry/ts-morph        |
+| @ts-morph/common         | 0.27.0        | shadcn → ts-morph → common → fast-glob                     |
+| ts-morph                 | 26.0.0        | Ferramenta transitiva do shadcn, não runtime do aplicativo |
+
+braces 3.0.3 ainda era a versão mais recente consultada e consta afetada por [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm). Nenhuma versão corrigida compatível dessa cadeia foi certificada. npm sugere eslint-config-next 14.2.35 e shadcn 1.0.0 para parte da árvore: são downgrades, com impacto incompatível a avaliar, e não foram aplicados. Para ts-morph/common, fixAvailable=true não informa uma versão exata segura para a cadeia atual; não foi confundido com correção validada.
+
+**Risco residual:** DoS em ferramentas que processem padrões maliciosos. Não demonstrado no runtime de produção, mas devDependencies podem executar em instalação/CI. Mitigação proposta: não executar geradores/registries/globs não confiáveis com secrets; restringir jobs com credenciais a código revisado; manter versões fixas e monitorar correção upstream. Essas recomendações não significam alteração efetiva de configuração CI. Decisão ainda necessária: aceite temporário explícito do risco em desenvolvimento ou substituição/remoção compatível das ferramentas. Aceite não presumido apenas porque --omit=dev ficou limpo.
+
+### Verificações finais executadas
+
+- npm ci limpo, CLI 2.121.0 e help dos três comandos locais: PASS.
+- Formatação, lint, typecheck, 95 testes unitários em 13 arquivos e build: PASS; unidades usam transporte sintético, não nova autenticação real.
+- npm run db:test: sete migrations em PostgreSQL local descartável, 70 asserções com authenticated/anon não privilegiados, regressões da ponte, smoke Etapa 003 e seis corridas: PASS.
+- Concorrência: última vaga, convidado idempotente, transferência de owner, criação idempotente de grupo, disputa de slug e grupos independentes; owner único/rollback verificados.
+- Histórico remoto consultado somente leitura: sete migrations continuam mapeadas, incluindo local 20261020161609 → remota 20261020162554. Nenhuma pendente no manifesto e nenhuma reaplicada.
+- Security Advisor atualizado: sete WARN e três INFO. Quatro APIs SECURITY DEFINER autenticadas e três tabelas deliberadamente fechadas mantêm as justificativas anteriores. Dois WARN rls_auto_enable e proteção contra senhas vazadas desabilitada permanecem para revisão administrativa; nenhuma permissão/Auth foi alterada.
+- Autenticação/JWT reais não repetidos nesta execução; nenhuma fixture ou dado remoto criado, alterado ou excluído. 4ª Força, Grupo Teste 2 e fixtures preservados.
+
+### Matriz consolidada e critérios ainda abertos
+
+| Controle                                                  | Evidência / situação                                                                                       |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Auth A/B, identidades distintas                           | PASS real, execução original documentada no Codespaces                                                     |
+| Data API/RPC e isolamento de leitura/escrita A/B          | PASS real nos cenários efetivamente executados                                                             |
+| Owner, convidado, idempotência e integridade              | PASS real nos cenários da suíte; concorrência ampliada PASS em PostgreSQL local                            |
+| SSR identidade/grupo próprio/grupo alheio                 | PASS real, seis checkpoints da captura posterior                                                           |
+| Rejeição explícita de marcadores privados em resposta SSR | PASS unitário novo; execução real do reforço ainda pendente                                                |
+| Membro autenticado comum tentando autoelevação            | SQL local cobre autorização; cenário JWT de membro comum ainda não demonstrado                             |
+| Interface privada desktop/celular/claro/escuro            | Fluxos funcionais informados pelo proprietário; matriz privada de dispositivos/temas ainda não demonstrada |
+| Crítico tar/CLI                                           | Corrigido na árvore instalada e lockfile                                                                   |
+| Nove altos dev / Advisor residual                         | Classificados; aceite temporário/remediação e revisão administrativa pendentes conforme alcance            |
+
+**Bloqueios para encerramento formal:** registrar a validação SSR reforçada de ausência dos marcadores privados; cenário JWT de membro comum sem privilégios; matriz privada de UI/dispositivos/temas; decisão documentada para o risco residual de ferramentas. Não converter SQL simulado em JWT real nem capturas públicas em UI privada homologada.
+
+Para o reforço SSR, após sincronizar develop e confirmar configuração, basta executar uma vez o mesmo --ssr-only com o manifesto original; não repetir a suíte completa. O relatório agora inclui privateDataPresent=false em ambos os checkpoints foreign_group. Não é necessário repetir cadastro/confirmação/recuperação já homologados por causa desta atualização do CLI.
+
+**Liberação formal da Etapa 004: pendente dos bloqueios acima.** Os resultados não autorizam produção, merge ou alterações administrativas externas. Nenhuma vulnerabilidade crítica conhecida permanece no npm audit desta árvore, mas isso não certifica todo o sistema. Histórico de evidências e falhas abaixo preservado.
 
 ## Diagnóstico SSR e sincronização — 21/10/2026
 

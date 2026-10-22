@@ -9,6 +9,7 @@ export type SsrReport = {
   redirect: string;
   category: string;
   vercelProtection: boolean;
+  privateDataPresent: boolean;
   passed: boolean;
 };
 export function checkSsr(options: {
@@ -20,6 +21,7 @@ export function checkSsr(options: {
     ownSlug: string;
     foreignSlug: string;
     ownName: string;
+    forbiddenMarkers: string[];
   }[];
   onCheck: (report: SsrReport) => void;
   fetcher?: typeof fetch;

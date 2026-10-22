@@ -63,7 +63,13 @@ if (ssrIndex !== -1) {
     );
   }
   assert(
-    source.run === id && source.phase === "ssr" && source.groups?.length === 2,
+    source.run === id &&
+      source.phase === "ssr" &&
+      source.groups?.length === 2 &&
+      source.players?.length === 2 &&
+      source.players.every(
+        (id) => typeof id === "string" && /^[a-f0-9-]{36}$/.test(id),
+      ),
     "Source must be an existing SSR-phase audit with two groups",
   );
   assert(
@@ -389,6 +395,10 @@ try {
           ownSlug: auditSlugs[0],
           foreignSlug: auditSlugs[1],
           ownName: `Auditoria 003.2 ${sourceRun.slice(0, 8)}`,
+          forbiddenMarkers: [
+            (source?.players ?? state.players)[1],
+            "Convidado fictício auditoria 003.2",
+          ],
         },
         {
           account: "B",
@@ -397,6 +407,10 @@ try {
           ownSlug: auditSlugs[1],
           foreignSlug: auditSlugs[0],
           ownName: `Auditoria 003.2 ${sourceRun.slice(0, 8)}`,
+          forbiddenMarkers: [
+            (source?.players ?? state.players)[0],
+            "Convidado fictício auditoria 003.2",
+          ],
         },
       ],
       onCheck(report) {

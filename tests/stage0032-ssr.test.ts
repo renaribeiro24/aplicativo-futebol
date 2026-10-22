@@ -10,6 +10,7 @@ const session = {
   ownSlug: "own",
   foreignSlug: "foreign",
   ownName: "Auditoria & teste",
+  forbiddenMarkers: ["synthetic-foreign-player-id", "Synthetic Guest"],
 };
 async function run(response: Response | Error, stage = "identity") {
   const reports: SsrReport[] = [];
@@ -160,4 +161,19 @@ describe("streamed not-found error boundary", () => {
       );
     }
   });
+});
+
+describe("private fixture data must not appear in foreign SSR response", () => {
+  it.each(["synthetic-foreign-player-id", "Synthetic Guest"])(
+    "rejects leakage even with a valid not-found boundary: %s",
+    async (marker) => {
+      const body =
+        '<meta name="robots" content="noindex"/><script>$RX("B:0","NEXT_HTTP_ERROR_FALLBACK;404")</script>' +
+        marker;
+      const r = await run(new Response(body), "foreign_group");
+      expect(r.passed).toBe(false);
+      expect(r.reports[2].privateDataPresent).toBe(true);
+      expect(JSON.stringify(r.reports)).not.toContain(marker);
+    },
+  );
 });

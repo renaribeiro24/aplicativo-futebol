@@ -43,7 +43,7 @@
     "eslint-config-next": "16.4.2",
     "prettier": "3.9.10",
     "shadcn": "4.22.1",
-    "supabase": "2.81.3",
+    "supabase": "2.121.0",
     "typescript": "6.0.3",
     "vitest": "5.0.5"
   },
