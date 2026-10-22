@@ -2,6 +2,27 @@
 
 Estado em 22/10/2026: **etapa ainda aberta**. Auth/JWT, Data API/RPC e seis cenários SSR reais aprovados; crítico de dependências corrigido. Critérios remanescentes e riscos na consolidação abaixo.
 
+## Conta técnica C — preparação interrompida (22/10/2026)
+
+O proprietário autorizou expressamente criar um vínculo comum de C exclusivamente em grupo sintético. Essa autorização está registrada e não precisa ser solicitada novamente para o mesmo escopo. Ao pedir identificação inequívoca, o proprietário informou: **a conta C não existe**. Portanto, a preparação foi interrompida antes de inserir qualquer vínculo ou iniciar autenticação. Nenhuma conta/senha foi criada administrativamente e a confirmação de e-mail não foi desabilitada.
+
+Leituras prévias realizadas: AGENTS.md, ARCHITECTURE.md, DATABASE.md, documentação atual e migrations; catálogo remoto confirmou colunas de profiles/players/groups/group_members, papéis owner/admin/player/guest, estados active/invited/suspended/left, FK para players/groups, unicidade por grupo/player, índice de único owner ativo e triggers de validação/auditoria/owner. Grupos sintéticos audit-0032-a-8467145b-fb16-4cbd-89f5-3cf149b3a830 e audit-0032-b-8467145b-fb16-4cbd-89f5-3cf149b3a830 existem e cada um tem um owner ativo. Não foi necessário criar grupo novo nem consultar/listar identidades pessoais para adivinhar C.
+
+Operação futura delimitada: após C existir, estar confirmada e ter player próprio criado pelo onboarding normal, validar UUID técnico e grupo sintético A; inserir apenas um vínculo novo role=player/status=active, mantendo as constraints/triggers e o owner. A auditoria de INSERT é automática; sem simular JWT/sub para atribuir falsamente a operação administrativa a um usuário. Registrar associação e contexto administrativo no manifesto privado. Nenhum UPDATE em vínculos existentes, nenhum owner/admin concedido, nenhuma mudança de policy/grant/função/trigger.
+
+| Verificação desta tentativa                              | Resultado                                                                |
+| -------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Conta C existente e confirmada                           | BLOQUEADO — conta inexistente, conforme proprietário                     |
+| Vínculo comum                                            | BLOQUEADO — não inserido                                                 |
+| JWT real de C                                            | BLOQUEADO — não autenticado                                              |
+| Acesso autorizado, autoelevação e administração indevida | NÃO EXECUTADOS                                                           |
+| Isolamento multi-tenant de C                             | NÃO EXECUTADO                                                            |
+| Integridade                                              | Nenhuma mutação realizada; não equivale a aprovação dos testes negativos |
+
+**Ação necessária do proprietário:** criar Auditoria BoraFute C com e-mail técnico exclusivo pelo /signup do domínio de homologação, confirmar o link no mesmo navegador/origem e entrar uma vez para completar onboarding. Informar apenas o UUID da conta no Supabase Auth e confirmar que é exclusiva de homologação. Senha/JWT/cookies nunca no chat. Para execução posterior no Codespaces, disponibilizar TEST_USER_C_EMAIL e TEST_USER_C_PASSWORD somente em secrets/arquivo ignorado. O executor Codex atual não tem Codespaces nem essas credenciais; não declarar JWT real antes da execução apropriada.
+
+Nenhuma fixture criada/excluída, nenhum dado de 4ª Força/Grupo Teste 2 alterado. Alteração exclusivamente documental, com formatação conferida; não repetir unidades/build/SQL ou testes reais para este registro de bloqueio. A homologação de interfaces privadas continua independente e pendente. O aceite de riscos de desenvolvimento registrado no commit 10e8b04 foi preservado, sem ampliar seu escopo.
+
 ## Aceite temporário de risco — dependências de desenvolvimento (22/10/2026)
 
 **Decisão explícita do responsável pelo projeto:** aprovado o aceite temporário dos nove avisos de severidade alta do `npm audit` restritos às dependências de desenvolvimento descritas neste relatório, até **05/11/2026**, com reavaliação antecipada se houver atualização compatível ou mudança de exposição/uso.
