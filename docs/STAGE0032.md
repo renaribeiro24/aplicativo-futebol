@@ -2,6 +2,79 @@
 
 Estado em 22/10/2026: **etapa ainda aberta**. Auth/JWT, Data API/RPC e seis cenários SSR reais aprovados; crítico de dependências corrigido. Critérios remanescentes e riscos na consolidação abaixo.
 
+## Retomada da homologação final — 22/10/2026
+
+**As quatro pendências não foram aprovadas nesta retomada.** develop confirmado no GitHub em 5e7f470. Executor disponível /workspace/work/close32, sem /workspaces/aplicativo-futebol anexado e sem secrets/runtime variables configurados (readiness atual consultada). --check na cópia independente mostrou as nove variáveis ausentes; não foi iniciado login nem SSR remoto. O arquivo privado do Codespaces não foi lido/copied e o manifesto original não está acessível aqui. Não confundir ausência de acesso do executor com falha dos controles do produto.
+
+### 1. SSR reforçado — pendente de execução no Codespaces
+
+Executar somente os dois comandos abaixo no Codespaces, com nove campos presentes, mesmos usuários técnicos A/B e manifesto original preservado:
+
+```sh
+node --env-file=work/stage0032.test.env scripts/test-stage0032-integration.mjs --check
+node --env-file=work/stage0032.test.env scripts/test-stage0032-integration.mjs --ssr-only 8467145b-fb16-4cbd-89f5-3cf149b3a830
+```
+
+Não executar a suíte completa. Critério: seis relatórios passed=true; identity A/B HTTP 200 com ID verificado internamente; own_group A/B HTTP 200 com conteúdo esperado; foreign_group A/B not-found válido e **privateDataPresent=false**. HTTP 200 em streaming não basta para reprovação nem aprovação. Não repetir em FAIL: registrar account/scenario/status/category/code/redirect/privateDataPresent, run e caminho do novo manifesto. Não compartilhar corpo, Cookie, Location bruto, tokens ou valores de configuração.
+
+A execução anterior de seis checkpoints continua válida para a cobertura daquela versão. Não há evidência nova do reforço explícito de marcadores privados, e nenhum resultado histórico foi reconstituído.
+
+### 2. Terceira conta / membro comum — bloqueio confirmado no fluxo existente
+
+Inspeção de src/features/groups/actions.ts, policies e RPCs: a aplicação oferece create_group_once e add_guest_once; o convidado tem user_id nulo. create_invitation cria convite, mas não existe fluxo público implementado de aceite/resgate ou associação de uma conta autenticada ao grupo. AGENTS.md explicitamente registra que convites não têm aceite público e proíbe introduzir claim de convidado sem nova decisão. group_members tem SELECT de cliente, sem INSERT direto concedido. Portanto, cadastrar C, criar um convite ou um convidado **não produz um membro autenticado comum**. Reaproveitar A/B owners ou JWT simulado não satisfaz esse cenário.
+
+Procedimento mínimo proposto, **não autorizado nem executado**, sem nova funcionalidade:
+
+1. Criar C pelo cadastro normal, confirmar no mesmo navegador/origem e completar onboarding. Conta técnica exclusiva; secrets TEST_USER_C_EMAIL/PASSWORD somente no executor privado. Não usar conta pessoal, jogador real ou conta administrativa.
+2. Identificar em manifesto privado a identidade/player técnico de C e o grupo sintético de A da execução original. Confirmar que A permanece único owner, B não participa desse grupo e C não tem vínculos prévios. Não usar 4ª Força nem Grupo Teste 2.
+3. Solicitar autorização específica para uma fixture administrativa delimitada: **uma linha nova em public.group_members**, ligando o player técnico C ao grupo sintético A, com role=player e status=active. Isso concede somente o vínculo comum necessário ao teste, nunca owner/admin. Não transformar convidado existente, trocar user_id, transferir owner, alterar ACL/RLS ou conceder privilégio a C.
+4. Antes de executar, preparar/revisar transação com IDs privados exatos, precondições que abortem por qualquer divergência, lock do grupo e pós-condições (uma associação comum; owner único inalterado). Só COMMIT após verificação; nenhum DELETE posterior automático. Registrar ID da associação e autorização em manifesto. O SQL exato deve ser revisado/testado antes da execução; este roteiro não autoriza sua aplicação.
+5. A operação administrativa serve apenas à preparação da fixture. Todas as provas de autorização devem usar novo login/getUser real de C e chave publicável; nunca cliente privilegiado representando C.
+
+Após o vínculo aprovado, suíte direcionada de C deve comprovar: leitura permitida do grupo A e dados autorizados; grupos/membros/jogadores exclusivos de B invisíveis; UPDATE direto de papéis recusado/zero linhas; set_member_role para owner/admin recusado, inclusive em si; alterações em papéis/status de terceiros recusadas; transfer_ownership, add_guest_once e create_invitation administrativos recusados no grupo A e no grupo B. Usar somente IDs sintéticos. Reconsultar com os owners para confirmar papel player de C, unicidade dos owners e ausência de mutações inesperadas. Se uma chamada indevida tiver sucesso, parar e registrar; não limpar evidências nem relaxar policies. Nenhum desses testes C foi executado nesta sessão.
+
+### 3. Interface privada — roteiro e matriz ainda não executados
+
+Sem navegador conectado a uma sessão técnica neste executor, não foram geradas capturas autenticadas nem reutilizadas capturas públicas como se fossem privadas.
+
+| Combinação pendente | Viewport de referência | Conteúdo a verificar                             |
+| ------------------- | ---------------------- | ------------------------------------------------ |
+| Desktop / claro     | 1440 × 900             | dashboard, grupo, elenco, formulários, navegação |
+| Desktop / escuro    | 1440 × 900             | mesmos fluxos, contraste/foco/erros              |
+| Celular / claro     | 390 × 844              | mesmos fluxos, teclado, labels e overflow        |
+| Celular / escuro    | 390 × 844              | mesmos fluxos, contraste e navegação             |
+
+Usar perfis separados de A/B (e C quando a fixture estiver autorizada). Para cada combinação: entrar normalmente, abrir dashboard/grupo próprio/elenco, navegar formulários sem criar novas fixtures desnecessárias, verificar mensagens e foco; abrir a URL sintética do outro grupo e confirmar tela not-found sem nome/ID/detalhes privados. Registrar status da matriz, viewport/tema, erro de console apenas por categoria sanitizada e captura recortada sem e-mail/cookies/tokens. Guardar artefatos em work/ ignorado. Bloqueio visual complementa, não substitui Data API/RPC/JWT. Não usar dados reais nem incluir conteúdo privado de 4ª Força.
+
+### 4. Auditorias atualizadas e proposta de decisão de risco
+
+npm audit --json novamente: **nove altos, zero críticos/moderados**. npm audit --omit=dev --json: **zero achados**. Consultas de versões e npm outdated não identificaram atualização compatível validada que corrigisse a cadeia atual; braces latest=3.0.3, micromatch latest=4.0.8 e fast-glob latest=3.3.3 continuam na cadeia afetada. Não houve atualização/downgrade adicional, audit fix ou mudança de lockfile.
+
+Pacotes: braces@3.0.3, micromatch@4.0.8, fast-glob@3.3.1/3.3.3, @next/eslint-plugin-next@16.4.2, eslint-config-next@16.4.2, @shadcn/registry@0.2.0, shadcn@4.22.1, @ts-morph/common@0.27.0 e ts-morph@26.0.0. Caminhos, severidade propagada e correção do crítico tar/CLI permanecem detalhados na consolidação anterior. Zero em produção não certifica segurança total nem elimina exposição de instalação/CI.
+
+**Decisão técnica proposta: aceite temporário restrito a desenvolvimento, pendente de aprovação do proprietário.**
+
+- Alcance: DoS por padrões profundamente aninhados na cadeia braces/glob usada por lint/geradores; não foi demonstrado caminho runtime de produção.
+- Condições: usar apenas padrões/configurações/repositório revisados; não executar registries/geradores não confiáveis em sessão com secrets; jobs de PR não confiável sem credenciais; manter lockfile e verificar auditoria em cada mudança de ferramentas. Não usar contorno de peers ou downgrade automático de Next/eslint/shadcn.
+- Medidas comprovadamente presentes: versões/lockfile fixos; CLI vulnerável substituído; produção auditada sem achados. Não há workflow versionado em .github nesta cópia; políticas de CI/organização e isolamento de secrets não foram certificados por esta inspeção.
+- Revisão até **05/11/2026**, ou antes se houver versão compatível corrigida, evidência de exploração, entrada de padrões não confiáveis, mudança de exposição ou proposta de publicação em produção. Prazo expirado sem revisão não equivale a renovação.
+- Aprovação deve registrar proprietário responsável, data, alcance e condições. **Não há aceite registrado nesta sessão.** Isso não autoriza produção.
+
+Security Advisor consultado separadamente: sete WARN e três INFO. Quatro APIs autenticadas SECURITY DEFINER permanecem fronteira intencional documentada/testada; três INFO são tabelas deliberadamente fechadas. Dois WARN da função gerenciada rls_auto_enable exigem revisão de privilégio mínimo pelo administrador, e proteção de senhas vazadas continua desabilitada, sujeita a configuração/plano. Não foram alteradas funções, RLS, permissões ou Supabase Auth. Não remover avisos abrindo tabelas.
+
+### Parecer desta retomada
+
+| Pendência                              | Resultado                                                                                    |
+| -------------------------------------- | -------------------------------------------------------------------------------------------- |
+| SSR reforçado / privateDataPresent A/B | NÃO EXECUTADO — exige Codespaces e manifesto privado                                         |
+| Membro comum com JWT real              | NÃO EXECUTADO — C e vínculo comum indisponíveis; fluxo de aceite não implementado            |
+| Interface privada: quatro combinações  | NÃO EXECUTADO — falta navegador autenticado acessível                                        |
+| Dependências                           | Crítico corrigido anteriormente; nove altos dev com aceite temporário proposto, não aprovado |
+| Security Advisor                       | Sete WARN/três INFO; revisão administrativa residual documentada                             |
+| Conclusão                              | **Etapa aberta; sem liberação formal da Etapa 004 ou produção**                              |
+
+Alteração desta tentativa exclusivamente documental; formatação conferida. Não foi necessário repetir build, unidades/SQL ou autenticação já aprovados para essa mudança. Nenhum dado/fixture excluído, vínculo criado, permissão alterada ou configuração externa modificada. Histórico abaixo preservado.
+
 ## Consolidação técnica — 22/10/2026
 
 **Parecer atual: etapa ainda aberta.** Auth/JWT, Data API/RPC e os seis checkpoints SSR têm evidência real; o alerta crítico de dependências foi corrigido. Permanecem validações essenciais e decisões de risco discriminadas abaixo. Continuar desenvolvimento não equivale a autorizar publicação.
