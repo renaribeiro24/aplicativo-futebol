@@ -1,0 +1,5 @@
+-- Historical proposal superseded by the approved, applied migration:
+-- supabase/migrations/20261020160133_auth_schema_bridge.sql
+-- The definitive migration uses explicit CREATE OR REPLACE definitions,
+-- atomic pre/postconditions and preserves the original function ACLs.
+-- Do not execute the original dynamic-replacement proposal from Git history.
