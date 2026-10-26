@@ -1,6 +1,6 @@
 # Etapa 003.2 — checklist de interfaces privadas
 
-Estado em 26/10/2026: **automação privada PASS nas quatro combinações; homologação manual complementar registrada (8 PASS relatados; UI22 NÃO APLICÁVEL condicional, sujeito à revisão de encerramento)**. Não interpretar testes locais de preparação como uma sessão autenticada. Status permitidos: PASS, FAIL, PENDENTE, NÃO APLICÁVEL. Só registrar PASS após executar; justificar NÃO APLICÁVEL e registrar evidência/observação. FAIL não significa automaticamente falha de segurança: distinguir produto, executor e ambiente.
+Estado em 26/10/2026: **automação privada PASS nas quatro combinações; homologação manual complementar registrada (8 PASS relatados; UI22 NÃO APLICÁVEL nesta rodada, exceção aceita pelo responsável em 26/10/2026)**. Não interpretar testes locais de preparação como uma sessão autenticada. Status permitidos: PASS, FAIL, PENDENTE, NÃO APLICÁVEL. Só registrar PASS após executar; justificar NÃO APLICÁVEL e registrar evidência/observação. FAIL não significa automaticamente falha de segurança: distinguir produto, executor e ambiente.
 
 ## Resultado automatizado privado recebido em 26/10/2026
 
@@ -40,6 +40,14 @@ O proprietário confirmou **não existir conta técnica elegível sem vínculo a
 ### Consolidação da rodada manual e revisão de encerramento
 
 Os oito PASS agregados comunicados são: convidado, perfil, mensagens/validações, acessibilidade/navegação, controles C, B→A, Android físico e carregamento Slow 3G. A tabela inicial de resultados manuais acima é **histórica** e deve ser lida com os complementos posteriores, não como status atual. UI22 está NÃO APLICÁVEL **condicional**, não PASS; a aceitação formal dessa exceção continua pendente. Não presumir que cada PASS agregado cobre todas as quatro combinações ou a integralidade de WCAG. Parecer detalhado em docs/STAGE0032.md. Etapa aberta e PR Draft.
+
+## Decisão do responsável — aceite da exceção UI22 (26/10/2026)
+
+O responsável pelo projeto **aprovou expressamente a exceção do cenário UI22 (dashboard vazio) nesta rodada de homologação**, conforme decisão registrada na conversa em 26/10/2026. A justificativa é a inexistência de conta técnica elegível sem vínculos a grupos; não foram criados usuários nem removidos vínculos para forçar o cenário.
+
+**Escopo do aceite:** dispensa condicional de execução de UI22 **nesta etapa**, com obrigação de cobertura futura quando houver ambiente/fixture apropriado. O resultado **não é PASS** e não constitui prova do funcionamento do dashboard vazio.
+
+**O que NÃO foi aprovado por esta decisão:** encerramento formal da Etapa 003.2, liberação da Etapa 004, merge da PR #1, publicação em produção, alteração administrativa ou aceitação automática de outras pendências. Continuam necessárias a conferência das evidências privadas de persistência do convidado e perfil, identificação da versão/deployment homologado e revisão das demais ressalvas documentadas. PR #1 permanece Draft; main intacta.
 
 ## Preparação e segurança
 
