@@ -1,6 +1,12 @@
 # Etapa 003.2 — checklist de interfaces privadas
 
-Estado em 26/10/2026: **homologação privada PENDENTE**. Não interpretar testes locais de preparação como uma sessão autenticada. Status permitidos: PASS, FAIL, PENDENTE, NÃO APLICÁVEL. Só registrar PASS após executar; justificar NÃO APLICÁVEL e registrar evidência/observação. FAIL não significa automaticamente falha de segurança: distinguir produto, executor e ambiente.
+Estado em 26/10/2026: **automação privada PASS nas quatro combinações; homologação manual complementar PENDENTE**. Não interpretar testes locais de preparação como uma sessão autenticada. Status permitidos: PASS, FAIL, PENDENTE, NÃO APLICÁVEL. Só registrar PASS após executar; justificar NÃO APLICÁVEL e registrar evidência/observação. FAIL não significa automaticamente falha de segurança: distinguir produto, executor e ambiente.
+
+## Resultado automatizado privado recebido em 26/10/2026
+
+**PASS: 46 aprovados, zero reprovados**, modo authenticated_owner_readonly e diagnosticOnly=false, conforme captura do proprietário. Relatório no Codespaces: work/stage0032-ui-0b8dce63-aa96-4a99-bacf-d8f40d525405/report.json. O arquivo privado não foi lido nesta sessão; fonte é a saída sanitizada. Desktop claro/escuro e celular claro/escuro passaram. Não repetir essa matriz ou login apenas para preencher os itens manuais abaixo.
+
+Os status PENDENTE da tabela manual representam os critérios completos ainda não atestados, incluindo submissões, interpretação visual/contraste e estados especiais. Não anulam os PASS automatizados. Usar a evidência existente para os subcritérios já cobertos e executar apenas o complemento: salvar convidado/perfil em dados fictícios, mensagens/validações, foco/contraste/zoom, loading/vazio elegível, UI da conta C e direção B→A. Não inferir legibilidade, acessibilidade completa ou sucesso de gravação só por heading/status HTTP.
 
 ## Preparação e segurança
 

@@ -1,6 +1,27 @@
 # Etapa 003.2 — auditoria de segurança e estabilização
 
-Estado em 26/10/2026: **etapa ainda aberta**. C 20/20 informado pelo proprietário, SSR anterior 6/6 e verificações automatizadas preservados; matriz privada de interfaces pendente. Escopo e evidências na seção atual abaixo.
+Estado em 26/10/2026: **etapa ainda aberta para homologação manual complementar**. Matriz privada automatizada PASS nas quatro combinações, 46/46 checks; evidências JWT/SSR anteriores preservadas.
+
+## Matriz privada automatizada aprovada — 26/10/2026
+
+Captura do proprietário confirma execução no Codespaces com executor 475da8d: **PASS, authenticated_owner_readonly, diagnosticOnly=false, 46 verificações aprovadas, zero reprovadas, failedChecks vazio**. As quatro combinações passaram: desktop 1440×900 claro/escuro e celular (viewport) 390×844 claro/escuro.
+
+Relatório informado: work/stage0032-ui-0b8dce63-aa96-4a99-bacf-d8f40d525405/report.json. Fonte: saída sanitizada apresentada pelo proprietário; o arquivo privado não foi lido neste executor. Não houve novo teste autenticado neste workspace.
+
+| Combinação     | Automação privada somente leitura |
+| -------------- | --------------------------------- |
+| Desktop claro  | PASS                              |
+| Desktop escuro | PASS                              |
+| Celular claro  | PASS                              |
+| Celular escuro | PASS                              |
+
+O resultado comprova os checks do executor: layouts de login nas quatro combinações, login/sessão, dashboard, grupo próprio e formulário de convidado visível, perfil, formulário de novo grupo, grupo alheio not-found sem os marcadores de texto privados verificados, página inexistente, labels/foco básico, ausência de overflow e de erros inesperados nas páginas auditadas, navegação dashboard→grupo→perfil, logout e bloqueio anônimo das rotas privadas. Logout foi executado uma vez ao final, não quatro vezes. O código não cadastrou convidados/grupos, não salvou perfil e não guardou sessões/capturas privadas.
+
+A falha de rede anterior continua registrada como observação não reproduzida: o diagnóstico restrito passou 7/7 e esta matriz completa passou 46/46, mas isso não determina retrospectivamente a causa daquela requisição. Não repetir a matriz, SSR ou testes de C sem alteração/falha nova que justifique.
+
+**O que resta:** testes manuais complementares do checklist (não repetir a navegação já comprovada): submissão de convidado em grupo UI separado; edição de perfil técnico; mensagens de sucesso/validação; contraste/foco/teclado completo e zoom; estados de loading/vazio quando elegíveis; controles visuais da conta C e direção visual B→A prevista no roteiro. Registrar evidências/justificativas de NÃO APLICÁVEL. A automação atual não prova esses itens por não submeter formulários nem usar B/C na matriz visual.
+
+Etapa 003.2 continua aberta somente para as verificações/evidências obrigatórias remanescentes e decisões já discriminadas; matriz privada automatizada não está mais bloqueada. Aceite de risco de desenvolvimento e limites administrativos anteriores preservados. Nenhuma permissão, RLS, domínio, produção ou fixture foi alterada nesta atualização documental.
 
 ## Diagnóstico de rede no dashboard — 26/10/2026
 
