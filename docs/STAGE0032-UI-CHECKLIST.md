@@ -1,6 +1,6 @@
 # Etapa 003.2 — checklist de interfaces privadas
 
-Estado em 26/10/2026: **automação privada PASS nas quatro combinações; homologação manual complementar registrada (8 PASS relatados; UI22 NÃO APLICÁVEL nesta rodada, exceção aceita pelo responsável em 26/10/2026)**. Não interpretar testes locais de preparação como uma sessão autenticada. Status permitidos: PASS, FAIL, PENDENTE, NÃO APLICÁVEL. Só registrar PASS após executar; justificar NÃO APLICÁVEL e registrar evidência/observação. FAIL não significa automaticamente falha de segurança: distinguir produto, executor e ambiente.
+Estado em 26/10/2026: **Etapa 003.2 ENCERRADA TECNICAMENTE COM RESSALVAS**, por aceite expresso do responsável; UI22 não aplicável nesta rodada com cobertura futura; rastreabilidade histórica parcialmente comprovada e aceita como ressalva. Os PASS automatizados e manuais preservam os respectivos limites de evidência. PR #1 Draft; main e produção inalteradas.
 
 ## Resultado automatizado privado recebido em 26/10/2026
 
@@ -56,6 +56,20 @@ O proprietário confirmou que o convidado previamente cadastrado no grupo técni
 ### Complemento — UI11 persistência após atualização (26/10/2026)
 
 O proprietário respondeu afirmativamente à pergunta sobre a permanência dos dados anteriormente salvos no perfil técnico após atualização da página (Ctrl+F5 solicitado). **UI11: PASS na verificação manual de persistência, conforme relato do proprietário.** Evidência testemunhal, sem captura sanitizada, comparação de valores ou consulta independente ao banco; não declarar auditoria de persistência em banco. Junto com UI08, ambas as verificações pontuais de persistência foram relatadas como PASS. **Rastreabilidade da versão/deployment homologado continua pendente de consolidação**; não encerrar a Etapa 003.2, não promover PR #1 nem alterar produção.
+
+## Deliberação formal — encerramento técnico da Etapa 003.2 (26/10/2026)
+
+**DECISÃO DO RESPONSÁVEL: APROVADO O ENCERRAMENTO TÉCNICO COM RESSALVAS.** O responsável autorizou expressamente o encerramento da Etapa 003.2 e o início do desenvolvimento da Etapa 004, **sem merge na main e sem publicação em produção**.
+
+**Escopo e base do aceite:** 117 testes unitários, 6 verificações SSR, 20 checkpoints JWT da conta C, 46 verificações automatizadas da interface e 8 critérios manuais complementares, conforme registros e limitações de evidência descritos nesta documentação. UI08 e UI11 tiveram confirmação manual de persistência após atualização da página, por relato do responsável, sem prova independente de banco.
+
+**Ressalvas aceitas e obrigações futuras:**
+- A correlação temporal entre a execução dos 46 testes e o deployment servido permanece **PARCIALMENTE COMPROVADA**. O responsável **aceitou expressamente esta ressalva documental** para encerramento da etapa; o aceite não transforma rastreabilidade parcial em prova integral.
+- UI22 (dashboard vazio) permanece **NÃO APLICÁVEL nesta rodada**, com exceção anteriormente aceita pelo responsável e validação futura obrigatória quando houver fixture/ambiente apropriado. Não é PASS.
+- Riscos temporariamente aceitos em dependências de desenvolvimento e alertas administrativos de segurança permanecem sujeitos a revisão conforme prazos/condições já documentados. Não há autorização para uso em produção.
+- Preservar evidências e explicitar distinção entre resultados automatizados, relatos manuais e inspeções de leitura. Não declarar conformidade WCAG integral ou ausência absoluta de vulnerabilidades.
+
+**Estado após a decisão:** Etapa 003.2 **ENCERRADA TECNICAMENTE COM RESSALVAS**; Etapa 004 **LIBERADA APENAS PARA DESENVOLVIMENTO NA BRANCH DE DESENVOLVIMENTO**. PR #1 permanece Draft, main preservada, sem merge, sem deploy de produção, sem alteração de DNS, Supabase Auth/RLS ou limpeza de dados. Qualquer promoção exige aprovação separada e novos critérios de prontidão.
 
 ## Preparação e segurança
 
