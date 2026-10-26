@@ -1,6 +1,6 @@
 # Etapa 003.2 — checklist de interfaces privadas
 
-Estado em 26/10/2026: **automação privada PASS nas quatro combinações; homologação manual complementar PARCIAL (6 PASS relatados; 2 PENDENTES)**. Não interpretar testes locais de preparação como uma sessão autenticada. Status permitidos: PASS, FAIL, PENDENTE, NÃO APLICÁVEL. Só registrar PASS após executar; justificar NÃO APLICÁVEL e registrar evidência/observação. FAIL não significa automaticamente falha de segurança: distinguir produto, executor e ambiente.
+Estado em 26/10/2026: **automação privada PASS nas quatro combinações; homologação manual complementar PARCIAL (7 PASS relatados, incluindo Android físico; 1 critério agregado PENDENTE: loading/vazio)**. Não interpretar testes locais de preparação como uma sessão autenticada. Status permitidos: PASS, FAIL, PENDENTE, NÃO APLICÁVEL. Só registrar PASS após executar; justificar NÃO APLICÁVEL e registrar evidência/observação. FAIL não significa automaticamente falha de segurança: distinguir produto, executor e ambiente.
 
 ## Resultado automatizado privado recebido em 26/10/2026
 
@@ -24,6 +24,10 @@ Fonte: resultados comunicados pelo proprietário nesta conversa. Os resultados a
 | Celular físico | PENDENTE | UI24 | Testar teclado virtual, toque, zoom e botões em aparelho real |
 
 **Critérios de encerramento:** manter UI21, UI22 e UI24 pendentes até execução ou decisão justificada de não aplicabilidade, quando cabível. O resultado manual genérico não autoriza converter automaticamente todas as células D/C, D/E, M/C, M/E para PASS. Manter os resultados de automação registrados, PR #1 Draft e etapa 003.2 ABERTA. Não executar novas mutações, limpar fixtures, promover main ou publicar em produção por causa desta atualização documental.
+
+### Complemento — celular físico Android (26/10/2026)
+
+O proprietário relatou **PASS sem problemas** na homologação manual em aparelho Android, após roteiro de menus, textos, botões, teclado virtual, toque, formulários, rolagem horizontal e legibilidade. Marca-se **UI24 / Android: PASS (relatado)**. Modelo, navegador/versão, evidência por tema e teste em iOS não foram informados; não atribuir aprovação específica a iOS ou a combinações não documentadas. UI21 (loading) e UI22 (dashboard vazio elegível) continuam PENDENTES. Etapa 003.2 ABERTA, PR #1 Draft.
 
 ## Preparação e segurança
 
