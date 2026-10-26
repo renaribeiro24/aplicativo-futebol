@@ -10,6 +10,14 @@ O responsável pelo projeto **aprovou expressamente a exceção do cenário UI22
 
 **O que NÃO foi aprovado por esta decisão:** encerramento formal da Etapa 003.2, liberação da Etapa 004, merge da PR #1, publicação em produção, alteração administrativa ou aceitação automática de outras pendências. Continuam necessárias a conferência das evidências privadas de persistência do convidado e perfil, identificação da versão/deployment homologado e revisão das demais ressalvas documentadas. PR #1 permanece Draft; main intacta.
 
+## Conferência complementar de evidências — 26/10/2026
+
+**UI08 e UI11:** o proprietário confirmou em navegação manual, após atualização da página, que o convidado técnico continuava listado (UI08) e que os dados anteriormente salvos do perfil técnico permaneceram preenchidos (UI11). Ambos **PASS manual relatado de persistência**. Evidência testemunhal, sem captura sanitizada, fixture identificada ou consulta direta ao banco; não declarar prova independente.
+
+**Vercel (consulta de leitura nesta revisão):** `www.borafute.com.br` apontava para deployment `dpl_Gf8Px4vi8NhfP8viPajE5TXBzHA2`, estado READY, originado de `develop`, commit `2c0447dc9af4652c1e026d7185bbd64103b7a99f`. A consulta confirma a vinculação **no momento da inspeção**, mas não prova que o alias não tenha sido alterado durante todas as sessões anteriores de homologação. A matriz UI usou executor `475da8d`; não foi obtido manifesto correlacionando horário, URL resolvida e deployment da execução. A comparação Git `2c0447d...develop` não revelou mudanças em `src/`, embora existam mudanças em dependências/scripts/testes/documentação; equivalência funcional completa não certificada apenas por isso.
+
+**Situação:** evidências manuais de persistência complementadas; rastreabilidade histórica da homologação **PARCIALMENTE COMPROVADA**. Ainda não declarar aceite final nem liberação da Etapa 004. PR #1 Draft, main e produção preservadas. Não houve novos testes nem alteração de configuração.
+
 ## Parecer documental preliminar de encerramento — 26/10/2026
 
 **Conclusão: homologação funcional substancialmente favorável, mas encerramento formal AINDA NÃO AUTORIZADO.** Revisão documental, sem reexecutar suítes e sem acesso aos relatórios privados brutos do Codespaces.
