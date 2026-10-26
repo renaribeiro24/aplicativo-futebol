@@ -53,6 +53,10 @@ O responsável pelo projeto **aprovou expressamente a exceção do cenário UI22
 
 O proprietário confirmou que o convidado previamente cadastrado no grupo técnico **continuou listado após atualizar a página** (Ctrl+F5 foi o procedimento solicitado). **UI08: PASS na verificação manual de persistência, conforme relato do proprietário.** Evidência testemunhal, sem captura sanitizada, identificador da fixture ou consulta independente ao banco. Nenhum novo cadastro solicitado. UI11 permanece pendente de reconfirmação de persistência e a rastreabilidade do deployment ainda precisa ser consolidada. Etapa 003.2 ABERTA; PR #1 Draft.
 
+### Complemento — UI11 persistência após atualização (26/10/2026)
+
+O proprietário respondeu afirmativamente à pergunta sobre a permanência dos dados anteriormente salvos no perfil técnico após atualização da página (Ctrl+F5 solicitado). **UI11: PASS na verificação manual de persistência, conforme relato do proprietário.** Evidência testemunhal, sem captura sanitizada, comparação de valores ou consulta independente ao banco; não declarar auditoria de persistência em banco. Junto com UI08, ambas as verificações pontuais de persistência foram relatadas como PASS. **Rastreabilidade da versão/deployment homologado continua pendente de consolidação**; não encerrar a Etapa 003.2, não promover PR #1 nem alterar produção.
+
 ## Preparação e segurança
 
 - Responsável técnico: ______; data/hora (America/Sao_Paulo): ______; navegador/versão: ______.
