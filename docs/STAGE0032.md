@@ -1,6 +1,6 @@
 # Etapa 003.2 — auditoria de segurança e estabilização
 
-Estado em 26/10/2026: **etapa ainda aberta para homologação manual complementar**. Matriz privada automatizada PASS nas quatro combinações, 46/46 checks; evidências JWT/SSR anteriores preservadas.
+Estado em 26/10/2026: **Etapa 003.2 ENCERRADA TECNICAMENTE COM RESSALVAS por decisão expressa do responsável; Etapa 004 liberada somente para desenvolvimento.** PR #1 permanece Draft; main e produção inalteradas.
 
 ## Decisão do responsável — aceite da exceção UI22 (26/10/2026)
 
@@ -23,6 +23,20 @@ O responsável pelo projeto **aprovou expressamente a exceção do cenário UI22
 **Resultado: PARCIALMENTE COMPROVADA**, conforme relatório de auditoria apresentado pelo responsável. O artefato privado `work/stage0032-ui-0b8dce63-aa96-4a99-bacf-d8f40d525405/report.json` não estava acessível no executor `/workspace`, portanto seu conteúdo não foi conferido diretamente. A execução de 46 PASS está documentada em 26/10/2026, sem horário exato comprovado. O executor `475da8d`, branch `develop`, fixa `https://www.borafute.com.br` como origem autenticada, mas o relatório gerado não inclui campos próprios de timestamp, commit, branch ou deployment. A inspeção independente da Vercel confirmou que, no momento da consulta, o alias apontava para `dpl_Gf8Px4vi8NhfP8viPajE5TXBzHA2`, commit servido `2c0447dc9af4652c1e026d7185bbd64103b7a99f`; não há correlação temporal contemporânea da execução de UI com esse deployment.
 
 **Avaliação:** lacuna de rastreabilidade documental, não falha funcional demonstrada. Não repetir os 46 testes apenas para suprir essa lacuna. Eventual aceite como risco residual exige aprovação expressa do responsável e não equivale a prova de correlação. UI08/UI11 têm confirmação manual testemunhal de persistência; UI22 tem exceção expressamente aceita. **Etapa 003.2 permanece aberta, sem liberação da Etapa 004, merge ou produção.**
+
+## Deliberação formal — encerramento técnico da Etapa 003.2 (26/10/2026)
+
+**DECISÃO DO RESPONSÁVEL: APROVADO O ENCERRAMENTO TÉCNICO COM RESSALVAS.** O responsável autorizou expressamente o encerramento da Etapa 003.2 e o início do desenvolvimento da Etapa 004, **sem merge na main e sem publicação em produção**.
+
+**Escopo e base do aceite:** 117 testes unitários, 6 verificações SSR, 20 checkpoints JWT da conta C, 46 verificações automatizadas da interface e 8 critérios manuais complementares, conforme registros e limitações de evidência descritos nesta documentação. UI08 e UI11 tiveram confirmação manual de persistência após atualização da página, por relato do responsável, sem prova independente de banco.
+
+**Ressalvas aceitas e obrigações futuras:**
+- A correlação temporal entre a execução dos 46 testes e o deployment servido permanece **PARCIALMENTE COMPROVADA**. O responsável **aceitou expressamente esta ressalva documental** para encerramento da etapa; o aceite não transforma rastreabilidade parcial em prova integral.
+- UI22 (dashboard vazio) permanece **NÃO APLICÁVEL nesta rodada**, com exceção anteriormente aceita pelo responsável e validação futura obrigatória quando houver fixture/ambiente apropriado. Não é PASS.
+- Riscos temporariamente aceitos em dependências de desenvolvimento e alertas administrativos de segurança permanecem sujeitos a revisão conforme prazos/condições já documentados. Não há autorização para uso em produção.
+- Preservar evidências e explicitar distinção entre resultados automatizados, relatos manuais e inspeções de leitura. Não declarar conformidade WCAG integral ou ausência absoluta de vulnerabilidades.
+
+**Estado após a decisão:** Etapa 003.2 **ENCERRADA TECNICAMENTE COM RESSALVAS**; Etapa 004 **LIBERADA APENAS PARA DESENVOLVIMENTO NA BRANCH DE DESENVOLVIMENTO**. PR #1 permanece Draft, main preservada, sem merge, sem deploy de produção, sem alteração de DNS, Supabase Auth/RLS ou limpeza de dados. Qualquer promoção exige aprovação separada e novos critérios de prontidão.
 
 ## Parecer documental preliminar de encerramento — 26/10/2026
 
