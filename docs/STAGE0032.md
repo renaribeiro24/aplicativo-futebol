@@ -1,6 +1,89 @@
 # Etapa 003.2 — auditoria de segurança e estabilização
 
-Estado em 26/10/2026: **etapa ainda aberta**. Conta C confirmada e vínculo player/active verificados por leitura administrativa; testes JWT de C preparados, mas ainda não executados neste executor. Evidências A/B e SSR anteriores preservadas.
+Estado em 26/10/2026: **etapa ainda aberta**. C 20/20 informado pelo proprietário, SSR anterior 6/6 e verificações automatizadas preservados; matriz privada de interfaces pendente. Escopo e evidências na seção atual abaixo.
+
+## Homologação de interfaces e relato de C — 26/10/2026
+
+**Etapa ainda aberta: matriz privada não executada nesta sessão.** Roteiro completo em [STAGE0032-UI-CHECKLIST.md](STAGE0032-UI-CHECKLIST.md), com status PASS/FAIL/PENDENTE/NÃO APLICÁVEL, instruções, resultados esperados e campos de evidência para as quatro combinações.
+
+### Evidência da conta C recebida
+
+O proprietário informou PASS em 20/20 checkpoints JWT reais, sem falha de permissão, com proprietário original preservado e C player/active. Run 02b9bebb-47e0-400a-b03d-5c4035b10f2f; arquivo informado: work/stage0032-member-c-02b9bebb-47e0-400a-b03d-5c4035b10f2f.json.
+
+**Proveniência:** resultado informado pelo proprietário; o arquivo não foi encontrado no workspace acessível, e o Codespaces não está anexado. Não se afirma leitura, hash ou revisão independente desse relatório. O checklist inclui comando somente leitura que emite contagens e flags de integridade, sem conteúdo privado, para confirmar o artefato no Codespaces. Não repetir a suíte C para obter esse resumo.
+
+Assim, ficam consolidados: 117 testes unitários anteriores; SSR 6/6 já documentado por captura; C 20/20 conforme relato atual. Esses resultados não equivalem à homologação visual privada.
+
+### Deployment e alias efetivamente verificados
+
+Vercel get_alias/get_deployment confirmaram www.borafute.com.br → **dpl_Gf8Px4vi8NhfP8viPajE5TXBzHA2**, READY, target=null (Preview), branch develop, commit **2c0447dc9af4652c1e026d7185bbd64103b7a99f**. HEAD remoto antes desta tarefa: 18f53eff43ba72924ea8b8064539f24051f6b29e. O alias está fixo e não acompanha HEAD automaticamente. A comparação GitHub não encontrou alterações em src/ entre esses commits, mas encontrou mudanças em ferramentas, lockfile e documentação. Não certificar todo o deployment mais recente ou equivalência de configuração por essa comparação. Não houve atualização de alias, domínio, DNS ou deploy de produção.
+
+Consultas HTTPS por integração Vercel (sem sessão do aplicativo):
+
+| Rota                  | Evidência                                                                           |
+| --------------------- | ----------------------------------------------------------------------------------- |
+| /login                | HTTP 200; formulário real; private/no-store                                         |
+| /dashboard            | Ferramenta seguiu redirect: HTTP 200 final, x-matched-path=/login, private/no-store |
+| /groups/[sintético A] | HTTP 200 final em /login, private/no-store                                          |
+| /profile              | HTTP 200 final em /login, private/no-store                                          |
+| /api/me               | HTTP 401                                                                            |
+
+Os HTTP 200 finais não são o status original do redirect. Nenhum DEPLOYMENT_NOT_FOUND nas páginas retornadas. O curl direto do executor recebeu CONNECT 403/HTTP 000: limitação de proxy, não falha HTTP da aplicação. Não houve tentativa de contorno. As consultas pela integração não equivalem a teste de navegação Playwright no domínio.
+
+### Ferramentas e automação executada
+
+Playwright e Chromium já estavam disponíveis no executor. **Nenhuma dependência ou browser foi instalado.** O script novo scripts/test-stage0032-ui.mjs oferece --check, --local-public e --authenticated; o modo privado faz um único login de A para as quatro combinações e não persiste sessão, HAR ou traces, nem captura páginas privadas. Não submete criação de convidado/perfil/grupo; esses fluxos persistentes ficam no roteiro manual em fixtures UI separadas.
+
+Nesta sessão, sem secrets/runtime variables, TEST_USER_A_EMAIL/PASSWORD não estavam disponíveis. --authenticated foi bloqueado antes de abrir uma sessão/login; zero checks privados aprovados ou reprovados, quatro combinações PENDENTE. O relatório bloqueado em work/ fica como registro de ambiente, não defeito do produto. --check apenas indica disponibilidade das ferramentas/credenciais, não validade de senha ou acesso de rede.
+
+Automação local real sobre build de produção, sem configuração Supabase, em http://127.0.0.1:3300:
+
+- **45 verificações PASS, zero FAIL**, incluindo 40 visitas a dez rotas em quatro combinações, API fechada 503 e quatro verificações explícitas do aviso de preparação no login.
+- Rotas: home, login, cadastro, recuperação com mensagem context, confirmação, reset, dashboard, criar grupo, perfil e página inexistente. Rotas privadas mostram preparação: não há usuário/sessão fictícia.
+- Viewports 1440×900 e 390×844, colorScheme light/dark. Zero overflow horizontal; um h1 e main presentes; inputs visíveis com labels; foco em elemento interativo após Tab.
+- Zero erros JavaScript não tratados, erros de console não esperados ou falhas HTTP/rede inesperadas. Não é auditoria WCAG completa nem medição automatizada de contraste.
+- Fundos calculados mudaram de oklch(0.975 0.004 250) no claro para oklch(0.18 0.018 255) no escuro em ambos os tamanhos. Capturas da home desktop clara e celular escura inspecionadas: layout legível, sem cortes/overflow. Skip link aparece por estar focado pelo teste de teclado.
+- Relatório final: work/stage0032-ui-b1e3fec0-d67c-4fc7-9be6-2b74e3df84fa/report.json. Quatro imagens públicas desktop-light-public.png, desktop-dark-public.png, mobile-light-public.png e mobile-dark-public.png no mesmo diretório. Nenhum artefato privado ou credencial publicado no Git.
+
+| Combinação     | Público/preparação local | Interface privada no Preview |
+| -------------- | ------------------------ | ---------------------------- |
+| Desktop claro  | PASS                     | PENDENTE                     |
+| Desktop escuro | PASS                     | PENDENTE                     |
+| Celular claro  | PASS                     | PENDENTE                     |
+| Celular escuro | PASS                     | PENDENTE                     |
+
+A primeira execução local parou por seis cancelamentos de prefetch classificados erroneamente como erro de rede; relatório inicial work/stage0032-ui-b226e991-730d-4a34-bbbc-ce1b0faa2c51/report.json preservado. Diagnóstico confirmou fetch especulativo next-router-prefetch com net::ERR_ABORTED. Corrigida exclusivamente a classificação no executor: ignorar apenas ERR_ABORTED e header next-router-prefetch=1, registrando contagem separada; qualquer outro erro continua bloqueante. Cinco testes unitários cobrem o falso positivo e falhas que não podem ser ignoradas. A validação de código final passou em formatação, lint, typecheck, 122 testes em 15 arquivos e build. A execução final acima passou após essa correção. Não foi alterada a aplicação para satisfazer os testes.
+
+### Problemas, limites e roteiro de execução
+
+| Achado                                                          | Classificação                         | Situação                                                |
+| --------------------------------------------------------------- | ------------------------------------- | ------------------------------------------------------- |
+| Prefetch cancelado contado como falha                           | Baixa, executor de testes             | Corrigido e coberto por regressão                       |
+| Alias serve commit anterior ao HEAD                             | Média, rastreabilidade da homologação | Registrado; nenhuma associação alterada sem autorização |
+| Credenciais/browsing privado e relatório C indisponíveis aqui   | Bloqueio de ambiente/evidência        | Não confundir com vulnerabilidade                       |
+| Contraste completo, toque, loading, vazio e submissões privadas | Cobertura manual                      | PENDENTE conforme checklist                             |
+
+Nenhum defeito visual do produto foi comprovado no escopo público executado; a interface privada ainda pode conter defeitos não observados.
+
+No Codespaces ou executor autorizado com Playwright/Chromium já disponíveis, conferir novamente deployment/alias e usar:
+
+```sh
+node scripts/test-stage0032-ui.mjs --check
+node --env-file=work/stage0032.test.env scripts/test-stage0032-ui.mjs --authenticated
+```
+
+Não usar conta pessoal; somente A técnica com acesso owner ao grupo sintético esperado. Se faltar navegador/ferramenta, usar o roteiro manual; não há instalação automática nem bypass de Vercel. Se faltar acesso ao domínio, não contornar o proxy. Guardar relatório sanitizado; capturas privadas manuais precisam de recorte/máscara. O executor navega em fixtures existentes, não modifica 4ª Força/Grupo Teste 2, não cria/exclui usuários e não limpa fixtures.
+
+Para cadastro de convidado/sucesso/edição persistente, o proprietário deve usar grupo UI sintético separado, registrar novas fixtures e preservá-las. Validar layout e resultados nas quatro combinações; não multiplicar submissões desnecessárias. Lista de grupos fica no dashboard; não há rota /groups de listagem nem menu hambúrguer/aceite público de convite a inventar.
+
+### Condições de encerramento
+
+1. Conferir o resumo seguro do relatório C no ambiente onde o arquivo existe, sem refazer autenticação.
+2. Executar e registrar navegação privada nas quatro combinações contra deployment identificado.
+3. Completar os itens manuais obrigatórios: submissões e mensagens, contraste/foco/teclado, loading/vazio quando alcançáveis e ausência visual de dados de outro grupo. Justificar NÃO APLICÁVEL por recurso/estado realmente inexistente; não transformar bloqueio em PASS.
+4. Revisar defeitos eventualmente encontrados e decisões de risco já documentadas, mantendo o aceite de desenvolvimento dentro de seu prazo/escopo.
+
+Etapa não encerrada; sem liberação formal para Etapa 004 ou produção. Riscos e histórico abaixo preservados; nenhuma autorização de produção foi inferida.
 
 ## Permissões reais da conta C — preparação do executor (26/10/2026)
 
@@ -211,51 +294,7 @@ Os nove alertas altos abaixo são pacotes sinalizados da mesma cadeia de desenvo
 | @shadcn/registry         | 0.2.0         | shadcn → registry → fast-glob                              |
 | shadcn                   | 4.22.1        | CLI/gerador direto, com fast-glob/registry/ts-morph        |
 | @ts-morph/common         | 0.27.0        | shadcn → ts-morph → common → fast-glob                     |
-| ts-morph                 | 26.0.0        | Ferramenta transitiva do shadcn, não runtime do aplicativo |
-
-braces 3.0.3 ainda era a versão mais recente consultada e consta afetada por [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm). Nenhuma versão corrigida compatível dessa cadeia foi certificada. npm sugere eslint-config-next 14.2.35 e shadcn 1.0.0 para parte da árvore: são downgrades, com impacto incompatível a avaliar, e não foram aplicados. Para ts-morph/common, fixAvailable=true não informa uma versão exata segura para a cadeia atual; não foi confundido com correção validada.
-
-**Risco residual:** DoS em ferramentas que processem padrões maliciosos. Não demonstrado no runtime de produção, mas devDependencies podem executar em instalação/CI. Mitigação proposta: não executar geradores/registries/globs não confiáveis com secrets; restringir jobs com credenciais a código revisado; manter versões fixas e monitorar correção upstream. Essas recomendações não significam alteração efetiva de configuração CI. Decisão ainda necessária: aceite temporário explícito do risco em desenvolvimento ou substituição/remoção compatível das ferramentas. Aceite não presumido apenas porque --omit=dev ficou limpo.
-
-### Verificações finais executadas
-
-- npm ci limpo, CLI 2.121.0 e help dos três comandos locais: PASS.
-- Formatação, lint, typecheck, 95 testes unitários em 13 arquivos e build: PASS; unidades usam transporte sintético, não nova autenticação real.
-- npm run db:test: sete migrations em PostgreSQL local descartável, 70 asserções com authenticated/anon não privilegiados, regressões da ponte, smoke Etapa 003 e seis corridas: PASS.
-- Concorrência: última vaga, convidado idempotente, transferência de owner, criação idempotente de grupo, disputa de slug e grupos independentes; owner único/rollback verificados.
-- Histórico remoto consultado somente leitura: sete migrations continuam mapeadas, incluindo local 20261020161609 → remota 20261020162554. Nenhuma pendente no manifesto e nenhuma reaplicada.
-- Security Advisor atualizado: sete WARN e três INFO. Quatro APIs SECURITY DEFINER autenticadas e três tabelas deliberadamente fechadas mantêm as justificativas anteriores. Dois WARN rls_auto_enable e proteção contra senhas vazadas desabilitada permanecem para revisão administrativa; nenhuma permissão/Auth foi alterada.
-- Autenticação/JWT reais não repetidos nesta execução; nenhuma fixture ou dado remoto criado, alterado ou excluído. 4ª Força, Grupo Teste 2 e fixtures preservados.
-
-### Matriz consolidada e critérios ainda abertos
-
-| Controle                                                  | Evidência / situação                                                                                       |
-| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Auth A/B, identidades distintas                           | PASS real, execução original documentada no Codespaces                                                     |
-| Data API/RPC e isolamento de leitura/escrita A/B          | PASS real nos cenários efetivamente executados                                                             |
-| Owner, convidado, idempotência e integridade              | PASS real nos cenários da suíte; concorrência ampliada PASS em PostgreSQL local                            |
-| SSR identidade/grupo próprio/grupo alheio                 | PASS real, seis checkpoints da captura posterior                                                           |
-| Rejeição explícita de marcadores privados em resposta SSR | PASS unitário novo; execução real do reforço ainda pendente                                                |
-| Membro autenticado comum tentando autoelevação            | SQL local cobre autorização; cenário JWT de membro comum ainda não demonstrado                             |
-| Interface privada desktop/celular/claro/escuro            | Fluxos funcionais informados pelo proprietário; matriz privada de dispositivos/temas ainda não demonstrada |
-| Crítico tar/CLI                                           | Corrigido na árvore instalada e lockfile                                                                   |
-| Nove altos dev / Advisor residual                         | Classificados; aceite temporário/remediação e revisão administrativa pendentes conforme alcance            |
-
-**Bloqueios para encerramento formal:** registrar a validação SSR reforçada de ausência dos marcadores privados; cenário JWT de membro comum sem privilégios; matriz privada de UI/dispositivos/temas; decisão documentada para o risco residual de ferramentas. Não converter SQL simulado em JWT real nem capturas públicas em UI privada homologada.
-
-Para o reforço SSR, após sincronizar develop e confirmar configuração, basta executar uma vez o mesmo --ssr-only com o manifesto original; não repetir a suíte completa. O relatório agora inclui privateDataPresent=false em ambos os checkpoints foreign_group. Não é necessário repetir cadastro/confirmação/recuperação já homologados por causa desta atualização do CLI.
-
-**Liberação formal da Etapa 004: pendente dos bloqueios acima.** Os resultados não autorizam produção, merge ou alterações administrativas externas. Nenhuma vulnerabilidade crítica conhecida permanece no npm audit desta árvore, mas isso não certifica todo o sistema. Histórico de evidências e falhas abaixo preservado.
-
-## Diagnóstico SSR e sincronização — 21/10/2026
-
-GitHub confirmou develop em 5dbe621b2a9d51530e303853be19d71c1a39c6de, incluindo os commits antes locais. Inspeção feita em cópia independente atualizada por blobs GitHub em /workspace/work/ssr-fix, preservando a cópia anterior e os arquivos privados do Codespaces. O Codespaces e o manifesto privado da execução 8467145b-fb16-4cbd-89f5-3cf149b3a830 não estão anexados a este executor. Nenhum resultado real novo foi inventado e a suíte completa não foi repetida.
-
-### Defeito comprovado no executor, causa histórica ainda não confirmada
-
-A asserção antiga exigia HTTP 404 para /groups/[slug] alheio. O código usa notFound() após consultas assíncronas e possui app/loading.tsx. A documentação da versão instalada explica que, após começar streaming, notFound() mantém HTTP 200 e injeta noindex. Referências: [not-found](https://nextjs.org/docs/app/api-reference/file-conventions/not-found), [loading/status codes](https://nextjs.org/docs/app/api-reference/file-conventions/loading#status-codes); também conferido em node_modules/next/dist/docs/01-app/03-api-reference/04-functions/not-found.md.
-
-Reprodução local isolada, sem Auth/dados: Next 16.4.2, loading boundary, rota dinâmica aguardando uma operação e chamando notFound(). HTTPS remoto não foi envolvido; requisição HTTP localhost retornou 200, meta robots noindex e instrução React de boundary com digest NEXT_HTTP_ERROR_FALLBACK;404. O HTML pode conter apenas o shell e a instrução para renderização no cliente, sem h1 final. Isso demonstra uma expectativa incorreta no runner, mas **não prova que a execução histórica falhou nessa asserção**: ela também poderia ter falhado antes em /api/me ou no grupo próprio.
+| ts-mo…2012 tokens truncated… Isso demonstra uma expectativa incorreta no runner, mas **não prova que a execução histórica falhou nessa asserção**: ela também poderia ter falhado antes em /api/me ou no grupo próprio.
 
 Correção restrita ao executor/observabilidade; aplicação, SSR Supabase, cookies, proxy, RLS e controles de sessão inalterados:
 
