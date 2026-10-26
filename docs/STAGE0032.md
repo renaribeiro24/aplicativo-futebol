@@ -1,6 +1,75 @@
 # Etapa 003.2 — auditoria de segurança e estabilização
 
-Estado em 22/10/2026: **etapa ainda aberta**. Auth/JWT, Data API/RPC e seis cenários SSR reais aprovados; crítico de dependências corrigido. Critérios remanescentes e riscos na consolidação abaixo.
+Estado em 26/10/2026: **etapa ainda aberta**. Conta C confirmada e vínculo player/active verificados por leitura administrativa; testes JWT de C preparados, mas ainda não executados neste executor. Evidências A/B e SSR anteriores preservadas.
+
+## Permissões reais da conta C — preparação do executor (26/10/2026)
+
+**Conta e vínculo confirmados por leitura administrativa; permissões JWT de C ainda não executadas neste executor.** A ausência de C registrada em 22/10 é histórica e não descreve o estado atual.
+
+### Pré-condições reais verificadas, sem mutação
+
+Supabase consultado somente por SELECT, sem simular identidade de C:
+
+- auth.users confirma email_confirmed_at preenchido para C 111e7247-9007-41ce-a594-da1665e785e6; perfil existente.
+- Vínculo 49f6781c-b0c7-4735-ba1c-e34fb8a6871f corresponde a C, grupo A 45792949-85ee-4149-9398-c3d0e894676e, role=player/status=active.
+- Grupo A usa o slug sintético audit-0032-a-8467145b-fb16-4cbd-89f5-3cf149b3a830, possui exatamente três integrantes (owner/convidado/C) e seu owner ativo corresponde ao criador original.
+- Grupo B sintético 8a332978-f572-4345-9073-f46a4ca7809d existe e também mantém um único owner ativo.
+- Nenhuma inserção foi repetida. Não houve UPDATE/DELETE, alteração de RLS/grants, Auth, Vercel ou domínio.
+
+O executor disponível continua separado do Codespaces e sem secrets/runtime variables configurados. TEST_USER_C_EMAIL, TEST_USER_C_PASSWORD e as variáveis públicas não estão disponíveis aqui. O novo --check foi executado e mostrou as cinco variáveis ausentes. **Leitura privilegiada dessas pré-condições não representa teste JWT ou prova de autorização de C.**
+
+### Executor direcionado criado
+
+scripts/test-stage0032-member-c.mjs usa apenas createClient do SDK com chave publicável, persistSession=false e sessão em memória de C. Não utiliza cliente administrativo, não cria vínculo e não executa exclusões. O UUID de getUser precisa corresponder exatamente a C e o e-mail deve estar confirmado; projeto e UUIDs de fixtures são fixados para impedir uso acidental em outro ambiente.
+
+Pré-flight positivo com C: ler seu perfil, grupo A, três vínculos e respectivos players autorizados. O executor exige C player/active no vínculo conhecido e um owner original, sem identidades inesperadas nesse conjunto sintético. Em seguida:
+
+| Cenário preparado                                      | Critério de aprovação                                                                       |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| Login normal e getUser C                               | Sessão real emitida pelo provedor, UUID exato, confirmação presente                         |
+| Perfil próprio, grupo A, integrantes/players           | Leituras autorizadas e fixture esperada                                                     |
+| Grupo B: groups/group_members/players de origem B      | Zero linhas para C, com o recurso sintético existente na pré-verificação administrativa     |
+| Autoelevação direta e set_member_role para admin/owner | SQLSTATE 42501/HTTP 403 ou, só no DML direto, resposta 2xx com array vazio                  |
+| Alterar papel de outro integrante                      | RPC set_member_role negada                                                                  |
+| Desativar owner, diretamente e por RPC                 | Tentativa negada; nenhum DELETE é enviado                                                   |
+| Transferir propriedade para C                          | RPC transfer_ownership negada                                                               |
+| Alterar dados administrativos de A e B                 | UPDATE negado ou zero linhas afetadas                                                       |
+| Cadastrar convidado em A e B                           | add_guest_once com argumentos válidos negada                                                |
+| Criar convite em A e B                                 | create_invitation com argumentos válidos negada                                             |
+| Integridade após cada tentativa                        | Snapshot de perfil/grupo A/membros/players idêntico; C player/active e owner original único |
+
+São 20 checkpoints esperados (incluindo 14 tentativas negativas e a conferência final), executados sequencialmente e interrompidos na primeira falha. HTTP 401 é falha de autenticação, não aprovação de autorização. Erros de integridade/assinatura/RPC inexistente e status inesperados também não contam como bloqueio de segurança aprovado. Leituras vazias são classificadas hidden_or_not_found: C não deve poder distinguir existência de recurso privado; a existência de B foi confirmada separadamente, sem atribuir a leitura administrativa a C.
+
+O fingerprint dos snapshots é comparado somente em memória. Manifesto/saída não guardam conteúdo de perfis, dados retornados, senhas, cookies, JWTs ou mensagens brutas do provedor. Guardam cenário, categoria, status/código limitado, flags de integridade, run, IDs sintéticos conhecidos e IDs de requisição. Se alguma RPC indevida retornar um UUID de fixture inesperada, ele é preservado apenas no manifesto para investigação; não há limpeza/compensação automática.
+
+**Escopo da integridade do runner:** perfil e grupo A, incluindo proprietário/C/membros/players autorizados. C não tem permissão para fotografar todo o estado privado de B; a conferência administrativa/owner de B após execução deve continuar separada. Negação 42501 reverte o statement da RPC; isso não deve ser descrito como uma leitura privada de B feita por C. Se uma operação tiver sucesso inesperado ou houver erro de rede, parar, guardar o manifesto e conferir estado por leitura autorizada antes de qualquer nova tentativa.
+
+### Execução única no Codespaces
+
+Configurar TEST_USER_C_EMAIL e TEST_USER_C_PASSWORD em secrets do Codespaces, sem enviar valores no chat. Reiniciar o Codespaces se necessário para carregar secrets novos. Reutilizar as variáveis públicas do projeto e TEST_ACCOUNTS_ARE_SYNTHETIC=1. Template sem credenciais: tests/stage0032-member-c.env.example. O arquivo work/stage0032.test.env existente não foi lido, sobrescrito ou publicado por esta tarefa; variáveis exportadas têm precedência sobre --env-file.
+
+```sh
+node --env-file=work/stage0032.test.env scripts/test-stage0032-member-c.mjs --check
+node --env-file=work/stage0032.test.env scripts/test-stage0032-member-c.mjs
+```
+
+O primeiro comando deve mostrar cinco campos true (URL, chave publicável, e-mail C, senha C e declaração de conta sintética). Só então executar o segundo uma vez. Não executar a suíte integral A/B nem reinserir o vínculo. O manifesto será work/stage0032-member-c-RUN_UUID.json, com modo 0600. As tentativas administrativas são requisições reais sobre fixtures, com expectativa de recusa; em sucesso indevido, o executor para e preserva evidências, sem excluir ou restaurar registros às cegas. Compartilhar somente saída sanitizada. --check é presença, não valida credenciais.
+
+### Verificações locais e resultado desta tarefa
+
+Formatação, lint, typecheck, 117 testes em 14 arquivos e build passaram. Novos testes unitários cobrem identidade equivocada/não confirmada, papéis incorretos, owner duplicado/substituído, diferenciação 403/401/404/erros SQL, vazamento de mensagens e detecção de mutações/ordenação em snapshots. Esses testes usam dados locais e não são JWT real. Sintaxe e --check do novo executor passaram; testes de permissões remotos não iniciados.
+
+| Verificação solicitada       | Resultado verificável nesta execução                                                         |
+| ---------------------------- | -------------------------------------------------------------------------------------------- |
+| Conta C confirmada/vinculada | PASS administrativo somente leitura                                                          |
+| Autenticação JWT de C        | BLOQUEADO — credenciais não acessíveis neste executor                                        |
+| Leitura autorizada via C     | NÃO EXECUTADA                                                                                |
+| Bloqueio do grupo B via C    | NÃO EXECUTADO                                                                                |
+| Bloqueio de autoelevação     | NÃO EXECUTADO                                                                                |
+| Administração indevida       | NÃO EXECUTADA                                                                                |
+| Integridade atual            | C player/active e owner original único confirmados por SELECT; pós-tentativas ainda pendente |
+
+Nenhuma fixture foi criada, alterada ou excluída por esta tarefa. 4ª Força, Grupo Teste 2, usuários reais e relacionamentos preservados. O aceite de riscos de ferramentas registrado anteriormente não foi ampliado. **Etapa 003.2 permanece aberta** para executar este cenário JWT e a matriz de interfaces privadas, além das demais pendências já discriminadas.
 
 ## Conta técnica C — preparação interrompida (22/10/2026)
 
