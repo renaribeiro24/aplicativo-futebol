@@ -1,6 +1,6 @@
 # Etapa 003.2 — checklist de interfaces privadas
 
-Estado em 26/10/2026: **automação privada PASS nas quatro combinações; homologação manual complementar PARCIAL (8 PASS relatados, incluindo Android físico e loading; dashboard vazio UI22 PENDENTE)**. Não interpretar testes locais de preparação como uma sessão autenticada. Status permitidos: PASS, FAIL, PENDENTE, NÃO APLICÁVEL. Só registrar PASS após executar; justificar NÃO APLICÁVEL e registrar evidência/observação. FAIL não significa automaticamente falha de segurança: distinguir produto, executor e ambiente.
+Estado em 26/10/2026: **automação privada PASS nas quatro combinações; homologação manual complementar registrada (8 PASS relatados; UI22 NÃO APLICÁVEL condicional, sujeito à revisão de encerramento)**. Não interpretar testes locais de preparação como uma sessão autenticada. Status permitidos: PASS, FAIL, PENDENTE, NÃO APLICÁVEL. Só registrar PASS após executar; justificar NÃO APLICÁVEL e registrar evidência/observação. FAIL não significa automaticamente falha de segurança: distinguir produto, executor e ambiente.
 
 ## Resultado automatizado privado recebido em 26/10/2026
 
@@ -32,6 +32,10 @@ O proprietário relatou **PASS sem problemas** na homologação manual em aparel
 ### Complemento — carregamento em rede lenta (26/10/2026)
 
 O proprietário confirmou navegação com limitação de rede Slow 3G, concluída normalmente, com pequeno atraso de carregamento e sem travamento/erro relatado. **UI21: PASS manual relatado** para o cenário executado. Não foi fornecida evidência independente sobre indicador visual de loading, vazamento de conteúdo alheio ou matriz por tema/dispositivo; não inferir aprovação de todas as células D/C, D/E, M/C, M/E. **UI22: PENDENTE** até verificar dashboard vazio com conta técnica elegível, ou documentar justificativa fundamentada de não aplicabilidade. Etapa 003.2 ABERTA; PR #1 Draft.
+
+### Complemento — dashboard vazio (26/10/2026)
+
+O proprietário confirmou **não existir conta técnica elegível sem vínculo a grupos**. Para a **rodada manual atual**, UI22 recebe **NÃO APLICÁVEL (condicional, justificado pela ausência de fixture elegível)**, e não PASS. O comportamento de dashboard vazio **não foi executado nem comprovado** e permanece como cobertura futura a validar quando houver conta técnica elegível ou teste isolado não destrutivo. Não criar usuários, excluir vínculos, modificar RLS nem alterar dados existentes apenas para forçar esse estado. A aceitação definitiva desta exceção deve ser revisada na decisão de encerramento da etapa, juntamente com os demais critérios e evidências. PR #1 permanece Draft; sem autorização para merge ou produção.
 
 ## Preparação e segurança
 
