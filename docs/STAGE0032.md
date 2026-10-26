@@ -18,6 +18,12 @@ O responsável pelo projeto **aprovou expressamente a exceção do cenário UI22
 
 **Situação:** evidências manuais de persistência complementadas; rastreabilidade histórica da homologação **PARCIALMENTE COMPROVADA**. Ainda não declarar aceite final nem liberação da Etapa 004. PR #1 Draft, main e produção preservadas. Não houve novos testes nem alteração de configuração.
 
+## Auditoria documental complementar — rastreabilidade da UI (26/10/2026)
+
+**Resultado: PARCIALMENTE COMPROVADA**, conforme relatório de auditoria apresentado pelo responsável. O artefato privado `work/stage0032-ui-0b8dce63-aa96-4a99-bacf-d8f40d525405/report.json` não estava acessível no executor `/workspace`, portanto seu conteúdo não foi conferido diretamente. A execução de 46 PASS está documentada em 26/10/2026, sem horário exato comprovado. O executor `475da8d`, branch `develop`, fixa `https://www.borafute.com.br` como origem autenticada, mas o relatório gerado não inclui campos próprios de timestamp, commit, branch ou deployment. A inspeção independente da Vercel confirmou que, no momento da consulta, o alias apontava para `dpl_Gf8Px4vi8NhfP8viPajE5TXBzHA2`, commit servido `2c0447dc9af4652c1e026d7185bbd64103b7a99f`; não há correlação temporal contemporânea da execução de UI com esse deployment.
+
+**Avaliação:** lacuna de rastreabilidade documental, não falha funcional demonstrada. Não repetir os 46 testes apenas para suprir essa lacuna. Eventual aceite como risco residual exige aprovação expressa do responsável e não equivale a prova de correlação. UI08/UI11 têm confirmação manual testemunhal de persistência; UI22 tem exceção expressamente aceita. **Etapa 003.2 permanece aberta, sem liberação da Etapa 004, merge ou produção.**
+
 ## Parecer documental preliminar de encerramento — 26/10/2026
 
 **Conclusão: homologação funcional substancialmente favorável, mas encerramento formal AINDA NÃO AUTORIZADO.** Revisão documental, sem reexecutar suítes e sem acesso aos relatórios privados brutos do Codespaces.
