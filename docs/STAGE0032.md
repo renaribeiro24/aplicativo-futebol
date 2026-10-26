@@ -2,6 +2,21 @@
 
 Estado em 26/10/2026: **etapa ainda aberta para homologação manual complementar**. Matriz privada automatizada PASS nas quatro combinações, 46/46 checks; evidências JWT/SSR anteriores preservadas.
 
+## Parecer documental preliminar de encerramento — 26/10/2026
+
+**Conclusão: homologação funcional substancialmente favorável, mas encerramento formal AINDA NÃO AUTORIZADO.** Revisão documental, sem reexecutar suítes e sem acesso aos relatórios privados brutos do Codespaces.
+
+- Segurança: 20/20 checkpoints com JWT real da conta técnica C, integridade/owner preservados, conforme evidência comunicada anteriormente; SSR 6/6 e 117 testes unitários informados em execuções anteriores. Não confundir estes números com 46 checks de UI.
+- UI automatizada: 46/46 PASS nas quatro combinações desktop/mobile simulado e tema claro/escuro, conforme registro já existente.
+- UI manual: seis PASS iniciais (convidado, perfil, validação, acessibilidade/navegação, controles C, B→A), Android físico PASS e carregamento Slow 3G PASS, todos **relatados pelo proprietário**, sem verificação independente nesta revisão.
+- UI22 dashboard vazio: **NÃO APLICÁVEL condicional nesta rodada**, pois o proprietário confirmou ausência de conta técnica sem grupos. Não foi testado; manter cobertura futura. A exceção depende de aceite explícito na decisão de encerramento.
+- Evidências ainda a consolidar: identificadores privados das fixtures UI e persistência dos testes de escrita, detalhes do ambiente/deployment/commit efetivamente testado e comprovação de que a matriz e testes manuais se referem a versão funcional equivalente; não registrar credenciais ou dados privados no Git.
+- Riscos não impeditivos de homologação funcional, mas sujeitos a decisão separada: aceite temporário das vulnerabilidades de desenvolvimento até 05/11/2026 e avisos administrativos do Supabase Security Advisor antes de produção. Não interpretar como autorização de deploy.
+- Documentação: a matriz detalhada possui células PENDENTE herdadas do modelo manual; resultados agregados estão registrados em complementos. Não converter todas as 4 combinações para PASS sem evidência específica.
+- Governança: PR #1 deve permanecer Draft, main intacta, sem merge, deploy de produção, mudança de domínio/DNS/Auth/RLS ou limpeza de fixtures.
+
+**Próxima decisão:** responsável revisar a exceção UI22 e evidências/ambiente acima; somente depois emitir termo de aceite formal da Etapa 003.2. A Etapa 004 não é declarada liberada por este parecer.
+
 ## Matriz privada automatizada aprovada — 26/10/2026
 
 Captura do proprietário confirma execução no Codespaces com executor 475da8d: **PASS, authenticated_owner_readonly, diagnosticOnly=false, 46 verificações aprovadas, zero reprovadas, failedChecks vazio**. As quatro combinações passaram: desktop 1440×900 claro/escuro e celular (viewport) 390×844 claro/escuro.
