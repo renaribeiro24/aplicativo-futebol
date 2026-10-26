@@ -87,7 +87,10 @@ function save() {
 function check(label, passed, detail = {}) {
   report.checks.push({ label, passed, ...detail });
   save();
-  if (!passed) throw new Error("UI_CHECK_FAILED");
+  if (!passed) {
+    currentCheck = label;
+    throw new Error("UI_CHECK_FAILED");
+  }
 }
 let browser;
 let currentCheck = "browser_start";
@@ -272,7 +275,9 @@ try {
           .waitFor({ state: "visible" });
         check(
           `${currentCheck}_guest_form`,
-          await page.locator("#name").isVisible(),
+          await page
+            .getByRole("textbox", { name: "Nome do jogador", exact: true })
+            .isVisible(),
         );
       }
       if (!authenticated && path === "/login")

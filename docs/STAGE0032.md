@@ -2,6 +2,20 @@
 
 Estado em 26/10/2026: **etapa ainda aberta**. C 20/20 informado pelo proprietário, SSR anterior 6/6 e verificações automatizadas preservados; matriz privada de interfaces pendente. Escopo e evidências na seção atual abaixo.
 
+## Correção do seletor do formulário de convidado — 26/10/2026
+
+O proprietário apresentou a primeira execução privada do executor: FAIL, desktop/light, checkpoint desktop_light_/groups/[own], seis verificações aprovadas e uma reprovada; demais combinações PENDENTE. Relatório informado: work/stage0032-ui-6462eac3-d472-468c-985d-27c3ad45f048/report.json. A fonte desta evidência é a captura do terminal; o arquivo privado não foi lido neste executor.
+
+**Defeito confirmado no executor:** o teste de presença do formulário usava #name. TextField renderiza label envolvendo Input com name=name e texto Nome do jogador, sem atribuir id=name. Logo, o seletor antigo retorna falso mesmo quando o formulário correto está renderizado. Corrigido para getByRole("textbox", {name:"Nome do jogador",exact:true}); nenhuma alteração de aplicação, layout, RLS ou autorização foi necessária. Caso a conta não possua administração, o seletor acessível continuará ausente e o teste deve falhar; a correção não contorna essa proteção.
+
+Também corrigida a observabilidade: quando check(label,...) reprova, failure.checkpoint passa a registrar o label completo, inclusive o sufixo _guest_form, em vez de apenas a rota corrente. Nenhum texto privado ou detalhe de credencial foi acrescentado ao relatório.
+
+Validação: componente TextField real renderizado por ReactDOM no teste de regressão, verificando associação implícita label/input obrigatório. Reprodução Chromium isolada, sem Auth: #name encontra zero; textbox com nome acessível é visível. Formatação, lint, typecheck, **123 testes em 15 arquivos** e build passaram. A reprodução isolada não é aprovação da interface privada.
+
+**Não foi repetida a sessão autenticada nesta máquina**, que continua sem credenciais A. O resultado histórico FAIL não foi convertido em PASS. Próximo passo: atualizar develop no Codespaces preservando arquivos locais e executar uma vez o executor UI corrigido, usando Playwright isolado em work/ui-tools e as credenciais existentes. Não repetir JWT C ou suíte integral A/B; não mudar permissões para tornar um formulário visível.
+
+Gravidade: baixa, falso negativo/seleção no executor, corrigido. A homologação privada permanece aberta até a nova execução e os itens manuais obrigatórios do checklist. Relatório anterior e fixtures devem ser preservados.
+
 ## Homologação de interfaces e relato de C — 26/10/2026
 
 **Etapa ainda aberta: matriz privada não executada nesta sessão.** Roteiro completo em [STAGE0032-UI-CHECKLIST.md](STAGE0032-UI-CHECKLIST.md), com status PASS/FAIL/PENDENTE/NÃO APLICÁVEL, instruções, resultados esperados e campos de evidência para as quatro combinações.
