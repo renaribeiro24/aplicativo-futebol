@@ -49,6 +49,10 @@ O responsável pelo projeto **aprovou expressamente a exceção do cenário UI22
 
 **O que NÃO foi aprovado por esta decisão:** encerramento formal da Etapa 003.2, liberação da Etapa 004, merge da PR #1, publicação em produção, alteração administrativa ou aceitação automática de outras pendências. Continuam necessárias a conferência das evidências privadas de persistência do convidado e perfil, identificação da versão/deployment homologado e revisão das demais ressalvas documentadas. PR #1 permanece Draft; main intacta.
 
+### Complemento — UI08 persistência após atualização (26/10/2026)
+
+O proprietário confirmou que o convidado previamente cadastrado no grupo técnico **continuou listado após atualizar a página** (Ctrl+F5 foi o procedimento solicitado). **UI08: PASS na verificação manual de persistência, conforme relato do proprietário.** Evidência testemunhal, sem captura sanitizada, identificador da fixture ou consulta independente ao banco. Nenhum novo cadastro solicitado. UI11 permanece pendente de reconfirmação de persistência e a rastreabilidade do deployment ainda precisa ser consolidada. Etapa 003.2 ABERTA; PR #1 Draft.
+
 ## Preparação e segurança
 
 - Responsável técnico: ______; data/hora (America/Sao_Paulo): ______; navegador/versão: ______.
