@@ -1,6 +1,6 @@
 # Etapa 003.2 — checklist de interfaces privadas
 
-Estado em 26/10/2026: **automação privada PASS nas quatro combinações; homologação manual complementar PARCIAL (7 PASS relatados, incluindo Android físico; 1 critério agregado PENDENTE: loading/vazio)**. Não interpretar testes locais de preparação como uma sessão autenticada. Status permitidos: PASS, FAIL, PENDENTE, NÃO APLICÁVEL. Só registrar PASS após executar; justificar NÃO APLICÁVEL e registrar evidência/observação. FAIL não significa automaticamente falha de segurança: distinguir produto, executor e ambiente.
+Estado em 26/10/2026: **automação privada PASS nas quatro combinações; homologação manual complementar PARCIAL (8 PASS relatados, incluindo Android físico e loading; dashboard vazio UI22 PENDENTE)**. Não interpretar testes locais de preparação como uma sessão autenticada. Status permitidos: PASS, FAIL, PENDENTE, NÃO APLICÁVEL. Só registrar PASS após executar; justificar NÃO APLICÁVEL e registrar evidência/observação. FAIL não significa automaticamente falha de segurança: distinguir produto, executor e ambiente.
 
 ## Resultado automatizado privado recebido em 26/10/2026
 
@@ -28,6 +28,10 @@ Fonte: resultados comunicados pelo proprietário nesta conversa. Os resultados a
 ### Complemento — celular físico Android (26/10/2026)
 
 O proprietário relatou **PASS sem problemas** na homologação manual em aparelho Android, após roteiro de menus, textos, botões, teclado virtual, toque, formulários, rolagem horizontal e legibilidade. Marca-se **UI24 / Android: PASS (relatado)**. Modelo, navegador/versão, evidência por tema e teste em iOS não foram informados; não atribuir aprovação específica a iOS ou a combinações não documentadas. UI21 (loading) e UI22 (dashboard vazio elegível) continuam PENDENTES. Etapa 003.2 ABERTA, PR #1 Draft.
+
+### Complemento — carregamento em rede lenta (26/10/2026)
+
+O proprietário confirmou navegação com limitação de rede Slow 3G, concluída normalmente, com pequeno atraso de carregamento e sem travamento/erro relatado. **UI21: PASS manual relatado** para o cenário executado. Não foi fornecida evidência independente sobre indicador visual de loading, vazamento de conteúdo alheio ou matriz por tema/dispositivo; não inferir aprovação de todas as células D/C, D/E, M/C, M/E. **UI22: PENDENTE** até verificar dashboard vazio com conta técnica elegível, ou documentar justificativa fundamentada de não aplicabilidade. Etapa 003.2 ABERTA; PR #1 Draft.
 
 ## Preparação e segurança
 
