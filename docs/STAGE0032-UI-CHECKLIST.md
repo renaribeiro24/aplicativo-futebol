@@ -51,7 +51,7 @@ D/C = desktop claro (1440 × 900); D/E = desktop escuro; M/C = celular claro (39
 scripts/test-stage0032-ui.mjs reutiliza Playwright/Chromium já instalados. Não executa npm install, não instala browsers, não persiste storageState/HAR/traces e não tira capturas de páginas privadas. Nenhuma dependência foi adicionada. Se o Codespaces não tiver essas ferramentas, registrar bloqueio e executar a matriz manualmente; eventual instalação exige justificativa e revisão separada.
 
 ```sh
-node scripts/test-stage0032-ui.mjs --check
+node --env-file=work/stage0032.test.env scripts/test-stage0032-ui.mjs --check
 node --env-file=work/stage0032.test.env scripts/test-stage0032-ui.mjs --authenticated
 ```
 
