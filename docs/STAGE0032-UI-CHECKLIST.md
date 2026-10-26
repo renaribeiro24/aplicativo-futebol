@@ -37,6 +37,10 @@ O proprietário confirmou navegação com limitação de rede Slow 3G, concluíd
 
 O proprietário confirmou **não existir conta técnica elegível sem vínculo a grupos**. Para a **rodada manual atual**, UI22 recebe **NÃO APLICÁVEL (condicional, justificado pela ausência de fixture elegível)**, e não PASS. O comportamento de dashboard vazio **não foi executado nem comprovado** e permanece como cobertura futura a validar quando houver conta técnica elegível ou teste isolado não destrutivo. Não criar usuários, excluir vínculos, modificar RLS nem alterar dados existentes apenas para forçar esse estado. A aceitação definitiva desta exceção deve ser revisada na decisão de encerramento da etapa, juntamente com os demais critérios e evidências. PR #1 permanece Draft; sem autorização para merge ou produção.
 
+### Consolidação da rodada manual e revisão de encerramento
+
+Os oito PASS agregados comunicados são: convidado, perfil, mensagens/validações, acessibilidade/navegação, controles C, B→A, Android físico e carregamento Slow 3G. A tabela inicial de resultados manuais acima é **histórica** e deve ser lida com os complementos posteriores, não como status atual. UI22 está NÃO APLICÁVEL **condicional**, não PASS; a aceitação formal dessa exceção continua pendente. Não presumir que cada PASS agregado cobre todas as quatro combinações ou a integralidade de WCAG. Parecer detalhado em docs/STAGE0032.md. Etapa aberta e PR Draft.
+
 ## Preparação e segurança
 
 - Responsável técnico: ______; data/hora (America/Sao_Paulo): ______; navegador/versão: ______.
