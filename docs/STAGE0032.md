@@ -2,6 +2,14 @@
 
 Estado em 26/10/2026: **etapa ainda aberta para homologação manual complementar**. Matriz privada automatizada PASS nas quatro combinações, 46/46 checks; evidências JWT/SSR anteriores preservadas.
 
+## Decisão do responsável — aceite da exceção UI22 (26/10/2026)
+
+O responsável pelo projeto **aprovou expressamente a exceção do cenário UI22 (dashboard vazio) nesta rodada de homologação**, conforme decisão registrada na conversa em 26/10/2026. A justificativa é a inexistência de conta técnica elegível sem vínculos a grupos; não foram criados usuários nem removidos vínculos para forçar o cenário.
+
+**Escopo do aceite:** dispensa condicional de execução de UI22 **nesta etapa**, com obrigação de cobertura futura quando houver ambiente/fixture apropriado. O resultado **não é PASS** e não constitui prova do funcionamento do dashboard vazio.
+
+**O que NÃO foi aprovado por esta decisão:** encerramento formal da Etapa 003.2, liberação da Etapa 004, merge da PR #1, publicação em produção, alteração administrativa ou aceitação automática de outras pendências. Continuam necessárias a conferência das evidências privadas de persistência do convidado e perfil, identificação da versão/deployment homologado e revisão das demais ressalvas documentadas. PR #1 permanece Draft; main intacta.
+
 ## Parecer documental preliminar de encerramento — 26/10/2026
 
 **Conclusão: homologação funcional substancialmente favorável, mas encerramento formal AINDA NÃO AUTORIZADO.** Revisão documental, sem reexecutar suítes e sem acesso aos relatórios privados brutos do Codespaces.
