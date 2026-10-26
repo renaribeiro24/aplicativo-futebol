@@ -1,12 +1,29 @@
 # Etapa 003.2 — checklist de interfaces privadas
 
-Estado em 26/10/2026: **automação privada PASS nas quatro combinações; homologação manual complementar PENDENTE**. Não interpretar testes locais de preparação como uma sessão autenticada. Status permitidos: PASS, FAIL, PENDENTE, NÃO APLICÁVEL. Só registrar PASS após executar; justificar NÃO APLICÁVEL e registrar evidência/observação. FAIL não significa automaticamente falha de segurança: distinguir produto, executor e ambiente.
+Estado em 26/10/2026: **automação privada PASS nas quatro combinações; homologação manual complementar PARCIAL (6 PASS relatados; 2 PENDENTES)**. Não interpretar testes locais de preparação como uma sessão autenticada. Status permitidos: PASS, FAIL, PENDENTE, NÃO APLICÁVEL. Só registrar PASS após executar; justificar NÃO APLICÁVEL e registrar evidência/observação. FAIL não significa automaticamente falha de segurança: distinguir produto, executor e ambiente.
 
 ## Resultado automatizado privado recebido em 26/10/2026
 
 **PASS: 46 aprovados, zero reprovados**, modo authenticated_owner_readonly e diagnosticOnly=false, conforme captura do proprietário. Relatório no Codespaces: work/stage0032-ui-0b8dce63-aa96-4a99-bacf-d8f40d525405/report.json. O arquivo privado não foi lido nesta sessão; fonte é a saída sanitizada. Desktop claro/escuro e celular claro/escuro passaram. Não repetir essa matriz ou login apenas para preencher os itens manuais abaixo.
 
 Os status PENDENTE da tabela manual representam os critérios completos ainda não atestados, incluindo submissões, interpretação visual/contraste e estados especiais. Não anulam os PASS automatizados. Usar a evidência existente para os subcritérios já cobertos e executar apenas o complemento: salvar convidado/perfil em dados fictícios, mensagens/validações, foco/contraste/zoom, loading/vazio elegível, UI da conta C e direção B→A. Não inferir legibilidade, acessibilidade completa ou sucesso de gravação só por heading/status HTTP.
+
+## Homologação manual complementar — relato do proprietário em 26/10/2026
+
+Fonte: resultados comunicados pelo proprietário nesta conversa. Os resultados abaixo não representam execução independente pelo agente, nem substituem a evidência automatizada de 46 PASS. Dispositivo, navegador, hora exata e identificadores das fixtures não foram informados; não atribuir aprovação individual a todas as quatro combinações sem evidência específica.
+
+| Critério comunicado | Resultado | Correspondência no checklist | Observação |
+| --- | --- | --- | --- |
+| Cadastro de convidado fictício | PASS (relatado) | UI08 | Confirmar ID da fixture UI e persistência em manifesto privado, sem dados pessoais |
+| Salvamento de perfil técnico | PASS (relatado) | UI11 | Preservar evidência sanitizada de persistência |
+| Mensagens e validações | PASS (relatado) | UI09, parte de UI19 | Não implica contraste quantitativo certificado |
+| Acessibilidade e navegação | PASS (relatado) | UI02, UI18–UI20 | Escopo/dispositivos não especificados; não declarar conformidade WCAG |
+| Controles visuais de C | PASS (relatado) | UI17 | Não substitui os 20 checkpoints JWT aprovados |
+| Isolamento B → A | PASS (relatado) | UI14 (direção B → A) | Não inferir repetição A → B manual; testes automatizados preservados |
+| Loading e estado vazio | PENDENTE | UI21, UI22 | Testar navegação GET com rede lenta; vazio apenas se conta técnica elegível existir |
+| Celular físico | PENDENTE | UI24 | Testar teclado virtual, toque, zoom e botões em aparelho real |
+
+**Critérios de encerramento:** manter UI21, UI22 e UI24 pendentes até execução ou decisão justificada de não aplicabilidade, quando cabível. O resultado manual genérico não autoriza converter automaticamente todas as células D/C, D/E, M/C, M/E para PASS. Manter os resultados de automação registrados, PR #1 Draft e etapa 003.2 ABERTA. Não executar novas mutações, limpar fixtures, promover main ou publicar em produção por causa desta atualização documental.
 
 ## Preparação e segurança
 
