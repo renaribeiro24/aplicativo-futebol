@@ -2,6 +2,24 @@
 
 Estado em 26/10/2026: **etapa ainda aberta**. C 20/20 informado pelo proprietário, SSR anterior 6/6 e verificações automatizadas preservados; matriz privada de interfaces pendente. Escopo e evidências na seção atual abaixo.
 
+## Diagnóstico de rede no dashboard — 26/10/2026
+
+Nova captura do proprietário, após atualizar para 606c3e4: execução privada FAIL no desktop_light_/dashboard, cinco checks aprovados e um reprovado; demais combinações PENDENTE. O resumo sanitizado do relatório mostra HTTP 200, sem overflow, h1=1, main=true, nenhum campo sem label, keyboard=true, console=0, page=0, http=0, **network=1** e **canceledPrefetches=5**. Portanto, o único critério reprovado é uma falha de rede ainda não identificada. Não atribuir automaticamente essa sexta requisição a prefetch, sessão, RLS ou defeito do produto.
+
+Observabilidade ampliada sem afrouxar aprovação: networkFailures agora contém apenas códigos Chromium conhecidos, tipo/método por allowlist, categoria app_route/app_api/static_asset/external/unknown, flag prefetch, navegação e indicação de início na etapa anterior. URL, host externo, query, credenciais, cookies, headers e corpo nunca são gravados. Outros valores viram other. O detalhe das asserções reprovadas também passa a aparecer na saída sanitizada, sem precisar imprimir relatório bruto. Erros de rede desconhecidos continuam bloqueantes.
+
+Modo **--authenticated --dashboard-only** adicionado para uma única passagem dirigida: mantém as quatro verificações de layout do login para reproduzir a preparação anterior, faz um login real e testa somente a página privada dashboard em desktop claro. Não visita grupo, perfil ou as demais combinações privadas; se chegar ao final, faz logout e confere /api/me 401. Saída rotulada authenticated_dashboard_diagnostic e diagnosticOnly=true. Um eventual PASS desse modo não aprova toda a matriz nem prova a causa da falha intermitente anterior.
+
+```sh
+NODE_PATH="$PWD/work/ui-tools/node_modules${NODE_PATH:+:$NODE_PATH}" \
+node --env-file=work/stage0032.test.env \
+  scripts/test-stage0032-ui.mjs --authenticated --dashboard-only
+```
+
+Executar uma vez no Codespaces depois de atualizar develop. Compartilhar apenas a saída sanitizada, especialmente failedChecks/networkFailures. Não repetir a matriz completa nem ignorar requisições com base só no status 200 ou no nome ERR_ABORTED. Se não reproduzir, registrar essa limitação; se reproduzir, usar categoria/tipo/lifecycle para identificar a fronteira antes de corrigir.
+
+Testes locais: formatação, lint, typecheck, **126 testes em 15 arquivos** e build passaram. Novos testes verificam categorias de recursos, metadados de lifecycle e supressão de URL/query/credenciais/mensagens arbitrárias. Nenhum teste autenticado foi repetido neste executor e nenhuma causa histórica específica foi inventada. Sem alteração de aplicação, RLS, permissões, alias ou dados. Etapa continua aberta.
+
 ## Correção do seletor do formulário de convidado — 26/10/2026
 
 O proprietário apresentou a primeira execução privada do executor: FAIL, desktop/light, checkpoint desktop_light_/groups/[own], seis verificações aprovadas e uma reprovada; demais combinações PENDENTE. Relatório informado: work/stage0032-ui-6462eac3-d472-468c-985d-27c3ad45f048/report.json. A fonte desta evidência é a captura do terminal; o arquivo privado não foi lido neste executor.
@@ -292,11 +310,7 @@ Reforço do executor neste fechamento: acessos ao grupo alheio agora reprovam ta
 
 Antes: npm audit --json reproduziu 11 pacotes afetados (1 crítico, 9 altos, 1 moderado); npm audit --omit=dev --json, zero achados. O CLI supabase@2.81.3 fixava tar@7.5.11: simples atualização transitiva não bastava.
 
-Atualizado exclusivamente o CLI de desenvolvimento para **supabase@2.121.0**, versão exata. A nova distribuição usa shim Node e pacotes opcionais por plataforma, removendo o instalador antigo e a dependência tar. Instalação limpa npm ci passou no executor Linux/Node 24/npm 11; supabase --version confirmou 2.121.0. Help de gen types, migration up e db lint preserva as flags --local, --schema e --fail-on usadas pelos scripts. Nenhum comando remoto, migration real ou geração de tipos foi executado por esse CLI. A pilha Supabase local completa não foi iniciada; integração real de geração de tipos/lint nessa pilha continua não certificada. Node/npm e SDKs de Auth/SSR/runtime inalterados.
-
-Depois: **npm audit --json: 9 altos, 0 críticos, 0 moderados**; **npm audit --omit=dev --json: zero achados**. tar não existe mais no lockfile. Nenhum audit fix --force, downgrade ou override aplicado. package.json/lockfile e versão informativa do README atualizados.
-
-Os nove alertas altos abaixo são pacotes sinalizados da mesma cadeia de desenvolvimento, não nove explorações independentes:
+Atualizado exclusivamente o CLI de…273 tokens truncated…de desenvolvimento, não nove explorações independentes:
 
 | Pacote afetado           | Versão        | Caminho de dependência / alcance                           |
 | ------------------------ | ------------- | ---------------------------------------------------------- |

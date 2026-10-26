@@ -61,6 +61,10 @@ Artefatos em work/stage0032-ui-RUN/report.json (0600), com flags/contagens sem t
 
 Para repetir apenas QA público local, em build sem Supabase configurado, iniciar npm start na porta 3300 e usar --local-public. Resultado desse modo deve ser rotulado público/preparação, nunca privado. Relatório de 26/10: 45 verificações passaram em 40 visitas, quatro combinações; imagens somente da home pública. Todos os itens privados acima continuam pendentes.
 
+## Diagnóstico dirigido de rede
+
+Se a matriz reprovar apenas em network no dashboard, usar uma vez --authenticated --dashboard-only após atualizar o executor. Esse modo testa somente o dashboard privado em desktop claro, com um login e as verificações públicas iniciais; não aprova as outras combinações. A saída inclui failedChecks com networkFailures sanitizados (código/tipo/método/categoria/lifecycle), sem URL ou dados de sessão. A falha desconhecida permanece bloqueante até identificação; não ignorar aborts não classificados ou repetir toda a matriz às cegas. Procedimento em STAGE0032.md.
+
 ## Revisão do relatório C sem repetir autenticação
 
 O arquivo informado pelo proprietário fica no Codespaces, não no executor atual. Para produzir resumo seguro somente leitura:

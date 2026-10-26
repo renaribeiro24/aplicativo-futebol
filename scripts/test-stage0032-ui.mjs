@@ -1,6 +1,9 @@
 // Uses existing Playwright/Chromium only. Never installs tools or stores sessions.
 import assert from "node:assert/strict";
-import { expectedPrefetchAbort } from "./stage0032-ui-observations.mjs";
+import {
+  expectedPrefetchAbort,
+  networkFailureSummary,
+} from "./stage0032-ui-observations.mjs";
 import { createRequire } from "node:module";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
@@ -13,6 +16,11 @@ try {
 }
 const authenticated = process.argv.includes("--authenticated");
 const localPublic = process.argv.includes("--local-public");
+const dashboardOnly = process.argv.includes("--dashboard-only");
+assert(
+  !dashboardOnly || authenticated,
+  "--dashboard-only requires --authenticated",
+);
 const systemBrowser =
   process.env.CHROMIUM_EXECUTABLE_PATH ||
   (existsSync("/usr/bin/chromium") ? "/usr/bin/chromium" : undefined);
@@ -67,18 +75,27 @@ mkdirSync(directory, { recursive: true, mode: 0o700 });
 const report = {
   run,
   mode: authenticated
-    ? "authenticated_owner_readonly"
+    ? dashboardOnly
+      ? "authenticated_dashboard_diagnostic"
+      : "authenticated_owner_readonly"
     : "local_public_unconfigured",
   origin,
   result: "started",
   checks: [],
-  matrix: combinations.map((c) => ({ ...c, status: "PENDENTE" })),
+  matrix: (dashboardOnly ? combinations.slice(0, 1) : combinations).map(
+    (c) => ({ ...c, status: "PENDENTE" }),
+  ),
+  diagnosticOnly: dashboardOnly,
   privateScreenshots: false,
   limitations: [
     "No guest/profile submission or new fixture creation",
     "Contrast, touch, loading and empty states require manual review",
   ],
 };
+if (dashboardOnly)
+  report.limitations.unshift(
+    "Dashboard diagnostic only; not the full private matrix",
+  );
 function save() {
   writeFileSync(`${directory}/report.json`, JSON.stringify(report, null, 2), {
     mode: 0o600,
@@ -126,6 +143,9 @@ try {
   page.setDefaultTimeout(15000);
   let errors = { console: 0, page: 0, network: 0, http: 0 };
   let canceledPrefetches = 0;
+  let networkFailures = [];
+  const requestSteps = new WeakMap();
+  page.on("request", (request) => requestSteps.set(request, currentCheck));
   let expected404 = false;
   let currentPath = "/";
   page.on("pageerror", () => errors.page++);
@@ -144,7 +164,24 @@ try {
       )
     )
       canceledPrefetches++;
-    else errors.network++;
+    else {
+      errors.network++;
+      if (networkFailures.length < 20)
+        networkFailures.push(
+          networkFailureSummary({
+            url: request.url(),
+            origin,
+            reason: request.failure()?.errorText,
+            type: request.resourceType(),
+            method: request.method(),
+            prefetchHeader: request.headers()["next-router-prefetch"],
+            navigation: request.isNavigationRequest(),
+            startedInPreviousStep:
+              requestSteps.has(request) &&
+              requestSteps.get(request) !== currentCheck,
+          }),
+        );
+    }
   });
   page.on("response", (r) => {
     if (r.status() < 400) return;
@@ -166,7 +203,7 @@ try {
     await page
       .getByRole("heading", { name: "Bom ter você por aqui.", exact: true })
       .waitFor({ state: "visible" });
-    for (const c of report.matrix) {
+    for (const c of combinations) {
       await page.setViewportSize({ width: c.width, height: c.height });
       await page.emulateMedia({ colorScheme: c.theme });
       const loginLayout = await page.evaluate(() => ({
@@ -211,14 +248,16 @@ try {
     });
     await page.emulateMedia({ colorScheme: combination.theme });
     const routes = authenticated
-      ? [
-          "/dashboard",
-          group,
-          "/profile",
-          "/groups/new",
-          foreign,
-          "/ui-audit-not-found",
-        ]
+      ? dashboardOnly
+        ? ["/dashboard"]
+        : [
+            "/dashboard",
+            group,
+            "/profile",
+            "/groups/new",
+            foreign,
+            "/ui-audit-not-found",
+          ]
       : [
           "/",
           "/login",
@@ -241,6 +280,7 @@ try {
       currentCheck = `${combination.device}_${combination.theme}_${route}`;
       errors = { console: 0, page: 0, network: 0, http: 0 };
       canceledPrefetches = 0;
+      networkFailures = [];
       currentPath = new URL(path, origin).pathname;
       expected404 = path === foreign || path === "/ui-audit-not-found";
       const response = await page.goto(origin + path, {
@@ -330,6 +370,7 @@ try {
           keyboard,
           errors,
           canceledPrefetches,
+          networkFailures,
         },
       );
       if (!authenticated && path === "/")
@@ -338,7 +379,7 @@ try {
           fullPage: true,
         });
     }
-    if (authenticated) {
+    if (authenticated && !dashboardOnly) {
       currentCheck = `${combination.device}_${combination.theme}_navigation`;
       await page.goto(origin + "/dashboard");
       await Promise.all([
@@ -365,7 +406,9 @@ try {
       (await context.request.get(origin + "/api/me")).status() === 401,
     );
     currentCheck = "anonymous_private_guards";
-    for (const route of ["/dashboard", group, "/profile", "/groups/new"]) {
+    for (const route of dashboardOnly
+      ? []
+      : ["/dashboard", group, "/profile", "/groups/new"]) {
       await page.goto(origin + route);
       check(
         "anonymous_private_guard",
@@ -389,9 +432,11 @@ console.log(
   JSON.stringify({
     result: report.result,
     mode: report.mode,
+    diagnosticOnly: dashboardOnly,
     matrix: report.matrix,
     passed: report.checks.filter((c) => c.passed).length,
     failed: report.checks.filter((c) => !c.passed).length,
+    failedChecks: report.checks.filter((c) => !c.passed),
     failure: report.failure,
     report: `${directory}/report.json`,
     noPersistedSessions: true,
