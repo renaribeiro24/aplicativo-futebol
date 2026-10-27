@@ -192,3 +192,5 @@ Estrutura SQL local para agendas recorrentes, políticas de preço e classifica�
 ## Identidade visual — BoraFute
 
 **Bora pro jogo!** Seu futebol. Sua turma. Tudo no mesmo lugar. Tokens, temas e componentes em [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md); validação e pendências em [docs/STAGE0042V.md](docs/STAGE0042V.md). A homologação Supabase 004.2-H permanece pendente.
+
+Server Actions no Codespaces: configuração de origem restrita a next dev, sem permissões adicionais em Vercel/produção. Diagnóstico e validação em [docs/CODESPACES-SERVER-ACTIONS.md](docs/CODESPACES-SERVER-ACTIONS.md).
