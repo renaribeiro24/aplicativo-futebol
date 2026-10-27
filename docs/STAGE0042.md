@@ -88,3 +88,68 @@ Nenhum resultado local significa que a migration foi aplicada ou homologada no S
 - Supabase: [RLS](https://supabase.com/docs/guides/database/postgres/row-level-security) e [privilégios por coluna](https://supabase.com/docs/guides/database/postgres/column-level-security), consultados por MCP oficial; políticas de UPDATE não substituem proteção de colunas.
 - CLI 2.121.0: ajuda de migration new consultada e comando de geração executado localmente.
 - A leitura direta de https://supabase.com/changelog.md foi recusada pelo proxy (CONNECT 403); nenhum contorno foi tentado. A revisão não certifica mudanças de plataforma não acessíveis por esse índice.
+
+## Etapa 004.2-H — tentativa de homologação Supabase local (27/10/2026)
+
+**Resultado: BLOQUEADA POR INFRAESTRUTURA; homologação completa NÃO CONCLUÍDA.** Trabalho na develop, base `e01006c197bf1232b6f2212258372019cb00554b`, checkout inicialmente limpo e sincronizado. As oito migrations estão presentes. Nenhuma foi aplicada ao Supabase hospedado, nenhum usuário remoto foi criado e nenhuma evidência da Etapa 003.2 foi modificada. Os resultados SQL descartáveis da seção anterior continuam válidos apenas no escopo original; não foram convertidos em testes de Auth/Data API.
+
+### Ambiente, tentativa e evidência
+
+- Node.js 24.19.0, npm 11.9.0, Supabase CLI 2.121.0 e Docker Engine 28.4.0, daemon local `unix:///var/run/docker.sock`.
+- Configuração existente: PostgreSQL major 17, API expondo apenas public, private fora da API, migrations habilitadas e seed desabilitado. Nenhuma configuração foi alterada. A configuração local preexistente tem confirmação de e-mail desabilitada; isso não foi modificado e não equivale a validação do fluxo hospedado de confirmação.
+- CLI executada com SUPABASE_HOME em work/cli-home para armazenar seu cache somente no workspace. A chamada inicial sem esse seletor não conseguiu escrever seu arquivo de telemetria no home somente leitura; não é defeito de schema e foi resolvida localmente pelo seletor já utilizado na Etapa 004.2.
+- O Docker respondeu normalmente e não havia containers/volumes de uma instância Supabase anterior. Executado `supabase start` com o daemon local explicitamente selecionado, sem --linked, project-ref, URL de banco ou credenciais remotas. Saída mantida em arquivo ignorado, não impressa integralmente.
+- O download das imagens falhou em `https://public.ecr.aws/v2/` com **Forbidden**. O registry não consta da lista permitida da política de rede restrita deste executor. Após recusas reiteradas internas da CLI, somente esse processo de start foi interrompido com SIGINT (saída 130), evitando repetir downloads recusados. Nenhum serviço foi iniciado; não houve erro SQL ou reprovação de autorização da aplicação.
+- Tags solicitadas, **não versões homologadas**: postgres 17.11.0.004, gotrue v2.197.0 e postgrest v16.4. Não foi possível obter uma versão executada do PostgreSQL/Auth/Data API da pilha completa.
+- Registro sanitizado produzido às **11:55:34 de 27/10/2026, America/Sao_Paulo** (14:55:34 UTC), em work/stage0042h-preflight.json. Log: work/stage0042h-start.log; SHA-256 `46e7be327f4529511793c121126d90100b562ea313aa6f11cd2a6cc871a9c8ca`. Horário é do registro de diagnóstico, não comprovação de início dos testes HTTP, que não ocorreram. Artefatos ignorados não são publicados no Git.
+- Nenhum bypass de proxy, troca de registry para contornar a política ou uso do banco remoto como alternativa. Nenhuma credencial local/real foi publicada.
+
+### Matriz de homologação desta tentativa
+
+| Critério                                                                    | Resultado     | Evidência / limitação                                                                      |
+| --------------------------------------------------------------------------- | ------------- | ------------------------------------------------------------------------------------------ |
+| Branch develop, estado remoto e oito arquivos de migration                  | PASS          | Checkout e fetch; zero divergência na preparação                                           |
+| CLI e Docker local disponíveis                                              | PASS          | Versões e socket local verificados                                                         |
+| Início da instância Supabase completa                                       | FAIL          | Registry recusado; falha de infraestrutura antes do provisionamento                        |
+| Aplicação das oito migrations na pilha completa                             | NÃO EXECUTADO | Banco Supabase local não iniciou                                                           |
+| btree_gist/extensions, ownership, ACLs, FKs e integridade na pilha completa | NÃO EXECUTADO | Evidências anteriores são do PostgreSQL descartável, não desta instância                   |
+| RLS e funções privadas sob Supabase completo                                | NÃO EXECUTADO | Sem instância local disponível                                                             |
+| Advisors de segurança e desempenho                                          | NÃO EXECUTADO | Nenhum achado novo/preexistente foi obtido nesta tentativa; isso não significa zero avisos |
+| Geração oficial dos tipos TypeScript locais                                 | NÃO EXECUTADO | Arquivo existente preservado; nenhum tipo inventado ou substituído por saída vazia         |
+| Auth local e JWTs reais owner/admin/player/guest/sem vínculo                | NÃO EXECUTADO | Zero contas ou tokens criados                                                              |
+| Data API: leituras, escritas e negativas por papel                          | NÃO EXECUTADO | Sem Auth/PostgREST locais                                                                  |
+| Isolamento, preços exclusivos de owner e classificação individual           | NÃO EXECUTADO | Exige nova evidência HTTP; SQL anterior não substitui                                      |
+| Sobreposição, histórico e troca atômica sob pilha completa                  | NÃO EXECUTADO | Nenhuma nova operação financeira ou fixture                                                |
+| Regressões HTTP de perfil, grupos, convidados e gerenciamento de membros    | NÃO EXECUTADO | Não reutilizar o domínio público para esta homologação local                               |
+
+Não executar advisors com --linked ou consultar o projeto hospedado para preencher esta matriz. Os avisos históricos do Advisor remoto continuam no relatório da Etapa 003.2; não se pode presumir que correspondam aos avisos de uma pilha local não iniciada. O aviso de CLI **[inbucket] deprecated, use [local_smtp]** foi observado na configuração existente: é compatibilidade futura da CLI, não um resultado de Security Advisor e não foi corrigido por alteração administrativa.
+
+### Verificações do repositório nesta rodada
+
+| Verificação do repositório       | Resultado desta rodada                                                                             |
+| -------------------------------- | -------------------------------------------------------------------------------------------------- |
+| npm run lint                     | PASS                                                                                               |
+| npm run typecheck                | PASS                                                                                               |
+| npm test                         | PASS: 126 testes em 15 arquivos                                                                    |
+| npm run build                    | PASS: build local Next.js 16.4.2, sem publicação                                                   |
+| Formatação do documento alterado | PASS                                                                                               |
+| npm run format:check global      | FAIL: somente docs/STAGE0032.md e docs/STAGE0032-UI-CHECKLIST.md, falhas preexistentes preservadas |
+| git diff --check                 | PASS                                                                                               |
+
+Logs ignorados: work/stage0042h-{lint,typecheck,unit,build,format}.log. Essas verificações não desbloqueiam os critérios HTTP e da pilha completa acima. Não foi repetida a suíte PostgreSQL descartável nesta rodada: os resultados anteriores permanecem históricos, sem nova atribuição à pilha Supabase. Sem alteração de SQL, código de aplicação, dependências, tipos ou configurações; alteração somente neste documento.
+
+### Retomada segura em ambiente com suporte local
+
+No Codespaces ou máquina de desenvolvimento com Docker e acesso autorizado ao registry oficial:
+
+1. Sincronizar develop preservando trabalho local. Conferir CLI 2.121.0, Docker, oito migrations, configuração e ausência de ligação/destino remoto no comando. Inventariar instâncias locais existentes antes de iniciar; **não executar reset, remover volumes ou sobrescrever secrets** de uma instância preexistente.
+2. Em instância local nova e exclusiva desta homologação, executar `npx supabase start`. A criação nova aplica as migrations automaticamente; registrar os oito arquivos aplicados. Não substituir esta etapa por testes SQL simulados. Se existir banco local com dados não descartáveis, preparar instância separada antes de qualquer reset.
+3. Conferir catálogo/ACLs, constraints, triggers e versão de btree_gist; testar que private não está exposto e que os dois novos trigger guards não possuem EXECUTE de clientes. Comparar advisors antes/depois da oitava migration em instâncias descartáveis separadas, sem alterar as migrations compartilhadas, para distinguir achados novos/preexistentes.
+4. Executar `npx supabase db advisors --local --type all --level info --fail-on none --output-format json`, mantendo o relatório completo local e publicando apenas resumo sanitizado. Executar também `npm run db:lint:local`.
+5. Executar `npm run db:types`, revisar o diff gerado oficialmente e rodar validação de TypeScript antes de publicar os tipos. O script existente rejeita argumentos remotos.
+6. Criar exclusivamente no Auth **local** cinco contas sintéticas distintas (owner/admin/player/guest/sem vínculo), autenticar normalmente e verificar identidade por getUser. Preparar vínculos somente em grupos sintéticos locais pelos mecanismos existentes; eventual preparação privilegiada deve ficar separada das provas de autorização. Nas provas HTTP usar chave publicável local e JWT do respectivo usuário, nunca service_role para representar cliente.
+7. Executar e registrar matriz HTTP permitida/negada, linhas realmente visíveis/alteradas, isolamento entre dois grupos, preços imutáveis para admin/player/guest, classificações próprias/terceiras, tentativas de reatribuição, sobreposições e histórico. Conferir integridade após negativas. Regressões devem cobrir RPCs existentes de perfil/grupos/convidados/convites/vínculos e owner único, sem ampliar permissões.
+8. Para troca de vigência, comprovar fechamento e inserção em **uma transação** com rollback em erro, inclusive sob contexto não privilegiado. Não tratar duas chamadas Data API independentes como operação atômica. A Etapa 004.2 ainda não fornece RPC pública de substituição; não inventar que esse fluxo já está exposto pela API.
+9. Rodar lint, typecheck, testes e build; registrar versões, commit, origem loopback, run e artefatos sanitizados. Não imprimir status/ambiente completo com chaves, JWTs ou senhas. Nenhum teste deste roteiro deve receber o ref hospedado ou domínio público.
+
+**Parecer: a Etapa 004.2 ainda NÃO está tecnicamente pronta para solicitar aplicação remota com homologação completa.** Permanecem impeditivos de evidência: Supabase local completo, advisors, tipos oficiais e Auth/Data API com JWT real. A implementação SQL permanece preparada e já testada no PostgreSQL descartável anterior, mas não foi homologada nesta pilha. Retomar essas verificações em ambiente apropriado; não aplicar remotamente para resolver a limitação local. Sem merge, deploy ou ampliação do aceite de riscos anteriores.
