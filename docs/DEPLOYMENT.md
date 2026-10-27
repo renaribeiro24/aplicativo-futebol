@@ -1,3 +1,36 @@
+# Estratégia temporária de Production — auditoria de 27/10/2026
+
+**Autorizada pelo proprietário, mas ainda não aplicada nesta sessão.** A estratégia solicitada é utilizar `develop` como Production Branch e publicar o BoraFute no domínio oficial. Os registros anteriores abaixo são históricos; as restrições de não publicar dessas operações anteriores não substituem a autorização desta tarefa.
+
+## Evidências da auditoria
+
+- Integração Vercel autenticada; equipe `team_ZCVh2SDJPkrBvec05vrO0RTO`, projeto `prj_F4qeSw3UsqZzXj5cA89XSY5PgGnt` (`aplicativo-futebol`), repositório vinculado `renaribeiro24/aplicativo-futebol`, framework Next.js e Node 24.x confirmados.
+- Código candidato: `develop` em `efae869db9df0a144810c0a0673ce3f016798cac`. Preview READY `dpl_3AcV3PCGDFhBskQrcf6VGjwoasbY`, URL https://aplicativo-futebol-apyr6aahh-renan-ribeiros-projects.vercel.app.
+- `www.borafute.com.br` continua associado ao Preview READY `dpl_Gf8Px4vi8NhfP8viPajE5TXBzHA2`, commit `2c0447dc9af4652c1e026d7185bbd64103b7a99f`. Não acompanha automaticamente o HEAD.
+- O cadastro de `borafute.com.br` mantém redirecionamento 308 para `www.borafute.com.br`; DNS e aliases não foram alterados.
+- As três variáveis `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` estão presentes em Production e Preview. Em Production, foram verificadas a origem oficial HTTPS, a referência correta do Supabase e a utilização de chave publicável, sem registrar valores. Preview possui também override de Site URL para `develop`; seus valores não foram revalidados nesta auditoria.
+- Vercel Authentication permanece `all_except_custom_domains`; proteção por senha desabilitada conforme configuração preexistente, sem alteração nesta sessão.
+- Há também `www.futzera.com` verificado no mesmo projeto, sem associação a branch no cadastro. Revisar seu destino antes da publicação: a atribuição automática dos domínios de Production pode afetá-lo. Não foi removido ou alterado.
+- Na consulta filtrada de deployments Production, não foi encontrado READY; retornou somente um deployment antigo cancelado. Não foi criado deployment nesta sessão.
+
+## Bloqueio e próxima ação do proprietário
+
+A integração disponível confirma o vínculo Git, mas não retorna a Production Branch nem oferece campo para alterá-la. O executor não possui CLI Vercel autenticada nem credencial Vercel configurada. Portanto, **a branch anterior não pôde ser confirmada e nenhuma mudança para develop foi realizada**. Não foi utilizada chamada com campos não suportados nem tentativa de recriar o vínculo Git.
+
+No [painel do projeto](https://vercel.com/renan-ribeiros-projects/aplicativo-futebol/settings/environments), abrir Settings → Environments → Production, localizar Branch Tracking/Production Branch, registrar o valor anterior e definir `develop`. Se o painel não oferecer edição, um proprietário da equipe deve realizar a configuração ou disponibilizar uma CLI autenticada no ambiente seguro. Nunca enviar tokens pelo chat ou gravá-los no repositório.
+
+Após essa configuração, conferir os domínios adicionais e a ausência de deployment Production correto antes de criar uma única publicação do SHA escolhido. Registrar deployment ID, SHA, READY, associação dos domínios e testes HTTPS. A alteração da branch pode disparar implantação; verificar antes de publicar novamente. Não presumir que o alias atualmente fixo em Preview será substituído sem conferir.
+
+## Homologação pendente e reversão
+
+As verificações HTTPS desta tentativa não foram concluídas: a consulta da integração foi interrompida, sem resposta utilizável. Não há aprovação nova de home, marca, login, cadastro, recuperação, favicon ou PWA para Production. Não foram executados login, confirmação de e-mail ou recuperação reais. Preservar callbacks `/auth/callback` e `/auth/callback?flow=recovery`, sessões SSR e PKCE; nenhuma configuração Supabase foi alterada.
+
+Para reverter a estratégia de branch, alterar o mesmo campo para `main` (ou restaurar o valor anterior registrado), após autorização para essa reversão. **Mudar a Production Branch não reverte o deployment já servido**: eventual rollback é uma operação distinta, para um deployment conhecido e revisado. Não publicar o conteúdo atual de `main` apenas para desfazer a configuração.
+
+A documentação é a única alteração desta tarefa. Não houve migration, publicação, promoção, modificação de dados, DNS, Supabase Auth, RLS, Resend ou proteção. A homologação Supabase **004.2-H permanece pendente**. A estratégia temporária amplia a exposição de cada futuro push em `develop`: revisar mudanças antes de enviá-las e separar os ambientes posteriormente.
+
+---
+
 # Preview de segurança — 21/10/2026
 
 Commit de código 2c0447dc9af4652c1e026d7185bbd64103b7a99f enviado exclusivamente à develop. Preview dpl_Gf8Px4vi8NhfP8viPajE5TXBzHA2 ficou READY, target=null. O alias www.borafute.com.br foi atualizado de dpl_HaXCLVNWJ4iBDnm2NfcpfudNBrbM para esse Preview. A associação continua fixa; não houve vínculo automático à branch, promoção ou implantação de produção.
