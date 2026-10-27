@@ -173,6 +173,71 @@ try {
     "stage003 SQL OK: identity, groups, guests, isolation, idempotency and rollback",
   );
 
+  const stage42 = sql(
+    readFileSync(path.join(root, "tests/database/stage0042.sql"), "utf8"),
+  );
+  console.log(
+    `stage0042 OK: ${(stage42.stderr.match(/NOTICE:\s+ok -/g) ?? []).length} SQL assertions; schedules, pricing, classification, RLS and history`,
+  );
+
+  // Stage 004.2: exclusion constraints and authorization after waiting for tenant lock.
+  const pricingInsert = `insert into public.group_pricing_policies(group_id,monthly_enabled,casual_enabled,effective_from) select id,false,false,(clock_timestamp() at time zone timezone)::date+7 from public.groups where slug='test-alpha';`;
+  const billingInsert = `insert into public.member_billing_terms(group_id,player_id,billing_type,effective_from) select g.id,p.id,'casual',(clock_timestamp() at time zone g.timezone)::date+7 from public.groups g cross join public.players p where g.slug='test-alpha' and p.user_id='00000000-0000-4000-8000-000000000003';`;
+  const ownerSession = `begin; set session authorization authenticated; select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000001',true);`;
+  for (const [label, statement, table] of [
+    ["pricing", pricingInsert, "group_pricing_policies"],
+    ["member terms", billingInsert, "member_billing_terms"],
+  ]) {
+    const first = sqlAsync(
+      `${ownerSession}${statement} select pg_sleep(0.5); commit;`,
+    );
+    await sleep(100);
+    const results = await Promise.all([
+      first,
+      sqlAsync(`${ownerSession}${statement} commit;`),
+    ]);
+    if (
+      results.filter((r) => r.code === 0).length !== 1 ||
+      !results.some((r) => r.stderr.includes("exclusion constraint"))
+    )
+      throw new Error(`Stage0042 ${label} overlap race failed`);
+    if (
+      sql(
+        `select count(*) from public.${table} t join public.groups g on g.id=t.group_id where g.slug='test-alpha';`,
+      ).stdout.trim() !== "1"
+    )
+      throw new Error(`Stage0042 ${label} overlap race left unexpected rows`);
+    console.log(
+      `stage0042 concurrency OK: ${label} overlap has exactly one winner`,
+    );
+  }
+  const demoteAdmin = sqlAsync(`${ownerSession}
+    select public.set_member_role(g.id,m.id,'player') from public.groups g join public.group_members m on m.group_id=g.id join public.players p on p.id=m.player_id where g.slug='test-alpha' and p.user_id='00000000-0000-4000-8000-000000000004';
+    select pg_sleep(0.5); commit;`);
+  await sleep(100);
+  const staleAdmin =
+    sqlAsync(`begin; set session authorization authenticated; select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000004',true);
+    insert into public.group_schedules(group_id,weekday,starts_at_local,duration_minutes,recurrence_type,interval_weeks,starts_on)
+    select id,extract(dow from current_date+7)::int,'19:30',90,'weekly',1,current_date+7 from public.groups where slug='test-alpha'; commit;`);
+  const roleRace = await Promise.all([demoteAdmin, staleAdmin]);
+  if (
+    roleRace[0].code !== 0 ||
+    roleRace[1].code === 0 ||
+    !roleRace[1].stderr.includes("Permissão insuficiente")
+  )
+    throw new Error(
+      "Stage0042 stale admin was not rejected after waiting for tenant lock",
+    );
+  if (sql("select count(*) from public.group_schedules;").stdout.trim() !== "0")
+    throw new Error("Stage0042 stale admin persisted a schedule");
+  console.log(
+    "stage0042 concurrency OK: demoted admin cannot write after waiting for tenant lock",
+  );
+  // Restore ONLY this synthetic local fixture through the existing owner RPC.
+  sql(
+    `${ownerSession} select public.set_member_role(g.id,m.id,'admin') from public.groups g join public.group_members m on m.group_id=g.id join public.players p on p.id=m.player_id where g.slug='test-alpha' and p.user_id='00000000-0000-4000-8000-000000000004'; commit;`,
+  );
+
   // Two transactions compete for the same final seat. PostgreSQL row locks, not mocks.
   const lookup = `select g.id as ga,m.id as match_id,p.id as pc from public.groups g join public.matches m on m.group_id=g.id join public.players p on p.user_id='00000000-0000-4000-8000-000000000003' where g.slug='test-alpha' and m.title='Synthetic limited match' \\gset\n`;
   const first = sqlAsync(

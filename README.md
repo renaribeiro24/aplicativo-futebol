@@ -184,3 +184,7 @@ Homologar a Etapa 003 com Auth, e-mail e JWTs reais seguindo `docs/STAGE003.md`;
 Projeto exclusivo aplicativo-futebol, ID `prj_F4qeSw3UsqZzXj5cA89XSY5PgGnt`, na equipe autorizada renan-ribeiros-projects. Repositório vinculado, produção main e Preview develop; Next.js/Node 24, npm ci e npm run build. Build READY e respostas HTTPS públicas verificadas. As três variáveis estão somente em Preview, com Supabase de desenvolvimento e origem do alias estável.
 
 Configuração Auth/SMTP e confirmação/login/grupos/convidados reais ainda precisam de homologação com duas contas fictícias. Callbacks exatos, impacto sobre Codespaces, auditoria e incidente de deploy cancelado estão em [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md); evidências em [docs/VERIFICATION.md](docs/VERIFICATION.md). PR #1 permanece em rascunho, sem merge.
+
+## Configuração de grupos — Etapa 004.2
+
+Estrutura SQL local para agendas recorrentes, políticas de preço e classificação financeira, sem interface ou aplicação remota. Migration, segurança, testes e pendências: [docs/STAGE0042.md](docs/STAGE0042.md). Não gera encontros ou cobranças e não atribui preços a grupos existentes.

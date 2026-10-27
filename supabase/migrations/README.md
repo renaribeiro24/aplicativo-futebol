@@ -1,3 +1,5 @@
+> **Etapa 004.2 (27/10/2026):** oitava migration `20261027143201_stage0042_group_configuration.sql` preparada e testada somente localmente; **não aplicada ao remoto**. As sete anteriores e seu mapeamento permanecem intactos. Detalhes em ../../docs/STAGE0042.md. Não executar db push sem reconciliar o histórico e obter autorização específica.
+
 > **Etapa 003:** sete migrations aplicadas. A nova 20261020161609_stage003_identity_workflows.sql é a versão MCP 20261020162554. Não reaplicar as anteriores nem usar db push sem reconciliar o mapeamento em ../development-migrations.json. Ver ../../docs/STAGE003.md.
 
 > **Atualização Etapa 002.3:** seis migrations aplicadas ao desenvolvimento. A sexta é 20261020160133_auth_schema_bridge.sql (MCP 20261020160511), sem alterações nos cinco arquivos originais. O histórico abaixo registra as etapas anteriores. Conferir ../development-migrations.json e ../../docs/DEPLOYMENT.md antes de qualquer operação; não reaplicar.
