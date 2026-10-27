@@ -1,6 +1,6 @@
-# Em Campo — fundação do aplicativo de futebol
+# BoraFute — Bora pro jogo!
 
-Aplicação web responsiva em português brasileiro para evoluir o gerenciamento de futebol amador e society. **Em Campo é um nome provisório.** O 4ª Força será o primeiro grupo, sem ser a marca global do produto. A aplicação foi projetada para múltiplos grupos independentes e múltiplos papéis por pessoa.
+Aplicação web responsiva em português brasileiro para evoluir o gerenciamento de futebol amador e society. **BoraFute é a identidade oficial do produto.** O 4ª Força será o primeiro grupo, sem ser a marca global do produto. A aplicação foi projetada para múltiplos grupos independentes e múltiplos papéis por pessoa.
 
 A Etapa 003 implementa autenticação, recuperação de senha, dashboard, grupos, convidados e perfil com persistência no Supabase de desenvolvimento. Sete migrations estão aplicadas, com tipos oficiais integrados. **A homologação ponta a ponta permanece pendente:** o executor Codex não alcança a API HTTP do Supabase; SQL remoto e testes locais passaram. Roteiro, rotas e configuração de Auth/SMTP em [docs/STAGE003.md](docs/STAGE003.md). Preview Vercel implantado; nenhum dado real foi criado.
 
@@ -188,3 +188,7 @@ Configuração Auth/SMTP e confirmação/login/grupos/convidados reais ainda pre
 ## Configuração de grupos — Etapa 004.2
 
 Estrutura SQL local para agendas recorrentes, políticas de preço e classificação financeira, sem interface ou aplicação remota. Migration, segurança, testes e pendências: [docs/STAGE0042.md](docs/STAGE0042.md). Não gera encontros ou cobranças e não atribui preços a grupos existentes.
+
+## Identidade visual — BoraFute
+
+**Bora pro jogo!** Seu futebol. Sua turma. Tudo no mesmo lugar. Tokens, temas e componentes em [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md); validação e pendências em [docs/STAGE0042V.md](docs/STAGE0042V.md). A homologação Supabase 004.2-H permanece pendente.

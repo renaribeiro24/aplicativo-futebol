@@ -33,7 +33,7 @@ export default async function Login({
         <CardContent className="space-y-6">
           {!configured && <SetupNotice />}
           {params.error && (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="feedback-error">
               Não foi possível confirmar o acesso. O link pode ser inválido ou
               ter expirado.
             </p>

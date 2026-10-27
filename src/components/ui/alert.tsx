@@ -7,9 +7,14 @@ const alertVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-card text-card-foreground",
+        default:
+          "border-info bg-info-surface text-info *:data-[slot=alert-description]:text-inherit",
+        success:
+          "border-success bg-success-surface text-success *:data-[slot=alert-description]:text-inherit",
+        warning:
+          "border-warning bg-warning-surface text-warning *:data-[slot=alert-description]:text-inherit",
         destructive:
-          "bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 [&>svg]:text-current",
+          "feedback-error *:data-[slot=alert-description]:text-inherit [&>svg]:text-current",
       },
     },
     defaultVariants: {
@@ -38,7 +43,7 @@ function AlertTitle({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="alert-title"
       className={cn(
-        "col-start-2 line-clamp-1 min-h-4 font-medium tracking-tight",
+        "col-start-2 min-h-4 font-medium tracking-tight",
         className,
       )}
       {...props}

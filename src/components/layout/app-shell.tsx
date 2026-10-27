@@ -1,3 +1,4 @@
+import { brand } from "@/lib/brand";
 import Link from "next/link";
 import { LayoutDashboard, ArrowLeft, LockKeyhole } from "lucide-react";
 import { Brand } from "./brand";
@@ -6,8 +7,9 @@ import { Button } from "@/components/ui/button";
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen md:grid md:grid-cols-[240px_1fr]">
-      <aside className="border-b bg-card p-5 md:min-h-screen md:border-r md:border-b-0 md:p-7">
+      <aside className="border-t-4 border-t-brand border-b bg-card p-5 md:min-h-screen md:border-r md:border-b-0 md:p-7">
         <Brand />
+        <p className="mt-3 text-sm text-muted-foreground">{brand.slogan}</p>
         <p className="mt-8 text-xs font-medium tracking-widest text-muted-foreground uppercase">
           Área reservada
         </p>
@@ -47,9 +49,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           Espaço reservado
         </p>
       </aside>
-      <div>
+      <div className="min-w-0">
         <header className="flex min-h-20 items-center justify-between gap-3 border-b bg-card px-5 sm:px-10">
-          <p className="text-sm text-muted-foreground">Seu espaço de futebol</p>
+          <p className="min-w-0 text-sm text-muted-foreground">
+            {brand.statement}
+          </p>
           <form action={logout}>
             <Button variant="outline" size="sm">
               Sair da conta

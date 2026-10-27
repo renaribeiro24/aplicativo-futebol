@@ -1,16 +1,17 @@
 import type { MetadataRoute } from "next";
+import { brand } from "@/lib/brand";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "Em Campo — Futebol em grupo",
-    short_name: "Em Campo",
-    description: "Fundação para organizar grupos de futebol amador e society.",
+    name: `${brand.name} — ${brand.slogan}`,
+    short_name: brand.name,
+    description: brand.statement,
     lang: "pt-BR",
     start_url: "/",
     scope: "/",
     display: "standalone",
-    background_color: "#f7f8fa",
-    theme_color: "#19364a",
+    background_color: brand.theme.light,
+    theme_color: brand.theme.dark,
     icons: [
       {
         src: "/icons/icon-192.png",

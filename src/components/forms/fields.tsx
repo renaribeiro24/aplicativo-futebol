@@ -32,7 +32,7 @@ export function PositionField({ value }: { value?: string | null }) {
       <select
         name="position"
         defaultValue={value ?? ""}
-        className="h-10 w-full rounded-md border bg-background px-3 text-sm focus-visible:ring-2 focus-visible:ring-ring"
+        className="form-control"
       >
         <option value="">Não informada</option>
         {Object.entries(positionLabels).map(([key, label]) => (

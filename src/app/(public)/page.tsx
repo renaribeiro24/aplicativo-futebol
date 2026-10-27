@@ -1,3 +1,4 @@
+import { brand } from "@/lib/brand";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -39,16 +40,14 @@ export default function Home() {
         <div>
           <Badge variant="outline" className="mb-7 gap-2">
             <span className="size-1.5 rounded-full bg-primary" />
-            Seu futebol em um só lugar
+            {brand.name} · Futebol em grupo
           </Badge>
-          <h1 className="max-w-xl text-4xl leading-[1.12] font-semibold tracking-tight sm:text-6xl">
-            Mais jogo.
-            <br />
-            <span className="text-muted-foreground">Menos improviso.</span>
+          <h1 className="max-w-xl font-display text-4xl leading-[1.12] font-semibold tracking-tight sm:text-6xl">
+            Bora pro <span className="text-primary">jogo!</span>
           </h1>
           <p className="mt-6 max-w-lg text-base leading-7 text-muted-foreground sm:text-lg">
-            O ponto de partida para organizar o futebol da semana. Uma
-            plataforma para conectar pessoas e dar espaço a cada grupo.
+            {brand.statement} Um espaço para organizar o futebol da semana e
+            reunir quem joga com você.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button asChild size="lg">
@@ -66,9 +65,9 @@ export default function Home() {
             próximas etapas.
           </p>
         </div>
-        <div className="relative overflow-hidden rounded-3xl border bg-primary p-7 text-primary-foreground sm:p-10">
+        <div className="relative overflow-hidden rounded-3xl border bg-pitch p-7 text-pitch-foreground sm:p-10">
           <div className="flex items-center justify-between">
-            <span className="text-xs tracking-[.18em] uppercase">
+            <span className="text-xs tracking-[.18em] text-brand uppercase">
               O próximo jogo começa na organização
             </span>
             <CircleDot className="size-6 shrink-0" aria-hidden="true" />
@@ -81,12 +80,12 @@ export default function Home() {
             <div className="absolute top-1/2 left-1/2 size-20 -translate-x-1/2 -translate-y-1/2 rounded-full border border-current/30" />
             <div className="absolute top-1/4 bottom-1/4 left-0 w-[18%] rounded-r border border-l-0 border-current/30" />
             <div className="absolute top-1/4 right-0 bottom-1/4 w-[18%] rounded-l border border-r-0 border-current/30" />
-            <span className="absolute top-[32%] left-[25%] size-3 rounded-full bg-current" />
+            <span className="absolute top-[32%] left-[25%] size-3 rounded-full bg-brand" />
             <span className="absolute top-[65%] left-[40%] size-3 rounded-full bg-current/50" />
             <span className="absolute top-[38%] right-[24%] size-3 rounded-full bg-current/70" />
             <span className="absolute right-[33%] bottom-[22%] size-3 rounded-full bg-current/40" />
           </div>
-          <p className="text-xl font-medium tracking-tight">
+          <p className="text-xl font-semibold tracking-tight">
             Seu grupo tem história.
             <br />A organização pode acompanhar.
           </p>
@@ -97,7 +96,7 @@ export default function Home() {
         </div>
       </section>
       <section id="proposta" className="border-t py-12 sm:py-16">
-        <p className="text-xs font-medium tracking-widest text-primary uppercase">
+        <p className="text-xs font-semibold tracking-widest text-primary uppercase">
           Pensado desde a base
         </p>
         <h2 className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">

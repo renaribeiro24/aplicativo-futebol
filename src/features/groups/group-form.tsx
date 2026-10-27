@@ -51,7 +51,7 @@ export function GroupForm({ requestId }: { requestId: string }) {
           name="description"
           maxLength={1000}
           rows={3}
-          className="rounded-md border bg-background p-3 focus-visible:ring-2 focus-visible:ring-ring"
+          className="form-control min-h-28"
         />
       </label>
       <label className="grid gap-2 text-sm font-medium">

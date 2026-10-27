@@ -68,10 +68,7 @@ export default async function GroupPage({
         </p>
       </header>
       {(query.saved === "group" || query.saved === "guest") && (
-        <p
-          role="status"
-          className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-sm"
-        >
+        <p role="status" className="feedback-success">
           {query.saved === "group"
             ? "Grupo criado. Você é o proprietário ativo."
             : "Jogador convidado cadastrado com sucesso."}

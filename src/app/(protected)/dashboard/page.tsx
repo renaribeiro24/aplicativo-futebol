@@ -55,12 +55,12 @@ export default async function Dashboard({
         </Button>
       </div>
       {params.error && (
-        <p role="alert" className="text-destructive">
+        <p role="alert" className="feedback-error">
           Não foi possível sair. Tente novamente.
         </p>
       )}
       {params.notice === "password" && (
-        <p role="status" className="text-primary">
+        <p role="status" className="feedback-success">
           Senha atualizada com sucesso.
         </p>
       )}

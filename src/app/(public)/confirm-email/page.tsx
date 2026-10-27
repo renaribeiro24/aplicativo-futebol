@@ -17,7 +17,7 @@ export default function ConfirmEmail() {
     <div className="mx-auto max-w-lg px-5 py-12 sm:py-20">
       <Card>
         <CardHeader>
-          <CardTitle>
+          <CardTitle className="text-2xl">
             <h1>Confirme seu lugar no grupo.</h1>
           </CardTitle>
           <CardDescription>

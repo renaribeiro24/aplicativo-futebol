@@ -25,12 +25,12 @@ export function ActionForm({
         <Button type="submit">{pending ? "Salvando…" : label}</Button>
       </fieldset>
       {state.error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="feedback-error">
           {state.error}
         </p>
       )}
       {state.message && (
-        <p role="status" className="text-sm text-primary">
+        <p role="status" className="feedback-success">
           {state.message}
         </p>
       )}

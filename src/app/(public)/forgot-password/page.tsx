@@ -22,7 +22,7 @@ export default async function Forgot({
     <div className="mx-auto max-w-lg px-5 py-12 sm:py-20">
       <Card>
         <CardHeader>
-          <CardTitle>
+          <CardTitle className="text-2xl">
             <h1>Vamos recuperar seu acesso.</h1>
           </CardTitle>
           <CardDescription>
@@ -33,7 +33,7 @@ export default async function Forgot({
         <CardContent className="space-y-6">
           {!getSupabaseConfig() && <SetupNotice />}
           {query.error && (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="feedback-error">
               {recoveryMessage(query.error)}
             </p>
           )}

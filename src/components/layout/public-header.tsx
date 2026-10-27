@@ -3,7 +3,7 @@ import { Brand } from "./brand";
 import { Button } from "@/components/ui/button";
 export function PublicHeader() {
   return (
-    <header className="border-b bg-card">
+    <header className="border-t-4 border-t-brand border-b bg-card">
       <div className="mx-auto flex min-h-20 max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-4 sm:px-8">
         <Brand />
         <nav

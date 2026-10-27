@@ -16,7 +16,7 @@ export default async function Reset() {
     <div className="mx-auto max-w-lg px-5 py-12 sm:py-20">
       <Card>
         <CardHeader>
-          <CardTitle>
+          <CardTitle className="text-2xl">
             <h1>Uma nova senha para seguir em campo.</h1>
           </CardTitle>
           <CardDescription>
@@ -29,7 +29,7 @@ export default async function Reset() {
             <AuthForm mode="reset" configured />
           ) : (
             <>
-              <p role="alert" className="text-sm text-destructive">
+              <p role="alert" className="feedback-error">
                 Não há uma sessão válida. Solicite um novo link de recuperação.
               </p>
               <Link href="/forgot-password" className="text-primary underline">
