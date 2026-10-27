@@ -3,9 +3,9 @@ import { Brand } from "./brand";
 import { Button } from "@/components/ui/button";
 export function PublicHeader() {
   return (
-    <header className="border-t-4 border-t-brand border-b bg-card">
+    <header className="brand-surface border-t-4 border-t-brand border-b bg-pitch">
       <div className="mx-auto flex min-h-20 max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-4 sm:px-8">
-        <Brand />
+        <Brand tone="dark" className="sm:w-48" />
         <nav
           aria-label="Navegação principal"
           className="flex items-center gap-3 sm:gap-6"

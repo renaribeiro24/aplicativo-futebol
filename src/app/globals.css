@@ -139,6 +139,26 @@
   }
 }
 @layer components {
+  /* Brand areas keep the approved dark lockup even in the light theme. */
+  .brand-surface {
+    color-scheme: dark;
+    --background: #20252b;
+    --foreground: #ffffff;
+    --card: #20252b;
+    --muted: #29312c;
+    --muted-foreground: #b3beb4;
+    --primary: #b8ff28;
+    --primary-foreground: #20252b;
+    --secondary: #303831;
+    --secondary-foreground: #ffffff;
+    --card-foreground: #ffffff;
+    --accent: #334527;
+    --accent-foreground: #d5f5b0;
+    --border: #414c43;
+    --input: #809080;
+    --ring: #b8ff28;
+    color: var(--foreground);
+  }
   .form-control {
     @apply min-h-11 w-full min-w-0 rounded-md border border-input bg-card px-3 py-2 text-base text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60;
     min-height: var(--control-height);

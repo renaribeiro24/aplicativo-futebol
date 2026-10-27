@@ -1,12 +1,7 @@
+import { Brand } from "@/components/layout/brand";
 import { brand } from "@/lib/brand";
 import Link from "next/link";
-import {
-  ArrowRight,
-  Users,
-  ShieldCheck,
-  Layers3,
-  CircleDot,
-} from "lucide-react";
+import { ArrowRight, Users, ShieldCheck, Layers3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -16,6 +11,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+const sloganBreak = brand.slogan.lastIndexOf(" ");
 const principles = [
   {
     icon: Users,
@@ -43,7 +39,10 @@ export default function Home() {
             {brand.name} · Futebol em grupo
           </Badge>
           <h1 className="max-w-xl font-display text-4xl leading-[1.12] font-semibold tracking-tight sm:text-6xl">
-            Bora pro <span className="text-primary">jogo!</span>
+            {brand.slogan.slice(0, sloganBreak)}{" "}
+            <span className="text-primary">
+              {brand.slogan.slice(sloganBreak + 1)}
+            </span>
           </h1>
           <p className="mt-6 max-w-lg text-base leading-7 text-muted-foreground sm:text-lg">
             {brand.statement} Um espaço para organizar o futebol da semana e
@@ -66,12 +65,7 @@ export default function Home() {
           </p>
         </div>
         <div className="relative overflow-hidden rounded-3xl border bg-pitch p-7 text-pitch-foreground sm:p-10">
-          <div className="flex items-center justify-between">
-            <span className="text-xs tracking-[.18em] text-brand uppercase">
-              O próximo jogo começa na organização
-            </span>
-            <CircleDot className="size-6 shrink-0" aria-hidden="true" />
-          </div>
+          <Brand variant="main" tone="dark" linked={false} className="w-full" />
           <div
             aria-hidden="true"
             className="relative my-9 aspect-[1.55] rounded-xl border border-current/30"

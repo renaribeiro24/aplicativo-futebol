@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen md:grid md:grid-cols-[240px_1fr]">
-      <aside className="border-t-4 border-t-brand border-b bg-card p-5 md:min-h-screen md:border-r md:border-b-0 md:p-7">
-        <Brand />
+      <aside className="brand-surface border-t-4 border-t-brand border-b bg-pitch p-5 md:min-h-screen md:border-r md:border-b-0 md:p-7">
+        <Brand tone="dark" className="w-full" />
         <p className="mt-3 text-sm text-muted-foreground">{brand.slogan}</p>
         <p className="mt-8 text-xs font-medium tracking-widest text-muted-foreground uppercase">
           Área reservada

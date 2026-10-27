@@ -1,6 +1,6 @@
 # BoraFute — Design System
 
-Identidade oficial aplicada na Etapa 004.2-V, em 27/10/2026. Marca do produto independente de qualquer grupo, inclusive 4ª Força. Nenhuma nova tela ou funcionalidade de negócio.
+Identidade oficial aplicada na Etapa 004.2-V e consolidada na 004.2-V.1, em 27/10/2026. Marca do produto independente de qualquer grupo, inclusive 4ª Força. Nenhuma nova tela ou funcionalidade de negócio.
 
 ## Marca e linguagem
 
@@ -9,7 +9,7 @@ Identidade oficial aplicada na Etapa 004.2-V, em 27/10/2026. Marca do produto in
 - Frase institucional: **Seu futebol. Sua turma. Tudo no mesmo lugar.**
 - Tom brasileiro, esportivo, direto e acolhedor; mensagens de erro continuam úteis e sem detalhes internos.
 - Dados textuais compartilhados em src/lib/brand.ts; nome, descrição, títulos, footer e manifesto PWA atualizados. “Em campo” continua válido como expressão esportiva, não como nome do produto.
-- Símbolo vetorial de bola, construído localmente, acompanha o nome. PNGs de instalação derivados do SVG, com variante maskable em fundo cheio e conteúdo central na área segura. Sem imagens de jogadores, marcas de grupos ou assets externos.
+- Símbolo vetorial de B em movimento com bola integrada acompanha o nome, conforme a referência aprovada. PNGs de instalação derivados do SVG, com variante maskable em fundo cheio e conteúdo central na área segura. Sem imagens de jogadores, marcas de grupos ou assets externos.
 
 ## Tokens e temas
 
@@ -45,7 +45,7 @@ Nunca usar #B8FF28 como texto sobre branco. Usar primary para links e brand para
 ## Tipografia, forma e movimento
 
 - Corpo: Arial, Helvetica, sans-serif, fontes do sistema; sem download externo.
-- Assinatura e headline esportiva: Arial Black, Arial, Helvetica, sans-serif, peso forte e espaçamento compacto. Aparência varia conforme disponibilidade da fonte, preservando fallbacks.
+- Lettering do logotipo: contornos vetoriais baseados em DejaVu Sans Bold Oblique, sem fonte de runtime; detalhes em BRAND.md. Headline esportiva: Arial Black, Arial, Helvetica, sans-serif, peso forte e espaçamento compacto, com fallbacks do sistema.
 - Texto de input/select/textarea em 16 px, evitando zoom involuntário comum em formulários móveis. Hierarquia e títulos existentes preservados; cabeçalhos de autenticação harmonizados em 24 px.
 - Raio base 14 px, com variantes 10/12/14/18 px. Cartões usam sombra discreta centralizada em surface-shadow. Grid, conteúdo, ordem e breakpoints existentes mantidos.
 - Control-height 44 px; botão padrão/sm e campos têm pelo menos 44 px, botão lg 48 px. Variantes compactas xs/icon-sm/icon-xs continuam disponíveis e não são usadas nas telas atuais; reavaliar alvo de toque antes de introduzi-las em navegação móvel.
@@ -53,7 +53,7 @@ Nunca usar #B8FF28 como texto sobre branco. Usar primary para links e brand para
 
 ## Componentes e telas
 
-- Brand, cabeçalho público e AppShell: bola, nome oficial, linha de assinatura verde e slogan; navegação e logout preservados. Header privado mostra a frase institucional, com quebra de texto em telas estreitas.
+- Brand, cabeçalho público e AppShell: B com bola, nome oficial, linha de assinatura verde e slogan; navegação e logout preservados. Header privado mostra a frase institucional, com quebra de texto em telas estreitas.
 - Button: ação elétrica com hover/active próprios; outline com borda identificável; foco sólido e deslocado; estados disabled e aria-invalid mantidos. Sem mudança no submit/asChild.
 - Input e campos nativos: form-control compartilhado, fundo explícito, tipografia móvel, borda/foco/erro. Labels e atributos de formulário preservados.
 - Card: superfície e sombra por tema. Badge: acento legível; foco de links/badges interativos sólido. Alert: variantes informativa, sucesso, atenção e erro, sem truncar título de mensagem.
@@ -77,3 +77,7 @@ Testes calculam luminância sRGB e contraste WCAG a partir do CSS real: 21 pares
 | Foco / card                     | 6,88:1  | 12,77:1 |
 
 Esses resultados certificam os pares sólidos especificados, não toda combinação arbitrária com opacidade/overlay, estados desabilitados ou uma auditoria WCAG integral. A borda de cartão e os traços do campo ilustrativo são decorativos; controles não dependem deles. Conferência visual e limites da rodada estão em STAGE0042V.md.
+
+## Consolidação da marca — 004.2-V.1
+
+O símbolo de bola isolada da primeira entrega foi substituído pelo B com bola e velocidade da referência aprovada. Desenhos oficiais, contornos tipográficos, versões claras/escuras/monocromáticas e regras de aplicação estão em [BRAND.md](BRAND.md). A paleta e os tokens permanecem; brand-surface usa grafite e cores de navegação compatíveis em ambos os temas. O logotipo principal web mantém slogan HTML legível em vez de miniaturizar sua assinatura vetorial nos cartões móveis. Evidências da atualização em [STAGE0042V1.md](STAGE0042V1.md); os resultados anteriores não foram apagados.

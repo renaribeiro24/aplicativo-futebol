@@ -94,3 +94,32 @@ it("keeps product identity and PWA metadata consistent with the theme", () => {
   expect(m.background_color).toBe(color(light, "background"));
   expect(m.theme_color).toBe(color(dark, "background"));
 });
+
+// Dark brand areas are also present while the rest of the page is light.
+const brandSurface = {
+  ...light,
+  ...tokens(
+    css.slice(css.indexOf(".brand-surface {"), css.indexOf(".form-control {")),
+  ),
+};
+describe("scoped graphite brand surface", () => {
+  it.each([
+    ["foreground", "card"],
+    ["muted-foreground", "card"],
+    ["primary", "card"],
+    ["accent-foreground", "accent"],
+    ["secondary-foreground", "secondary"],
+  ])("keeps %s / %s readable in a light page", (fg, bg) => {
+    expect(
+      contrast(color(brandSurface, fg), color(brandSurface, bg)),
+    ).toBeGreaterThanOrEqual(4.5);
+  });
+  it.each([
+    ["input", "card"],
+    ["ring", "card"],
+  ])("keeps %s / %s distinguishable", (fg, bg) => {
+    expect(
+      contrast(color(brandSurface, fg), color(brandSurface, bg)),
+    ).toBeGreaterThanOrEqual(3);
+  });
+});

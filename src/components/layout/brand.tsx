@@ -1,37 +1,60 @@
 import Link from "next/link";
 import { brand } from "@/lib/brand";
-export function Brand() {
-  return (
-    <Link
-      href="/"
-      className="inline-flex items-center gap-2.5 font-semibold tracking-tight"
-      aria-label={`${brand.name}, início`}
-    >
-      <span className="flex size-9 items-center justify-center rounded-xl bg-brand text-brand-foreground">
-        <svg
-          className="size-6"
-          viewBox="0 0 32 32"
-          fill="none"
-          aria-hidden="true"
+import { cn } from "@/lib/utils";
+
+export function Brand({
+  variant = "horizontal",
+  tone = "auto",
+  linked = true,
+  className,
+}: {
+  variant?: "horizontal" | "main";
+  tone?: "auto" | "dark" | "light" | "white" | "graphite";
+  linked?: boolean;
+  className?: string;
+}) {
+  const file = (color: Exclude<typeof tone, "auto">) =>
+    `${brand.assets.root}/borafute-horizontal-${color}.svg`;
+  const artwork = (
+    <>
+      <picture>
+        {tone === "auto" && (
+          <source media="(prefers-color-scheme: dark)" srcSet={file("dark")} />
+        )}
+        {/* Vector image: native picture preserves exact color variants without JS. */}
+        <img
+          src={file(tone === "auto" ? "light" : tone)}
+          width={brand.assets.width}
+          height={166}
+          className="block h-auto w-full"
+          alt={linked ? "" : brand.name}
+        />
+      </picture>
+      {variant === "main" && (
+        <p
+          aria-hidden={linked ? true : undefined}
+          className={cn(
+            "mt-2 text-center text-xs font-bold tracking-[.16em] uppercase italic",
+            tone === "dark"
+              ? "text-brand"
+              : tone === "white"
+                ? "text-pitch-foreground"
+                : tone === "graphite"
+                  ? "text-brand-foreground"
+                  : "text-primary",
+          )}
         >
-          <circle
-            cx="16"
-            cy="16"
-            r="12"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
-          <path
-            d="m16 10 6 4-2 7h-8l-2-7 6-4ZM16 4v6m11 2-5 2m1 12-3-5M9 26l3-5M5 12l5 2"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </span>
-      <span className="font-display text-xl font-black tracking-tight">
-        {brand.name}
-      </span>
+          {brand.slogan}
+        </p>
+      )}
+    </>
+  );
+  const classes = cn("block w-40 max-w-full shrink-0", className);
+  return linked ? (
+    <Link href="/" className={classes} aria-label={`${brand.name}, início`}>
+      {artwork}
     </Link>
+  ) : (
+    <div className={classes}>{artwork}</div>
   );
 }

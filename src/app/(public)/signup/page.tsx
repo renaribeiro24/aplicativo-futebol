@@ -1,3 +1,4 @@
+import { Brand } from "@/components/layout/brand";
 import Link from "next/link";
 import type { Metadata } from "next";
 import AuthForm from "@/features/auth/auth-form";
@@ -18,6 +19,14 @@ export default function Signup() {
     <div className="mx-auto max-w-lg px-5 py-12 sm:py-20">
       <Card>
         <CardHeader>
+          <div className="brand-surface mb-3 rounded-lg bg-pitch p-5">
+            <Brand
+              variant="main"
+              tone="dark"
+              linked={false}
+              className="mx-auto w-full max-w-sm"
+            />
+          </div>
           <CardTitle className="text-2xl">
             <h1>Seu lugar no grupo.</h1>
           </CardTitle>
