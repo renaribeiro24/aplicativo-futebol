@@ -1,0 +1,188 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* BoraFute semantic tokens. Lime is an action surface, never body text on white. */
+:root {
+  color-scheme: light;
+  --brand: #b8ff28;
+  --brand-foreground: #20252b;
+  --brand-hover: #a4eb14;
+  --brand-active: #94d509;
+  --background: #f6f8f5;
+  --foreground: #20252b;
+  --card: #ffffff;
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --primary: #356600;
+  --primary-foreground: #ffffff;
+  --secondary: #e9efe5;
+  --secondary-foreground: var(--foreground);
+  --muted: #eef2ec;
+  --muted-foreground: #59645c;
+  --accent: #e5f3d4;
+  --accent-foreground: #2d5700;
+  --destructive: #b42332;
+  --destructive-foreground: #ffffff;
+  --destructive-surface: #fff1f2;
+  --success: #24623c;
+  --success-surface: #edf8ee;
+  --info: #24576c;
+  --info-surface: #eef6fa;
+  --warning: #725000;
+  --warning-surface: #fff7db;
+  --border: #d8e0d7;
+  --input: #798678;
+  --ring: #356600;
+  --skeleton: #dce4d6;
+  --pitch: #20252b;
+  --pitch-foreground: #ffffff;
+  --radius: 0.875rem;
+  --control-height: 2.75rem;
+  --font-ui: Arial, Helvetica, sans-serif;
+  --type-display: "Arial Black", Arial, Helvetica, sans-serif;
+  --surface-shadow: 0 2px 12px rgb(32 37 43 / 0.045);
+  --transition-duration: 150ms;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --background: #15191d;
+    --foreground: #f3f6ef;
+    --card: #20252b;
+    --primary: #b8ff28;
+    --primary-foreground: #20252b;
+    --secondary: #303831;
+    --muted: #29312c;
+    --muted-foreground: #b3beb4;
+    --accent: #334527;
+    --accent-foreground: #d5f5b0;
+    --destructive: #ff9ea9;
+    --destructive-foreground: #20252b;
+    --destructive-surface: #3b2027;
+    --success: #98e2b1;
+    --success-surface: #183426;
+    --info: #a8d9fa;
+    --info-surface: #1a2e3b;
+    --warning: #f7d775;
+    --warning-surface: #372f1a;
+    --border: #414c43;
+    --input: #809080;
+    --ring: #b8ff28;
+    --skeleton: #3f4d38;
+    --surface-shadow: 0 2px 12px rgb(0 0 0 / 0.12);
+  }
+}
+@theme inline {
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-active: var(--brand-active);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-surface: var(--success-surface);
+  --color-warning: var(--warning);
+  --color-warning-surface: var(--warning-surface);
+  --color-info: var(--info);
+  --color-info-surface: var(--info-surface);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-skeleton: var(--skeleton);
+  --color-pitch: var(--pitch);
+  --color-pitch-foreground: var(--pitch-foreground);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: var(--font-ui);
+  --font-display: var(--type-display);
+  --shadow-card: var(--surface-shadow);
+}
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+  h1,
+  h2 {
+    text-wrap: balance;
+  }
+  button,
+  input,
+  select,
+  textarea {
+    transition-duration: var(--transition-duration);
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-4 outline-ring;
+  }
+  ::selection {
+    @apply bg-brand text-brand-foreground;
+  }
+}
+@layer components {
+  /* Brand areas keep the approved dark lockup even in the light theme. */
+  .brand-surface {
+    color-scheme: dark;
+    --background: #20252b;
+    --foreground: #ffffff;
+    --card: #20252b;
+    --muted: #29312c;
+    --muted-foreground: #b3beb4;
+    --primary: #b8ff28;
+    --primary-foreground: #20252b;
+    --secondary: #303831;
+    --secondary-foreground: #ffffff;
+    --card-foreground: #ffffff;
+    --accent: #334527;
+    --accent-foreground: #d5f5b0;
+    --border: #414c43;
+    --input: #809080;
+    --ring: #b8ff28;
+    color: var(--foreground);
+  }
+  .form-control {
+    @apply min-h-11 w-full min-w-0 rounded-md border border-input bg-card px-3 py-2 text-base text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60;
+    min-height: var(--control-height);
+  }
+  .feedback-error,
+  .feedback-success {
+    @apply rounded-lg border p-3 text-sm leading-relaxed;
+  }
+  .feedback-error {
+    color: var(--destructive);
+    background: var(--destructive-surface);
+    border-color: currentColor;
+  }
+  .feedback-success {
+    @apply border-success bg-success-surface text-success;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

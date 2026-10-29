@@ -1,0 +1,54 @@
+{
+  "name": "aplicativo-futebol",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --hostname 0.0.0.0",
+    "build": "next build --webpack",
+    "start": "next start",
+    "typecheck": "next typegen && tsc --noEmit",
+    "lint": "eslint . --max-warnings=0",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "format:check": "prettier --check .",
+    "format": "prettier --write .",
+    "check": "npm run lint && npm run typecheck && npm test && npm run build",
+    "db:test": "node scripts/test-database.mjs",
+    "db:types": "node scripts/generate-database-types.mjs",
+    "db:migrate:local": "supabase migration up --local",
+    "db:lint:local": "supabase db lint --local --schema public,private --fail-on warning",
+    "test:integration": "node scripts/test-stage003-integration.mjs"
+  },
+  "dependencies": {
+    "@radix-ui/react-slot": "1.5.0",
+    "@supabase/ssr": "0.12.7",
+    "@supabase/supabase-js": "2.118.0",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "lucide-react": "1.59.0",
+    "next": "16.4.2",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "server-only": "0.0.1",
+    "tailwind-merge": "3.7.0",
+    "tailwindcss": "4.3.3",
+    "tw-animate-css": "1.4.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.4.2",
+    "prettier": "3.9.10",
+    "shadcn": "4.22.1",
+    "supabase": "2.121.0",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  },
+  "engines": {
+    "node": ">=24 <25",
+    "npm": ">=11 <12"
+  }
+}

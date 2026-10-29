@@ -1,0 +1,49 @@
+{
+  "project_ref": "hpbvtqvbtyioqjyelrpb",
+  "applied_via": "Supabase MCP apply_migration",
+  "applied_at": "2026-10-20",
+  "migrations": [
+    {
+      "source_file": "20261019205218_identity_tenants.sql",
+      "source_sha256": "d97c5013a39e7d9c9739cc59136b7c1fd27d25ae522a15660607fea8dc54b964",
+      "remote_version": "20261020150243",
+      "remote_name": "20261019205218_identity_tenants"
+    },
+    {
+      "source_file": "20261019205219_members_scheduling.sql",
+      "source_sha256": "9414be5e53b834cade631a3bcb992239f2df6dbbe928927a5baf539f3df3b201",
+      "remote_version": "20261020150255",
+      "remote_name": "20261019205219_members_scheduling"
+    },
+    {
+      "source_file": "20261019205220_security_invariants.sql",
+      "source_sha256": "024ac6359884b2bcce6bce6e36832b6208d40d8d5201992307f437b4a81e112e",
+      "remote_version": "20261020150307",
+      "remote_name": "20261019205220_security_invariants"
+    },
+    {
+      "source_file": "20261019205221_administration.sql",
+      "source_sha256": "9ab38a24eedc323905d64e7874701f245ee739bd2496f2a873d164e11ede67a9",
+      "remote_version": "20261020150320",
+      "remote_name": "20261019205221_administration"
+    },
+    {
+      "source_file": "20261019205222_access_policies.sql",
+      "source_sha256": "594f2b22b5d710fc0e01fffd23ebd64d8a9fdccfe2ba6b9a4c5d617f46e6955e",
+      "remote_version": "20261020150339",
+      "remote_name": "20261019205222_access_policies"
+    },
+    {
+      "source_file": "20261020160133_auth_schema_bridge.sql",
+      "source_sha256": "dba7ab1996acd4c127d4b85517af73d11e5ea6608680bcf426d6e83c14a8eb83",
+      "remote_version": "20261020160511",
+      "remote_name": "20261020160133_auth_schema_bridge"
+    },
+    {
+      "source_file": "20261020161609_stage003_identity_workflows.sql",
+      "source_sha256": "6c099a5579f611e5a8aa4a7889812c83c6faf1347302d2c1db88d40d5b6e8035",
+      "remote_version": "20261020162554",
+      "remote_name": "20261020161609_stage003_identity_workflows"
+    }
+  ]
+}
