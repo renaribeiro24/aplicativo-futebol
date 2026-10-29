@@ -26,3 +26,9 @@ export async function loadGroup(slug: string) {
   if (!membership.data) notFound();
   return { ...identity, group: result.data, role: membership.data.role };
 }
+
+export async function loadManagedGroup(slug: string) {
+  const context = await loadGroup(slug);
+  if (context.role !== "owner" && context.role !== "admin") notFound();
+  return context;
+}

@@ -90,3 +90,53 @@ export async function addGuest(
   revalidatePath(`/groups/${slug}`);
   redirect(`/groups/${slug}?saved=guest&receipt=${request}`);
 }
+
+/** Uses the existing column grants and manager RLS; never accepts tenant IDs. */
+export async function updateGroupDetails(
+  slug: string,
+  _: AuthState,
+  form: FormData,
+): Promise<AuthState> {
+  const name = text(form, "name");
+  const description = text(form, "description");
+  const timezone = text(form, "timezone");
+  if (
+    !validName(name) ||
+    description.length > 1000 ||
+    !timezone ||
+    !validTimezone(timezone)
+  )
+    return {
+      error:
+        "Confira o nome, a descrição (até 1.000 caracteres) e o fuso horário.",
+    };
+  const { db, group, role } = await loadGroup(slug);
+  if (!canManage(role))
+    return {
+      error:
+        "Somente o proprietário e administradores podem editar este grupo.",
+    };
+  try {
+    const result = await db
+      .from("groups")
+      .update({ name, description, timezone })
+      .eq("id", group.id)
+      .is("deleted_at", null)
+      .select("id")
+      .maybeSingle();
+    if (result.error || !result.data)
+      return {
+        error:
+          "Não foi possível confirmar a alteração. Atualize a página e tente novamente.",
+      };
+  } catch {
+    return {
+      error:
+        "Não foi possível confirmar a alteração. Atualize a página e tente novamente.",
+    };
+  }
+  revalidatePath("/dashboard");
+  revalidatePath(`/groups/${slug}`);
+  revalidatePath(`/groups/${slug}/settings`);
+  return { message: "Dados do grupo salvos com sucesso." };
+}

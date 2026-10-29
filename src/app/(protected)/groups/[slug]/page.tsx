@@ -74,6 +74,14 @@ export default async function GroupPage({
             : "Jogador convidado cadastrado com sucesso."}
         </p>
       )}
+      {canManage(role) && (
+        <Link
+          href={`/groups/${slug}/settings`}
+          className="inline-flex min-h-11 items-center rounded-md bg-brand px-4 py-2 font-semibold text-brand-foreground"
+        >
+          Administrar grupo
+        </Link>
+      )}
       <Card>
         <CardHeader>
           <CardTitle>Quem joga com você</CardTitle>

@@ -173,6 +173,13 @@ try {
     "stage003 SQL OK: identity, groups, guests, isolation, idempotency and rollback",
   );
 
+  const settings = sql(
+    readFileSync(path.join(root, "tests/database/stage0042i.sql"), "utf8"),
+  );
+  console.log(
+    `stage0042i OK: ${(settings.stderr.match(/NOTICE:\s+ok -/g) ?? []).length} SQL assertions; actual settings persistence, manager permissions and tenant isolation`,
+  );
+
   const stage42 = sql(
     readFileSync(path.join(root, "tests/database/stage0042.sql"), "utf8"),
   );

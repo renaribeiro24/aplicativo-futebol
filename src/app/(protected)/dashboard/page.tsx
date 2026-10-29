@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Users, Plus, UserRound } from "lucide-react";
 import { loadIdentity } from "@/features/identity/server";
-import { roleLabels } from "@/features/groups/validation";
+import { canManage, roleLabels } from "@/features/groups/validation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -103,9 +103,18 @@ export default async function Dashboard({
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button asChild variant="outline">
-                    <Link href={`/groups/${group.slug}`}>Acessar grupo</Link>
-                  </Button>
+                  <div className="flex flex-wrap gap-3">
+                    <Button asChild variant="outline">
+                      <Link href={`/groups/${group.slug}`}>Acessar grupo</Link>
+                    </Button>
+                    {canManage(group.role) && (
+                      <Button asChild>
+                        <Link href={`/groups/${group.slug}/settings`}>
+                          Administrar
+                        </Link>
+                      </Button>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             ))}
