@@ -1,3 +1,4 @@
+import { membershipSeed } from "./stage0042-http-guards.mjs";
 import { spawn, spawnSync } from "node:child_process";
 import { readFileSync, readdirSync } from "node:fs";
 import { randomUUID } from "node:crypto";
@@ -389,6 +390,55 @@ try {
   ).stdout.trim();
   if (ownerCount !== "1")
     throw new Error("Ownership race left an invalid owner count");
+  const auditRun = randomUUID();
+  const users = [1, 2, 3].map(
+    (n) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`,
+  );
+  const identities = users.map((user) => ({
+    user,
+    player: sql(
+      `select id from public.players where user_id='${user}' and deleted_at is null;`,
+    ).stdout.trim(),
+  }));
+  const fixtureGroups = [];
+  for (let i = 0; i < 2; i++) {
+    const slug = `audit-0042-${i === 0 ? "a" : "b"}-${auditRun}`;
+    const result = sql(
+      `select set_config('request.jwt.claim.sub','${users[i]}',false); select public.create_group_once('${randomUUID()}','HTTP runner seed local','${slug}','Local synthetic seed validation','UTC');`,
+    )
+      .stdout.trim()
+      .split("\n")
+      .at(-1);
+    fixtureGroups.push({ id: result, slug });
+  }
+  const seed = membershipSeed({
+    version: 1,
+    project: "https://hpbvtqvbtyioqjyelrpb.supabase.co",
+    run: auditRun,
+    groups: fixtureGroups,
+    identities,
+  });
+  sql(seed);
+  const expected = sql(
+    `select count(*)=1 from public.group_members where group_id='${fixtureGroups[0].id}' and player_id='${identities[2].player}' and role='player' and status='active';`,
+  ).stdout.trim();
+  if (expected !== "t")
+    throw Error("Generated seed did not create the expected local membership");
+  const fingerprint = () =>
+    sql(
+      "select md5(jsonb_agg(to_jsonb(m) order by id)::text) from public.group_members m;",
+    ).stdout.trim();
+  const beforeSeedReplay = fingerprint();
+  const replay = docker(sqlArgs, seed, true);
+  if (
+    replay.status === 0 ||
+    !replay.stderr.includes("Unexpected group A roster") ||
+    fingerprint() !== beforeSeedReplay
+  )
+    throw Error("Seed replay was not safely rejected");
+  console.log(
+    "stage0042 HTTP runner seed OK: generated guarded SQL creates one player link; replay rejected without membership changes (local only, not JWT evidence)",
+  );
 } finally {
   docker(["rm", "--force", "--volumes", container], undefined, true);
 }

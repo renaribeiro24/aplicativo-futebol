@@ -222,3 +222,174 @@ Critérios de aceite: catálogo compatível e sem drift impeditivo; SQL/regress�
 ### Sincronização e restrição de deploy
 
 Única alteração preparada: este documento. Desde a mudança anterior, develop é Production Branch informada pelo proprietário; um push pode disparar deployment Production automaticamente. Esta tarefa proíbe deploy. Não foi certificado um mecanismo de supressão por commit que resolva esse efeito sem alterar a configuração administrativa; por isso o push documental deve permanecer pendente até conciliar essas instruções com o proprietário. Nenhum commit vazio, alteração de configuração Vercel ou push para outra branch será usado como contorno.
+
+## Ponto de controle — Supabase atual como desenvolvimento/homologação (29/10/2026)
+
+Nova decisão expressa do responsável: o projeto atual pode receber a migration e testes com registros sintéticos rastreáveis, **somente após autorização específica da aplicação**. Não é necessário outro projeto. Esta decisão substitui o bloqueio anterior de testar no projeto hospedado, mas não transforma resultados locais em JWT real nem encerra a homologação. Nesta rodada houve apenas leitura remota e testes em PostgreSQL descartável; nenhuma aplicação remota, conta ou fixture hospedada foi criada.
+
+### Auditoria remota concluída no escopo da aplicação
+
+Projeto plataforma-futebol (`hpbvtqvbtyioqjyelrpb`), ACTIVE_HEALTHY, PostgreSQL 17.11; sessão de auditoria postgres. As sete migrations anteriores continuam aplicadas conforme o mapeamento existente; a oitava está ausente. As três tabelas e duas funções propostas não existem; o nome do novo trigger está livre.
+
+Catálogo inspecionado: dez tabelas existentes public/private, todas com RLS e owner app_executor; 18 policies, 33 índices, chaves compostas `venues(group_id,id)` e `group_members(group_id,player_id)`, índice único de owner ativo, ACLs por coluna, schemas e default privileges. Helpers auth_user_id/current_player_id/group_role/require_manager/touch_updated_at possuem owners, permissões e search_path compatíveis com o SQL preparado. require_manager trava o grupo antes de revalidar vínculo ativo. app_executor permanece NOLOGIN/NOBYPASSRLS/não superuser; auth_user_id permanece restrita a postgres/app_executor.
+
+`btree_gist` 1.7 está disponível, trusted/relocatable e ainda não instalada; schema extensions existe. O catálogo confirma CREATE de postgres em database/public/extensions, associação ao executor e ausência de CREATE de app_executor em public no estado anterior. A migration poderá instalar a extensão em extensions e revogar o CREATE temporariamente concedido sem retirar um privilégio preexistente do executor. Revalidar imediatamente antes da execução; se divergir, interromper.
+
+Default privileges hospedados concedem acessos amplos em novas tabelas públicas. A migration revoga explicitamente esses grants nas três tabelas e nos guards privados e concede somente leitura/escrita por coluna previstas. Event triggers hospedados foram inspecionados, incluindo ensure_rls e notificações de reload do PostgREST. Não há necessidade demonstrada de mudar default privileges, event triggers ou policies antigas. O snapshot não certifica configuração administrativa de schemas expostos da Data API; a inacessibilidade de private e os grants efetivos precisam de prova HTTP na homologação.
+
+Advisors novamente retornaram **7 WARN/3 INFO de segurança e 10 INFO unused_index**, sem nova categoria frente à rodada anterior. Permanecem quatro APIs SECURITY DEFINER autenticadas intencionais, dois WARN rls_auto_enable (anon/authenticated), proteção de senhas vazadas desabilitada e três tabelas deliberadamente fechadas. Definição de rls_auto_enable confirmada como event_trigger, search_path pg_catalog; o alerta não demonstra exploração como RPC comum. Nenhum aviso foi corrigido por abertura de RLS ou remoção de índices. Remediações oficiais e decisões residuais continuam nas seções anteriores.
+
+### Impactos e recuperação
+
+Migration integralmente revisada, sem alteração de seu conteúdo: SHA-256 **b91c64544869846b5a88a0e2d2bb752e1bd571f0d753b6d08db287b7f986f97d**. Não há seed, backfill, DELETE, TRUNCATE, DROP ou reescrita de registros existentes. São criadas três tabelas vazias, índices, policies e guards. A adição em estrutura existente é o trigger members_guest_billing_guard: no futuro poderá rejeitar troca de papel para guest quando houver classificação monthly atual/futura. As FKs restritivas preservarão históricos; há breve aquisição de lock DDL em group_members. Não prometer indisponibilidade zero.
+
+Procedimento de recuperação **testado no PostgreSQL descartável nesta rodada**:
+
+1. Falha deliberada antes do COMMIT da oitava migration reverteu tabelas, guards, trigger em group_members, extensão recém-instalada e privilégio CREATE temporário. Depois, a migration normal foi aplicada com sucesso nesse banco descartável.
+2. Ensaio de reversão após aplicação com novas tabelas vazias: travar as três tabelas, abortar se houver qualquer linha, remover exclusivamente o trigger novo, as três tabelas e os dois guards, sem CASCADE. A extensão só pode ser removida com RESTRICT se criada nesta aplicação e sem consumidores adicionais. O fingerprint dos grupos sintéticos anteriores foi preservado. O ensaio foi revertido por ROLLBACK, restaurando o schema local para as regressões subsequentes.
+3. Se houver dados nas tabelas novas, **não executar esse procedimento de remoção**. Preservar/exportar o histórico e preferir migration corretiva; eventual restauração integral requer backup verificado, avaliação de perda de escritas posteriores e autorização separada. Backup/PITR hospedado não foi criado ou certificado; não há ferramenta disponível para comprovar sua disponibilidade. O snapshot de catálogo abaixo **não é backup dos dados**.
+
+Testes reexecutados pelo runner local de recuperação: 70 asserções de segurança anteriores, 109 da 004.2, 10 de edição de grupos da 004.2-I e 9 corridas de concorrência PASS, além dos dois cenários de recuperação acima. Não foram repetidos testes unitários/build nesta rodada, pois não há alteração de código; a base 667940c já registra 253 testes e build aprovados. Isso não prova Auth/Data API hospedados.
+
+Snapshot anterior somente de metadados: `work/stage0042-current-before.json`, SHA-256 `315772f4410974ef75e23a253008a383028559ff1d021330bf69ed934b7185c4`. Log local: `work/stage0042-current-recovery.log`, SHA-256 `a5e56b1c6803d543b1af7af2b241d54d50a112135cf5588ed5af9b3cafeda0a9`. Os artefatos são ignorados pelo Git e devem ser guardados pelo responsável; não contêm registros de usuários ou credenciais.
+
+### Checklist para a aplicação autorizada e homologação posterior
+
+- [ ] Obter autorização expressa para o arquivo/hash acima no projeto correto, registrando a estratégia de recuperação e o limite de backup/PITR não certificado.
+- [ ] Revalidar histórico, ausência dos objetos, pré-requisitos e baseline de grants; não reaplicar as sete migrations anteriores nem usar db push indiscriminado.
+- [ ] Aplicar somente a oitava pelo mecanismo oficial de migration, atomicamente, com interrupção em qualquer falha. Não modificar Auth/RLS antigos ou configurações administrativas como contorno.
+- [ ] Confirmar os três conjuntos de constraints/índices/owners/ACLs/RLS, guards privados sem EXECUTE de clientes e registro único da migration. Atualizar o mapeamento somente após sucesso.
+- [ ] Executar matriz HTTP com JWTs reais de contas sintéticas: owner/admin/player/guest/sem vínculo, dois grupos exclusivos desta execução, sobreposição/histórico, leitura própria e negativas sem alterações persistentes. Manter manifesto de IDs criados; não limpar fixtures preexistentes A/B/C ou grupos reais.
+- [ ] Regressões, advisors antes/depois, tipos oficiais e compatibilidade Next.js. Nenhum formulário financeiro será automaticamente ativado pela existência das tabelas; ainda faltam ações, tipos e operações de sucessão transacional.
+- [ ] Limpar somente registros/contas comprovadamente criados nesta execução e sem relações externas, na ordem das dependências, abortando em divergência. Não usar nomes de grupos como critério único de exclusão nem realizar limpeza global.
+
+**Limitação operacional confirmada:** HTTP direto para o Auth hospedado ainda recebe CONNECT 403 neste executor. A autorização para usar o projeto atual não remove a política de rede. Os testes JWT/Data API precisam de Codespaces com conectividade e credenciais técnicas seguras, ou executor autorizado equivalente; não há razão para simular PASS ou alterar o proxy. Antes de prometer conclusão imediata, preparar esse executor e as contas/fluxo de confirmação sem expor segredos.
+
+**Recomendação:** o SQL está compatível com o catálogo auditado e pode ser submetido à autorização para aplicação controlada de desenvolvimento, com os limites de recuperação e conectividade explicitados. **Etapa 004.2-H permanece NÃO APTO** até a aplicação autorizada e aprovação das provas HTTP/JWT, regressões e revisão dos riscos. Nenhuma aplicação ou publicação foi feita neste ponto de controle. Este adendo permanece local, sem commit/push ou novo deployment durante a espera da decisão.
+
+## Aplicação remota autorizada — 29/10/2026
+
+**Migration APLICADA; homologação 004.2-H permanece NÃO APTA.** O responsável autorizou expressamente a aplicação controlada e transacional do SQL exato, incluindo btree_gist, no projeto atual de desenvolvimento/homologação. A autorização não incluiu alterações adicionais de schema, dados preexistentes ou configurações administrativas.
+
+### Execução e identidade
+
+- Projeto reconfirmado: `hpbvtqvbtyioqjyelrpb`, plataforma-futebol, ACTIVE_HEALTHY. Histórico reconfirmado com as sete migrations anteriores e sem a oitava; objetos novos ausentes, chaves compostas/ownership/RLS/privilégios e extensão sem divergência impeditiva.
+- Arquivo fonte integral e inalterado: `20261027143201_stage0042_group_configuration.sql`, SHA-256 `b91c64544869846b5a88a0e2d2bb752e1bd571f0d753b6d08db287b7f986f97d`.
+- Aplicação única pelo mecanismo oficial **Supabase MCP apply_migration**, nome `20261027143201_stage0042_group_configuration`, retorno success=true. Não foram enviados SQL adicionais de correção, outras migrations, seed ou backfill.
+- Versão efetivamente atribuída pelo Supabase: **`20261029191222`**. A listagem posterior contém oito registros e preserva os sete anteriores. O mapeamento em `supabase/development-migrations.json` foi atualizado localmente com o identificador efetivo; o nome/versão local não foi usado para reaplicar migrations antigas.
+
+### Conferência posterior somente leitura
+
+| Critério              | Resultado                                                                                                                                                         |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Novas tabelas         | PASS: group_schedules, group_pricing_policies e member_billing_terms presentes e vazias                                                                           |
+| Ownership/RLS         | PASS: app_executor, RLS habilitada nas três                                                                                                                       |
+| Constraints           | PASS: 28, incluindo FKs compostas e duas exclusões GiST de vigência                                                                                               |
+| Índices/policies      | PASS: 9 índices e 9 policies com os predicados previstos                                                                                                          |
+| Triggers              | PASS: 6 nas tabelas novas e members_guest_billing_guard em group_members                                                                                          |
+| Guards privados       | PASS: 2 SECURITY DEFINER, owner app_executor, search_path vazio, EXECUTE somente ao executor                                                                      |
+| Extensão              | PASS: btree_gist 1.7 em extensions                                                                                                                                |
+| Grants efetivos       | PASS: SELECT autenticado; INSERT/UPDATE por coluna; anon sem leitura/escrita; authenticated sem DELETE/TRUNCATE nem UPDATE de IDs, tenant, player_id e created_at |
+| Privilégio temporário | PASS: app_executor não conserva CREATE em public                                                                                                                  |
+| Registros hospedados  | Nenhuma fixture/conta criada, limpeza executada ou alteração de registros preexistentes solicitada/emitida nesta execução                                         |
+
+As permissões conferidas acima são de catálogo/ACLs efetivas; não equivalem a uma prova HTTP de owner/admin/player/guest. A diferenciação de papéis está nos predicados RLS e guards inspecionados, mas a confirmação funcional por JWT real permanece pendente.
+
+### Advisors e regressão
+
+Security Advisor continua com **7 WARN e 3 INFO**, mesmos achados anteriores: quatro RPCs autenticadas intencionais, dois avisos rls_auto_enable, proteção de senhas vazadas desabilitada e três tabelas fechadas sem policies. Nenhum WARN novo foi retornado. Performance Advisor passou de **10 para 16 INFO unused_index**: os seis novos registros são group_schedules_group_start_idx, group_schedules_group_venue_idx, pricing_no_overlap, group_pricing_group_start_idx, billing_no_overlap e member_billing_group_player_start_idx. Esperado para estruturas recém-criadas/vazias; manter os índices, especialmente as exclusões que implementam integridade. Não alterar permissões ou remover índices apenas para limpar os relatórios.
+
+Referências: [Security Definer anon](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable), [Security Definer authenticated](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable), [RLS sem policy](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy), [senhas vazadas](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection), [unused_index](https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index).
+
+Regressões reexecutadas e aprovadas **localmente**: 253 testes unitários/21 arquivos; 70 asserções SQL de segurança anteriores; 109 da 004.2; 10 da interface de dados gerais; 9 corridas de concorrência. O runner aplica as oito migrations somente em seu PostgreSQL descartável, sem rede/portas, com claims locais. Nenhum desses testes foi apresentado como JWT real hospedado. Não houve alteração de código da aplicação ou necessidade de novo build/deploy nesta aplicação de banco.
+
+### Impedimento dos testes autenticados e próximos passos
+
+HTTP direto para o Auth hospedado segue recusado pelo proxy (CONNECT 403, nenhum status HTTP do Supabase). As variáveis técnicas TEST_USER_A/B/C_EMAIL e PASSWORD estão ausentes no ambiente deste executor; nenhum arquivo de credenciais foi lido/dumpado. Não contornado o proxy, não criado usuário remoto sem possibilidade de homologá-lo e não utilizada identidade privilegiada para simular cliente.
+
+Para concluir, usar Codespaces com conectividade autorizada e contas técnicas confirmadas/credenciais em secrets ou arquivo ignorado. A matriz deve cobrir owner/admin/player/guest/sem vínculo, dois grupos sintéticos exclusivos da execução, Data API, tentativas proibidas sem persistência, isolamento, sobreposição/histórico e sucessão transacional. O runner antigo da 003.2, por si só, **não cobre as novas tabelas**; é necessária execução direcionada desses cenários. Não executar os scripts SQL locais/bootstrap no projeto hospedado nem reutilizar grupos reais como sandbox. Preservar fixtures preexistentes; eventual limpeza é restrita aos IDs comprovadamente criados na nova execução e deve abortar em divergência.
+
+Só após os testes reais, tipos oficiais revisados e decisões de risco, avaliar o desbloqueio de agendas, preços/vencimentos e classificação financeira. Os controles da 004.2-I continuam desabilitados; a migration não cria ações de gravação, RPC transacional de sucessão ou persistência de regras de participação. **Não desbloquear financeiro apenas porque a migration foi aplicada.** O aplicativo atual continua usando as tabelas/APIs anteriores; não foi feita nova homologação autenticada da interface publicada.
+
+Artefatos locais ignorados: `work/stage0042-application-result.json`, `work/stage0042-applied-catalog.json`, `work/stage0042-applied-db.log` e `work/stage0042-applied-unit.log`. O relatório guarda hashes dos artefatos. Os snapshots de catálogo não são backup de dados; a limitação de backup/PITR previamente informada permanece. Não executada reversão ou limpeza.
+
+Alterações locais desta rodada: documentação e mapeamento de migration; nenhum commit/push ou deployment disparado. main, DNS, variáveis/configurações Vercel, Supabase Auth e políticas anteriores não foram alterados. Esta aplicação autorizada não amplia automaticamente o aceite de riscos nem encerra a etapa.
+
+Conferência adicional pós-aplicação: os 33 registros selecionados de ACLs das tabelas anteriores, definições/owners/grants dos helpers de autorização e policies antigas foram comparados ao snapshot anterior, sem diferenças. A comparação é de metadados, não um backup ou leitura dos registros de usuários.
+
+## Testes autenticados reais — preflight de 29/10/2026
+
+**Parecer mantido: NÃO APTO / NÃO APTA para homologação final. Suíte HTTP não iniciada.** O executor disponível é `/workspace`, não o Codespaces do responsável. Foram preservadas as alterações documentais e o mapeamento da aplicação remota já preparados localmente.
+
+Projeto e histórico novamente confirmados pela integração: plataforma-futebol, ACTIVE_HEALTHY, PostgreSQL 17.11.0.003, oitava migration registrada como `20261029191222` com nome `20261027143201_stage0042_group_configuration`. Nenhuma migration adicional foi executada.
+
+Preflight HTTP independente e limitado a 10 segundos por endpoint: `/auth/v1/health` e `/rest/v1/` recusados pelo proxy com CONNECT 403; status curl 000 indica que **não houve resposta HTTP do Supabase**. Isso não é falha de senha, RLS ou Data API demonstrada. Não se tentou contornar a rede nem mudar configurações administrativas. As variáveis públicas de configuração e TEST_USER_A/B/C_EMAIL/PASSWORD estão ausentes no processo deste executor; não foram lidos arquivos de credenciais, nem isso comprova ausência de secrets no Codespaces.
+
+| Perfil/cenário    | Leitura       | Inserção      | Atualização   | Exclusão      | Evidência                          |
+| ----------------- | ------------- | ------------- | ------------- | ------------- | ---------------------------------- |
+| Owner             | NÃO EXECUTADO | NÃO EXECUTADO | NÃO EXECUTADO | NÃO EXECUTADO | Auth/Data API inacessíveis         |
+| Admin             | NÃO EXECUTADO | NÃO EXECUTADO | NÃO EXECUTADO | NÃO EXECUTADO | Auth/Data API inacessíveis         |
+| Player            | NÃO EXECUTADO | NÃO EXECUTADO | NÃO EXECUTADO | NÃO EXECUTADO | Auth/Data API inacessíveis         |
+| Guest autenticado | NÃO EXECUTADO | NÃO EXECUTADO | NÃO EXECUTADO | NÃO EXECUTADO | Auth/Data API inacessíveis         |
+| Outro tenant      | NÃO EXECUTADO | NÃO EXECUTADO | NÃO EXECUTADO | NÃO EXECUTADO | Nenhum JWT emitido nesta rodada    |
+| Anônimo           | NÃO EXECUTADO | NÃO EXECUTADO | NÃO EXECUTADO | NÃO EXECUTADO | O proxy bloqueou antes da Data API |
+
+Sobreposição, vigências, manipulação de IDs e conferência de ausência de alterações após negativas também NÃO EXECUTADAS por HTTP. Neste esquema o vínculo financeiro utiliza `player_id`, não `member_id`; tentativas com coluna inexistente não devem ser tratadas como prova de isolamento. Nenhuma conta, vínculo, grupo ou registro sintético remoto foi criado ou removido nesta tentativa. Zero checkpoints JWT reais aprovados, zero falhas de autorização demonstradas; bloqueio de infraestrutura, não PASS nem FAIL funcional.
+
+Advisors novamente consultados: segurança manteve 7 WARN e 3 INFO; desempenho manteve 16 INFO unused_index. Sem correções administrativas ou remoção de índices. Os links e justificativas dos achados permanecem na seção da aplicação acima. Testes SQL/unitários não foram repetidos neste preflight sem alteração de código: seus resultados anteriores continuam históricos e não substituem JWT/Data API reais.
+
+Próximo executor necessário: terminal do Codespaces com acesso HTTPS ao projeto e secrets técnicos configurados de modo privado. Confirmar conectividade antes de qualquer criação; autenticar contas técnicas pelo Auth e preparar os quatro papéis somente em grupos sintéticos exclusivos, com manifesto de IDs e sem usar usuários/grupos reais como fixtures. O runner 003.2 existente não cobre automaticamente as tabelas novas; não apresentar sua aprovação como homologação da 004.2. Não executar bootstrap/fixtures SQL locais no projeto hospedado. Os formulários de agenda/financeiro continuam bloqueados até a matriz específica ser aprovada. Não houve commit/push, deploy, alteração de main, RLS, grants, funções, Auth ou Vercel neste preflight.
+
+## Retomada solicitada pelo Codespaces — diagnóstico do executor e matriz (29/10/2026)
+
+O responsável informou estar usando o Codespaces, mas o ambiente efetivamente conectado a esta sessão continua `/workspace`, com checkout `/workspace/work/stage0042-git` na develop; CODESPACES não é true, CODESPACE_NAME está ausente e `/workspaces/aplicativo-futebol` não existe. Isso não contradiz a existência do Codespaces do responsável: esta sessão não possui acesso ao terminal/secrets daquele ambiente. Nenhum push, deploy ou alteração remota foi realizado.
+
+Auth `/auth/v1/health` e Data API `/rest/v1/` testados com timeout de 10 segundos: ambos CONNECT 403 do proxy, curl 000. Não se chegou à autenticação, à autorização nem às policies do Supabase. Credenciais/configuração no processo deste executor ausentes: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, TEST_USER_A_EMAIL, TEST_USER_A_PASSWORD, TEST_USER_B_EMAIL, TEST_USER_B_PASSWORD, TEST_USER_C_EMAIL, TEST_USER_C_PASSWORD, TEST_ACCOUNTS_ARE_SYNTHETIC e TEST_ALLOW_CREATE_AUDIT_FIXTURES. Não foram lidos valores de arquivos privados; os secrets do Codespaces não foram inspecionados.
+
+### Matriz autenticada preparada, ainda NÃO EXECUTADA
+
+| Ator                                  | Leitura esperada                                    | Inserção/atualização esperadas                                                                       | Exclusão esperada       | Estado   |
+| ------------------------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ----------------------- | -------- |
+| Owner ativo do grupo A                | Agenda/preços e classificações do próprio grupo     | Agenda, preços/vencimentos e classificação; respeitar histórico                                      | Negada nas três tabelas | PENDENTE |
+| Admin ativo do grupo A                | Agenda/preços e classificações do próprio grupo     | Agenda/classificação permitidas; preços/vencimentos negados                                          | Negada                  | PENDENTE |
+| Player ativo do grupo A               | Agenda/preços do grupo e apenas suas classificações | Todas as escritas administrativas negadas                                                            | Negada                  | PENDENTE |
+| Guest autenticado ativo do grupo A    | Agenda/preços do grupo e apenas suas classificações | Todas as escritas administrativas negadas; guest só pode ser classificado como casual pelos gestores | Negada                  | PENDENTE |
+| Owner/integrante exclusivo do grupo B | Sem registros privados de A                         | Não criar nem alterar registros em A                                                                 | Negada                  | PENDENTE |
+| Anônimo, usando a chave publicável    | Sem registros privados                              | Negada                                                                                               | Negada                  | PENDENTE |
+
+Para cada negativa, conferir o estado posterior pela identidade legítima; UPDATE com zero linhas pode ser a resposta correta da RLS, não é sucesso nem erro inesperado. Distinguir falha de API key, Auth/JWT inválido, RLS/ACL e constraint. Testar adulteração de id/group_id/player_id/created_at e associação a local/jogador de outro grupo. `member_billing_terms` não tem member_id; rejeição de coluna inexistente não comprova isolamento.
+
+Integridade a comprovar pela Data API: checks de datas/duração/recorrência, preços negativos, vencimento inválido, períodos adjacentes/sobrepostos, imutabilidade de versões iniciadas/encerradas, convidados casual e ausência de modificações após negativas. Sucessão financeira atômica ainda não tem RPC pública: não representar duas chamadas HTTP como uma transação. Relatar essa limitação separadamente da prova SQL existente.
+
+Testes existentes inspecionados: scripts/test-stage0032-integration.mjs e scripts/test-stage0032-member-c.mjs, exemplos tests/stage0032.env.example e tests/stage0032-member-c.env.example; testes SQL tests/database/stage0042.sql e stage0042i.sql. Os runners 003.2 não implementam esta matriz financeira/agenda, e o runner C fixa fixtures anteriores: não reaproveitá-lo como criador de vínculos desta rodada ou como prova de segurança da 004.2. Não existe executor HTTP específico 004.2 pronto no checkout atual. A preparação documental acima não é execução nem implementação de uma suíte HTTP.
+
+### Próximo procedimento no ambiente correto
+
+1. Abrir o terminal do Codespaces ou conectar o agente àquele executor e confirmar pwd=/workspaces/aplicativo-futebol, CODESPACES=true e branch develop; preservar alterações locais.
+2. Conferir Auth e Data API por HTTPS antes de criar fixtures. HTTP 401/403 recebido do próprio gateway sem API key ainda comprova conectividade; CONNECT 403 ou curl 000 não comprova. Nunca contornar proxy ou desabilitar TLS/RLS.
+3. Configurar as credenciais A/B/C técnicas pelos secrets ou arquivo local ignorado, conforme os exemplos existentes, sem enviar valores pelo chat. NEXT_PUBLIC_SITE_URL é necessária ao preflight 003.2 e deve corresponder à origem utilizada. Flags de criação só devem valer 1 quando as contas forem exclusivas de homologação e a criação sintética estiver autorizada.
+4. Executar somente o --check dos runners existentes para conferir seus requisitos; isso não testa validade das senhas nem tabelas novas. Preparar então o executor HTTP específico da matriz, com log sanitizado, manifesto prévio e grupos novos exclusivos.
+5. A criação de vínculos authenticated admin/player/guest exige mecanismo de preparação autorizado e restrito aos novos grupos. Os fluxos atuais não oferecem aceite de convite que crie esses vínculos; não flexibilizar permissões ou simular JWTs para suprir isso. Não modificar vínculos preexistentes, inclusive os de C. Uma chave publicável não confere permissão para inserir group_members diretamente.
+6. Autenticar pelo Auth real, verificar identidades e usar somente JWT do ator nas provas. Registrar IDs/resultado por cenário e interromper em falha inesperada. Preservar fixtures para revisão se a limpeza não for inequivocamente segura.
+
+**Resultado desta retomada: NÃO APTO. Zero testes HTTP/JWT executados ou aprovados; nenhuma falha funcional demonstrada, nenhuma fixture remota criada.** Os resultados estruturais e locais anteriores permanecem válidos no escopo original. Interrompidas as operações dependentes de rede/credenciais, conforme a instrução do responsável. Sem nova migration, alteração de RLS/grants/funções/configurações administrativas ou mudança na main.
+
+## Runner HTTP específico implementado — 03/11/2026
+
+Implementados `scripts/test-stage0042-http.mjs`, guards/declaracões auxiliares, testes de segurança e exemplo de ambiente. Roteiro completo em [STAGE0042-HTTP-RUNNER.md](STAGE0042-HTTP-RUNNER.md), que substitui a pendência anterior de inexistência de executor HTTP. Três contas bastam por papéis sequenciais de C em um vínculo inteiramente novo; a única preparação administrativa é um INSERT transacional guardado nesse grupo sintético, nunca alteração do vínculo antigo de C. Os papéis de admin/player/guest são exercidos com JWT real da mesma identidade C e validados no banco a cada fase, sem adulteração de claims.
+
+A implementação cobre SELECT/INSERT/UPDATE/DELETE permitidos/negados nas três tabelas, isolamento nos dois sentidos, anônimo, identificação de schema privado não exposto, autoelevação, IDs, constraints, vigências iniciadas/retroativas/adjacentes/sobrepostas e duas corridas HTTP de sobreposição. Cada negativa exige snapshot posterior sem mudanças. Manifests/SQL privados, sem tokens/senhas/e-mails; não há limpeza, retry de gravação, service key, migration, alteração de RLS/grants ou de perfis globais.
+
+**Execução real BLOQUEADA nesta sessão:** o executor acessível continua `/workspace`, sem CODESPACES/secrets, apesar da informação de configuração no terminal do responsável. --check executado (exit 2, ausências); --preflight executado com proxy (exit 2, sem resposta HTTP); curl confirmou CONNECT 403 em Auth e Data API. --prepare bloqueou antes de qualquer manifesto ou fixture. Não foram autenticadas A/B/C ou confirmada aqui sua finalidade sintética; o runner só permite avançar mediante declaração expressa e confirmação Auth das três contas.
+
+Migration `20261029191222` novamente confirmada aplicada por leitura MCP, com as sete anteriores preservadas. Advisors consultados: 7 WARN/3 INFO de segurança e 16 INFO de desempenho, mesmas categorias; não houve correções administrativas. As referências/justificativas anteriores continuam válidas, sem novo aceite automático de risco.
+
+Validações locais da implementação: lint e typecheck PASS; 282 testes unitários/22 arquivos PASS (29 novos); build Next.js PASS. Regressão PostgreSQL descartável: 70 asserções anteriores, 109 da 004.2, 10 da 004.2-I e 9 corridas PASS, mais a criação do vínculo pelo SQL gerado e rejeição de sua repetição sem alterações. Os testes unitários usam dados fictícios/mocks explícitos e o SQL usa claims locais; **não são prova de JWT real**. Logs ignorados work/stage0042-http-{lint,typecheck,unit,build,db}.log.
+
+Sem push, deploy ou commit nesta rodada. Preservadas as alterações documentais e o mapeamento local da migration aplicada em rodadas anteriores. **Parecer 004.2-H: NÃO APTO.** Faltam executar o novo runner no Codespaces conectado, revisar os checkpoints/limitações do manifesto e emitir parecer com evidência real. Não desbloquear agendas/financeiro apenas pela entrega do executor.
+
+## Transferência autorizada do runner — 04/11/2026
+
+Preparada branch temporária `test/stage0042-http` a partir da base compatível `667940c13324782cbc959fb7911f6809c9d0f913`, preservando develop/main e os trabalhos locais anteriores. Escopo: runner/guards, testes, documentação e mapeamento da migration já aplicada. Nenhum arquivo de work/, credencial, manifesto privado ou fixture real integra a entrega. O runner passou a aceitar também o nome exato dessa branch; main/outras branches continuam bloqueadas. Os registros anteriores de ausência de push são históricos, anteriores à autorização desta transferência.
+
+Nesta tarefa de transferência não foram executados Auth, Data API, preparação administrativa ou criação de fixtures no Supabase remoto. Não foram feitas migrations ou alterações de grants/RLS/funções. A Etapa 004.2-H permanece NÃO APTA por ausência das provas JWT reais. Orientações para execução na branch temporária em [STAGE0042-HTTP-RUNNER.md](STAGE0042-HTTP-RUNNER.md). Commit/push e checks desta transferência serão registrados na resposta final, sem segundo commit só para registrar o hash.

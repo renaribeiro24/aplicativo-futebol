@@ -44,6 +44,14 @@
       "source_sha256": "6c099a5579f611e5a8aa4a7889812c83c6faf1347302d2c1db88d40d5b6e8035",
       "remote_version": "20261020162554",
       "remote_name": "20261020161609_stage003_identity_workflows"
+    },
+    {
+      "source_file": "20261027143201_stage0042_group_configuration.sql",
+      "source_sha256": "b91c64544869846b5a88a0e2d2bb752e1bd571f0d753b6d08db287b7f986f97d",
+      "remote_version": "20261029191222",
+      "remote_name": "20261027143201_stage0042_group_configuration",
+      "applied_at": "2026-10-29"
     }
-  ]
+  ],
+  "last_applied_at": "2026-10-29"
 }
