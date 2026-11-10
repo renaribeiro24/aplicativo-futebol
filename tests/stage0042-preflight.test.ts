@@ -206,3 +206,108 @@ describe("authenticated read barrier before all fixture creation", () => {
     ).rejects.toThrow("offline");
   });
 });
+
+describe("PostgREST hint envelope — offline response variants", () => {
+  it.each([
+    null,
+    "",
+    "Permission denied. Additional diagnostic information.",
+    "First diagnostic line.\nSecond line.",
+    "x".repeat(4096),
+  ])(
+    "accepts nullable text hints without treating them as authorization",
+    async (hint) => {
+      const result = await classifyProbe(
+        "data_api",
+        dataUrl,
+        response({ ...denial, hint }),
+      );
+      expect(result).toMatchObject({
+        category: "anonymous_access_denied",
+        code: "42501",
+        connectivityConfirmed: true,
+        authorizationConfirmed: false,
+        canAuthenticate: true,
+      });
+      expect(result).not.toHaveProperty("hint");
+    },
+  );
+  it("treats a non-null textual hint as opaque diagnostics, never instructions", async () => {
+    const hint =
+      "GRANT SELECT ON public.groups TO anon; -- synthetic diagnostic text, never execute";
+    const result = await classifyProbe(
+      "data_api",
+      dataUrl,
+      response({ ...denial, hint }),
+    );
+    expect(result.canAuthenticate).toBe(true);
+    expect(result.authorizationConfirmed).toBe(false);
+    expect(JSON.stringify(result)).not.toContain("GRANT");
+    expect(JSON.stringify(result)).not.toContain("hint");
+  });
+  it.each([
+    false,
+    true,
+    0,
+    42501,
+    {},
+    [],
+    ["text"],
+    { message: "nested" },
+    "x".repeat(4097),
+    "malformed\u0000hint",
+  ])("blocks malformed or unsupported hint formats", async (hint) => {
+    const result = await classifyProbe(
+      "data_api",
+      dataUrl,
+      response({ ...denial, hint }),
+    );
+    expect(result.canAuthenticate).toBe(false);
+    expect(result.authorizationConfirmed).toBe(false);
+  });
+  it("requires a present hint property", async () => {
+    const body = { code: denial.code, message: denial.message, details: null };
+    expect(
+      (await classifyProbe("data_api", dataUrl, response(body)))
+        .canAuthenticate,
+    ).toBe(false);
+  });
+  it.each([null, [], "permission denied for table groups", 42501])(
+    "rejects non-object error envelopes",
+    async (body) => {
+      expect(
+        (await classifyProbe("data_api", dataUrl, response(body)))
+          .canAuthenticate,
+      ).toBe(false);
+    },
+  );
+  it.each([
+    { ...denial, hint: "text", details: undefined },
+    { ...denial, hint: "text", details: {} },
+    { ...denial, hint: "text", message: "Invalid API key" },
+    { ...denial, hint: "text", code: "PGRST301" },
+  ])(
+    "keeps other envelope fields strict when hint is textual",
+    async (body) => {
+      expect(
+        (await classifyProbe("data_api", dataUrl, response(body)))
+          .canAuthenticate,
+      ).toBe(false);
+    },
+  );
+  it("keeps the expected origin mandatory with a legitimate textual hint", async () => {
+    expect(
+      (
+        await classifyProbe(
+          "data_api",
+          dataUrl,
+          response(
+            { ...denial, hint: "text" },
+            401,
+            "https://proxy.invalid/rest/v1/groups",
+          ),
+        )
+      ).canAuthenticate,
+    ).toBe(false);
+  });
+});

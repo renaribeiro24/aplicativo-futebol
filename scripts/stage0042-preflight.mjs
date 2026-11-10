@@ -53,10 +53,19 @@ export async function classifyProbe(endpoint, requestedUrl, response) {
   // Exact PostgREST PostgreSQL-error envelope for the deliberately unprivileged groups probe.
   if (
     response.status === 401 &&
-    body?.code === "42501" &&
+    body !== null &&
+    typeof body === "object" &&
+    !Array.isArray(body) &&
+    ["code", "message", "details", "hint"].every((field) =>
+      Object.hasOwn(body, field),
+    ) &&
+    body.code === "42501" &&
     body.message === "permission denied for table groups" &&
     body.details === null &&
-    body.hint === null
+    (body.hint === null ||
+      (typeof body.hint === "string" &&
+        body.hint.length <= 4096 &&
+        !body.hint.includes("\u0000")))
   )
     return {
       ...result,
