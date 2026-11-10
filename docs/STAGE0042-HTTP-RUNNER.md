@@ -36,7 +36,8 @@ node --use-env-proxy scripts/test-stage0042-http.mjs --preflight
 Se estiver usando arquivo privado ignorado, adicionar `--env-file=work/stage0042.test.env` imediatamente depois de `node --use-env-proxy`. Não sobrescrever arquivos privados existentes. Variáveis já exportadas têm precedência sobre o arquivo; corrigir secrets desatualizados no ambiente adequado sem enviar valores pelo chat.
 
 - `--check`: não usa rede nem cria arquivos/fixtures; retorna presença, alvo, formato da chave publicável e declaração/flags. Exit 2 significa configuração incompleta ou não autorizada.
-- `--preflight`: consulta apenas health/Auth e raiz da Data API, sem login ou gravações. Status null indica falha de transporte/TLS/proxy, não reprovação de RLS. HTTP 401 pode comprovar conectividade sem comprovar API key/sessão válida. O modo de preparação exige HTTP 200 nos dois endpoints com a chave publicável.
+- `--preflight`: consulta health/Auth e `/rest/v1/groups?select=id&limit=0`, sem login, dados de grupos ou gravações. Exige resposta do endpoint HTTPS exato do projeto, sem redirect, JSON válido e o contrato esperado. Auth deve retornar 200 com identificação GoTrue/version. Data API deve negar a sondagem anônima com HTTP 401, code 42501, message `permission denied for table groups`, details/hint null. Isso é `anonymous_access_denied`, connectivityConfirmed=true e **authorizationConfirmed=false**: permite somente avançar para autenticação. Chave inválida, JWT inválido, outro 401, erro de schema, resposta de outra origem/proxy ou acesso anônimo inesperadamente permitido bloqueiam o avanço (exit 2). Status null continua sendo falha de transporte/TLS/proxy, não reprovação de RLS. Não enviar a chave publicável como se fosse um JWT de usuário.
+- Antes de qualquer fixture, A/B/C precisam autenticar normalmente, passar por getUser, confirmação de conta e identidades/sessões distintas. Depois, **cada conta** precisa ler groups, group_members, venues e as três tabelas novas, filtradas por UUID inexistente para não consultar dados preexistentes. Somente HTTP 200, sem erro, com array vazio permite prosseguir; qualquer falha impede a criação de grupos. Isso verifica os acessos de leitura da sessão; a autorização linha a linha e por papel ainda depende da matriz posterior.
 
 Somente depois de configuração e conectividade válidas:
 
@@ -102,3 +103,9 @@ git switch --track origin/test/stage0042-http
 ```
 
 Se a branch local já existir, usar `git switch test/stage0042-http` e conferir divergências antes de atualizar. Se houver conflito ou impedimento por alterações locais, interromper sem reset/clean/stash automático. Seguir depois os modos --check, --preflight, --prepare e --run descritos acima. Nunca usar --prepare apenas como verificação inofensiva: ele cria grupos quando os pré-requisitos são aprovados.
+
+## Correção do preflight anônimo — 04/11/2026
+
+O preflight anterior exigia 200 antes do login na Data API e classificava genericamente 401, confundindo uma negativa PostgreSQL legítima com problema de conexão. Também deixava --preflight sair com zero para qualquer resposta HTTP. Corrigidos ambos os gates: agora somente o contrato estrito acima permite avançar para as verificações autenticadas. Respostas e mensagens completas nunca são registradas. O módulo de classificação possui testes offline e o manifest registra também seu SHA-256.
+
+Esta correção permanece local na branch test/stage0042-http, sem push/merge/deploy. Nenhuma execução contra o Supabase remoto ou criação de fixtures nesta rodada. A evidência real 200 Auth/401 PostgreSQL foi informada pelo responsável; os novos resultados são de testes locais, não nova homologação real. **004.2-H continua NÃO APTA.**

@@ -1,3 +1,8 @@
+import {
+  PROBES,
+  classifyProbe,
+  authenticatedReadPreflight,
+} from "./stage0042-preflight.mjs";
 // Real Auth JWT + Data API only. No service key, migrations, cleanup, retries or existing-link edits.
 import assert from "node:assert/strict";
 import { randomUUID, createHash } from "node:crypto";
@@ -94,6 +99,9 @@ const codeVersion = () => ({
   runnerSha256: createHash("sha256")
     .update(readFileSync(fileURLToPath(import.meta.url)))
     .digest("hex"),
+  preflightSha256: createHash("sha256")
+    .update(readFileSync(new URL("./stage0042-preflight.mjs", import.meta.url)))
+    .digest("hex"),
   guardsSha256: createHash("sha256")
     .update(
       readFileSync(new URL("./stage0042-http-guards.mjs", import.meta.url)),
@@ -171,33 +179,22 @@ function client() {
 }
 async function connectivity() {
   const out = [];
-  for (const [endpoint, path] of [
-    ["auth", "/auth/v1/health"],
-    ["data_api", "/rest/v1/"],
-  ]) {
+  for (const [endpoint, path] of PROBES) {
     try {
       const r = await fetch(PROJECT_URL + path, {
         headers: key?.startsWith("sb_publishable_") ? { apikey: key } : {},
         redirect: "error",
         signal: AbortSignal.timeout(10000),
       });
-      out.push({
-        endpoint,
-        status: r.status,
-        category: r.ok
-          ? "reachable"
-          : r.status === 401
-            ? "api_key_or_auth_required"
-            : r.status === 403
-              ? "http_forbidden"
-              : "unexpected_http",
-      });
-      await r.body?.cancel();
+      out.push(await classifyProbe(endpoint, PROJECT_URL + path, r));
     } catch (error) {
       const text = String(error?.message) + String(error?.cause?.message);
       out.push({
         endpoint,
         status: null,
+        connectivityConfirmed: false,
+        authorizationConfirmed: false,
+        canAuthenticate: false,
         category: /proxy|CONNECT|tunnel/i.test(text)
           ? "proxy"
           : /Timeout|Abort/i.test(error?.name ?? "")
@@ -437,17 +434,6 @@ async function update(db, table, group, row, values, label) {
   check(true, label, { table, operation: "update", status: r.status });
 }
 async function prepare() {
-  for (const table of tables) {
-    const r = await actors[0].db
-      .from(table)
-      .select("id")
-      .eq("group_id", randomUUID())
-      .limit(1);
-    assert(
-      !r.error,
-      "Applied table is unavailable; confirm the authorized migration before fixture creation",
-    );
-  }
   state.identities = actors.map((a) => ({ user: a.user.id, player: a.player }));
   state.phase = "creating_groups";
   save();
@@ -1228,7 +1214,7 @@ try {
     console.log(
       JSON.stringify({ mode, connectivity: checks, fixturesCreated: false }),
     );
-    process.exitCode = checks.every((c) => c.status !== null) ? 0 : 2;
+    process.exitCode = checks.every((c) => c.canAuthenticate) ? 0 : 2;
   } else {
     assertConfiguration(env);
     const branch = execFileSync("git", ["branch", "--show-current"], {
@@ -1238,7 +1224,7 @@ try {
     assertBranch(branch);
     const connection = await connectivity();
     assert(
-      connection.every((c) => c.status === 200),
+      connection.every((c) => c.canAuthenticate),
       "Auth/Data API preflight blocked; no fixtures created",
     );
     if (mode === "--prepare")
@@ -1267,6 +1253,25 @@ try {
       state = loaded;
     }
     await authenticate();
+    const readScope = randomUUID();
+    await authenticatedReadPreflight(
+      async (label, table) => {
+        current = `authenticated_read_${label}_${table}`;
+        const actor = actors.find((a) => a.label === label);
+        return await actor.db
+          .from(table)
+          .select("id")
+          .eq(table === "groups" ? "id" : "group_id", readScope)
+          .limit(1);
+      },
+      (actor, table) =>
+        check(true, `authenticated_read_${actor}_${table}`, {
+          actor,
+          table,
+          operation: "select",
+          status: 200,
+        }),
+    );
     if (mode === "--prepare") await prepare();
     else {
       await validateFixtures();
@@ -1292,11 +1297,13 @@ try {
     if (state.phase !== "awaiting_membership") state.result = "FAIL";
     state.failure = {
       checkpoint: current,
-      category: current.startsWith("authenticate")
-        ? "authentication"
-        : state.phase === "http_matrix"
-          ? "authorization_or_integrity"
-          : "configuration_or_fixture_setup",
+      category: current.startsWith("authenticated_read_")
+        ? "authenticated_read_authorization"
+        : current.startsWith("authenticate")
+          ? "authentication"
+          : state.phase === "http_matrix"
+            ? "authorization_or_integrity"
+            : "configuration_or_fixture_setup",
       detailsSuppressed: true,
     };
     save();
