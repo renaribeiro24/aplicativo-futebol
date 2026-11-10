@@ -8,8 +8,15 @@ vi.mock("@/components/forms/action-form", () => ({
   ActionForm: ({ children }: { children: ReactNode }) =>
     createElement("form", null, children),
 }));
+vi.mock("@/features/groups/operations/panel", () => ({
+  OperationsPanel: () => null,
+  SettingsPager: () => null,
+}));
+vi.mock("@/features/groups/operations/forms", () => ({
+  VenueForm: () => null,
+}));
 import Settings from "@/app/(protected)/groups/[slug]/settings/page";
-import { PendingConfiguration } from "@/features/groups/pending-configuration";
+import { ParticipationPreparation } from "@/features/groups/operations/participation";
 describe("settings render — synthetic local fixtures only", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -19,6 +26,7 @@ describe("settings render — synthetic local fixtures only", () => {
       is: vi.fn(),
       order: vi.fn(),
       limit: m.limit,
+      range: m.limit,
     };
     for (const fn of [chain.select, chain.eq, chain.is, chain.order])
       fn.mockReturnValue(chain);
@@ -54,18 +62,11 @@ describe("settings render — synthetic local fixtures only", () => {
       Settings({ params: Promise.resolve({ slug: "alpha" }) }),
     ).rejects.toThrow("Não foi possível carregar a administração");
   });
-  it.each([true, false])(
-    "disables every future section without a submit action (owner=%s)",
-    (owner) => {
-      const html = renderToStaticMarkup(
-        createElement(PendingConfiguration, { owner }),
-      );
-      expect((html.match(/<fieldset disabled=""/g) ?? []).length).toBe(4);
-      expect(html).not.toContain("<form");
-      expect(html).not.toContain('type="submit"');
-      expect(html).not.toContain('value="80"');
-      expect(html).not.toContain('value="25"');
-      expect(html).toContain("Nenhuma alteração pode ser salva");
-    },
-  );
+  it("keeps only participation rules disabled without a persistence contract", () => {
+    const html = renderToStaticMarkup(createElement(ParticipationPreparation));
+    expect((html.match(/<fieldset disabled=""/g) ?? []).length).toBe(1);
+    expect(html).not.toContain("<form");
+    expect(html).not.toContain('type="submit"');
+    expect(html).toContain("Nenhuma alteração pode ser salva");
+  });
 });

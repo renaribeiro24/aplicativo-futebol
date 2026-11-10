@@ -112,6 +112,119 @@ export type Database = {
           },
         ];
       };
+      group_pricing_policies: {
+        Row: {
+          casual_amount_cents: number | null;
+          casual_enabled: boolean;
+          created_at: string;
+          due_day: number | null;
+          effective_from: string;
+          effective_until: string | null;
+          group_id: string;
+          id: string;
+          monthly_amount_cents: number | null;
+          monthly_enabled: boolean;
+          updated_at: string;
+        };
+        Insert: {
+          casual_amount_cents?: number | null;
+          casual_enabled: boolean;
+          created_at?: string;
+          due_day?: number | null;
+          effective_from: string;
+          effective_until?: string | null;
+          group_id: string;
+          id?: string;
+          monthly_amount_cents?: number | null;
+          monthly_enabled: boolean;
+          updated_at?: string;
+        };
+        Update: {
+          casual_amount_cents?: number | null;
+          casual_enabled?: boolean;
+          created_at?: string;
+          due_day?: number | null;
+          effective_from?: string;
+          effective_until?: string | null;
+          group_id?: string;
+          id?: string;
+          monthly_amount_cents?: number | null;
+          monthly_enabled?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "group_pricing_policies_group_id_fkey";
+            columns: ["group_id"];
+            isOneToOne: false;
+            referencedRelation: "groups";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      group_schedules: {
+        Row: {
+          created_at: string;
+          duration_minutes: number;
+          ends_on: string | null;
+          group_id: string;
+          id: string;
+          interval_weeks: number;
+          is_active: boolean;
+          recurrence_type: string;
+          starts_at_local: string;
+          starts_on: string;
+          updated_at: string;
+          venue_id: string | null;
+          weekday: number;
+        };
+        Insert: {
+          created_at?: string;
+          duration_minutes: number;
+          ends_on?: string | null;
+          group_id: string;
+          id?: string;
+          interval_weeks: number;
+          is_active?: boolean;
+          recurrence_type: string;
+          starts_at_local: string;
+          starts_on: string;
+          updated_at?: string;
+          venue_id?: string | null;
+          weekday: number;
+        };
+        Update: {
+          created_at?: string;
+          duration_minutes?: number;
+          ends_on?: string | null;
+          group_id?: string;
+          id?: string;
+          interval_weeks?: number;
+          is_active?: boolean;
+          recurrence_type?: string;
+          starts_at_local?: string;
+          starts_on?: string;
+          updated_at?: string;
+          venue_id?: string | null;
+          weekday?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "group_schedules_group_id_fkey";
+            columns: ["group_id"];
+            isOneToOne: false;
+            referencedRelation: "groups";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "group_schedules_group_id_venue_id_fkey";
+            columns: ["group_id", "venue_id"];
+            isOneToOne: false;
+            referencedRelation: "venues";
+            referencedColumns: ["group_id", "id"];
+          },
+        ];
+      };
       groups: {
         Row: {
           created_at: string;
@@ -260,6 +373,54 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "venues";
             referencedColumns: ["group_id", "id"];
+          },
+        ];
+      };
+      member_billing_terms: {
+        Row: {
+          billing_type: string;
+          created_at: string;
+          effective_from: string;
+          effective_until: string | null;
+          group_id: string;
+          id: string;
+          player_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          billing_type: string;
+          created_at?: string;
+          effective_from: string;
+          effective_until?: string | null;
+          group_id: string;
+          id?: string;
+          player_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          billing_type?: string;
+          created_at?: string;
+          effective_from?: string;
+          effective_until?: string | null;
+          group_id?: string;
+          id?: string;
+          player_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "member_billing_terms_group_id_fkey";
+            columns: ["group_id"];
+            isOneToOne: false;
+            referencedRelation: "groups";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "member_billing_terms_group_id_player_id_fkey";
+            columns: ["group_id", "player_id"];
+            isOneToOne: false;
+            referencedRelation: "group_members";
+            referencedColumns: ["group_id", "player_id"];
           },
         ];
       };

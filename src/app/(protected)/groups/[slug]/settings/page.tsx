@@ -2,7 +2,14 @@ import Link from "next/link";
 import { loadManagedGroup } from "@/features/groups/server";
 import { updateGroupDetails } from "@/features/groups/actions";
 import { roleLabels } from "@/features/groups/validation";
-import { PendingConfiguration } from "@/features/groups/pending-configuration";
+import {
+  OperationsPanel,
+  SettingsPager,
+  type SettingsQuery,
+} from "@/features/groups/operations/panel";
+import { VenueForm } from "@/features/groups/operations/forms";
+import { ParticipationPreparation } from "@/features/groups/operations/participation";
+import { pageNumber } from "@/features/groups/operations/validation";
 import { ActionForm } from "@/components/forms/action-form";
 import { TextField } from "@/components/forms/fields";
 import {
@@ -16,27 +23,31 @@ import { Badge } from "@/components/ui/badge";
 export const metadata = { title: "Administrar grupo" };
 export default async function GroupSettings({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<SettingsQuery>;
 }) {
   const { slug } = await params;
   const { db, group, role } = await loadManagedGroup(slug);
+  const query = await (searchParams ?? Promise.resolve({} as SettingsQuery));
+  const memberPage = pageNumber(query.membersPage);
   const [members, venues] = await Promise.all([
     db
       .from("group_members")
-      .select("id,role,players(name,nickname)")
+      .select("id,player_id,role,players(name,nickname)", { count: "exact" })
       .eq("group_id", group.id)
       .eq("status", "active")
       .order("created_at")
       .order("id")
-      .limit(20),
+      .range((memberPage - 1) * 20, memberPage * 20 - 1),
     db
       .from("venues")
       .select("id,name")
       .eq("group_id", group.id)
       .is("deleted_at", null)
       .order("name")
-      .limit(50),
+      .limit(1000),
   ]);
   if (members.error || venues.error)
     throw new Error("Não foi possível carregar a administração do grupo.");
@@ -51,7 +62,7 @@ export default async function GroupSettings({
           Administrar {group.name}
         </h1>
         <p className="text-muted-foreground">
-          Organize sua turma. Os dados gerais já podem ser atualizados.
+          Organize sua turma, os horários e as configurações do seu grupo.
         </p>
       </header>
       <nav
@@ -152,11 +163,14 @@ export default async function GroupSettings({
           >
             Ver lista paginada e cadastrar convidado
           </Link>
-          {members.data.length === 20 && (
-            <p className="mt-2 text-sm text-muted-foreground">
-              Exibindo os primeiros 20 integrantes.
-            </p>
-          )}
+          <SettingsPager
+            slug={slug}
+            query={query}
+            field="membersPage"
+            page={memberPage}
+            count={members.count ?? 0}
+            size={20}
+          />
         </CardContent>
       </Card>
       <Card>
@@ -165,8 +179,8 @@ export default async function GroupSettings({
             Locais de futebol
           </h2>
           <CardDescription>
-            Locais já cadastrados neste grupo. A edição e a associação às
-            agendas estão em preparação.
+            Locais ativos deste grupo, disponíveis nas agendas. Cadastre um
+            local antes de vinculá-lo a uma agenda.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -183,14 +197,32 @@ export default async function GroupSettings({
               Nenhum local cadastrado neste grupo.
             </p>
           )}
-          {venues.data.length === 50 && (
+          <details className="mt-5 rounded-lg border p-4">
+            <summary className="min-h-11 cursor-pointer font-semibold text-primary">
+              Cadastrar local
+            </summary>
+            <div className="mt-4">
+              <VenueForm slug={slug} />
+            </div>
+          </details>
+          {venues.data.length === 1000 && (
             <p className="mt-2 text-sm text-muted-foreground">
-              Exibindo os primeiros 50 locais.
+              Exibindo os primeiros 1.000 locais ativos.
             </p>
           )}
         </CardContent>
       </Card>
-      <PendingConfiguration owner={role === "owner"} />
+      <OperationsPanel
+        slug={slug}
+        groupId={group.id}
+        timezone={group.timezone}
+        role={role}
+        db={db}
+        members={members.data}
+        venues={venues.data}
+        query={query}
+      />
+      <ParticipationPreparation />
     </div>
   );
 }
