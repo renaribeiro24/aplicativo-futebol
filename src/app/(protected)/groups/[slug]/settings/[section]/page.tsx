@@ -7,7 +7,6 @@ import {
   SettingsPager,
   type SettingsQuery,
 } from "@/features/groups/operations/panel";
-import { VenueForm } from "@/features/groups/operations/forms";
 import { pageNumber } from "@/features/groups/operations/validation";
 import { ActionForm } from "@/components/forms/action-form";
 import { TextField } from "@/components/forms/fields";
@@ -19,7 +18,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { settingsSections } from "@/features/groups/operations/sections";
 export const metadata = { title: "Configurações do grupo" };
 export default async function SettingsSection({
@@ -30,6 +29,7 @@ export default async function SettingsSection({
   searchParams?: Promise<SettingsQuery>;
 }) {
   const { slug, section } = await params;
+  if (section === "venues") redirect(`/groups/${slug}/settings/general`);
   const definition = settingsSections.find((s) => s.path === section);
   if (!definition) notFound();
   const { db, group, role } = await loadManagedGroup(slug);
@@ -48,10 +48,10 @@ export default async function SettingsSection({
           .order("id")
           .range((memberPage - 1) * 20, memberPage * 20 - 1)
       : Promise.resolve({ data: [], error: null, count: 0 }),
-    section === "venues" || section === "schedule"
+    section === "general" || section === "schedule"
       ? db
           .from("venues")
-          .select("id,name")
+          .select("id,name,address")
           .eq("group_id", group.id)
           .is("deleted_at", null)
           .order("name")
@@ -79,17 +79,16 @@ export default async function SettingsSection({
         <Card>
           <CardHeader>
             <h2 id="details" className="text-xl font-semibold">
-              Dados gerais
+              Identificação do grupo
             </h2>
             <CardDescription>
-              Nome e descrição aparecem para os integrantes. O fuso indica o
-              horário local do grupo.
+              Nome e descrição aparecem para os integrantes.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <ActionForm
               action={updateGroupDetails.bind(null, slug)}
-              label="Salvar dados do grupo"
+              label="Salvar identificação"
             >
               <TextField
                 name="name"
@@ -106,18 +105,82 @@ export default async function SettingsSection({
                   className="form-control min-h-28"
                 />
               </label>
-              <TextField
-                name="timezone"
-                label="Fuso horário"
-                value={group.timezone}
-                required
-                maxLength={100}
-              />
-              <p className="text-sm text-muted-foreground">
-                Use um fuso IANA, como America/Sao_Paulo. O endereço do grupo
-                não será alterado.
-              </p>
             </ActionForm>
+          </CardContent>
+        </Card>
+      )}
+      {section === "general" && (
+        <Card>
+          <CardHeader>
+            <h2 className="text-xl font-semibold">Local do futebol</h2>
+            <CardDescription id="primary-venue-notice">
+              A definição do local principal e o endereço detalhado estão em
+              preparação. Estes campos ainda não podem ser salvos. Nenhum local
+              existente será escolhido ou alterado automaticamente.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <fieldset
+              disabled
+              aria-describedby="primary-venue-notice"
+              className="grid min-w-0 gap-5 sm:grid-cols-2"
+            >
+              <legend className="sr-only">Local principal em preparação</legend>
+              <TextField
+                name="venue_name"
+                label="Nome do estabelecimento ou campo"
+                required
+                maxLength={120}
+              />
+              <TextField
+                name="postal_code"
+                label="CEP"
+                required
+                maxLength={9}
+              />
+              <TextField name="street" label="Logradouro" required />
+              <TextField name="street_number" label="Número" required />
+              <TextField name="complement" label="Complemento (opcional)" />
+              <TextField name="neighborhood" label="Bairro" required />
+              <TextField name="city" label="Cidade" required />
+              <TextField
+                name="state"
+                label="Estado (UF)"
+                required
+                maxLength={2}
+              />
+            </fieldset>
+            <div className="space-y-3">
+              <h3 className="font-semibold">Locais existentes preservados</h3>
+              {venues.data.length ? (
+                <ul className="space-y-3">
+                  {venues.data.map((venue) => (
+                    <li key={venue.id} className="[overflow-wrap:anywhere]">
+                      <span className="font-medium">{venue.name}</span>
+                      {venue.address && (
+                        <p className="text-sm text-muted-foreground">
+                          {venue.address}
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Nenhum local ativo cadastrado.
+                </p>
+              )}
+              {venues.data.length === 1000 && (
+                <p className="text-sm text-muted-foreground">
+                  Exibindo os primeiros 1.000 locais ativos.
+                </p>
+              )}
+              <p className="text-sm text-muted-foreground">
+                Locais anteriores e vínculos das agendas são preservados. A
+                definição automática de local para novas agendas aguarda
+                configuração do local principal.
+              </p>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -170,47 +233,6 @@ export default async function SettingsSection({
               count={members.count ?? 0}
               size={20}
             />
-          </CardContent>
-        </Card>
-      )}
-      {section === "venues" && (
-        <Card>
-          <CardHeader>
-            <h2 id="venues" className="text-xl font-semibold">
-              Locais de futebol
-            </h2>
-            <CardDescription>
-              Locais ativos deste grupo, disponíveis nas agendas. Cadastre um
-              local antes de vinculá-lo a uma agenda.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {venues.data.length ? (
-              <ul className="space-y-2">
-                {venues.data.map((venue) => (
-                  <li key={venue.id} className="[overflow-wrap:anywhere]">
-                    {venue.name}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Nenhum local cadastrado neste grupo.
-              </p>
-            )}
-            <details className="mt-5 rounded-lg border p-4">
-              <summary className="min-h-11 cursor-pointer font-semibold text-primary">
-                Cadastrar local
-              </summary>
-              <div className="mt-4">
-                <VenueForm slug={slug} />
-              </div>
-            </details>
-            {venues.data.length === 1000 && (
-              <p className="mt-2 text-sm text-muted-foreground">
-                Exibindo os primeiros 1.000 locais ativos.
-              </p>
-            )}
           </CardContent>
         </Card>
       )}

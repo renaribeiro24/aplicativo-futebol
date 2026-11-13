@@ -41,7 +41,7 @@ describe("group settings mutations — SDK mocked, not a remote persistence proo
     m.single.mockResolvedValue({ error: null, data: { id: "fixture-a" } });
   });
   it.each(["owner", "admin"])(
-    "allows %s and writes only the three permitted fields",
+    "allows %s and writes only name/description while preserving the timezone",
     async (role) => {
       m.group.mockResolvedValue({
         db: { from: m.from },
@@ -62,14 +62,13 @@ describe("group settings mutations — SDK mocked, not a remote persistence proo
       expect(m.update).toHaveBeenCalledWith({
         name: "Turma sintética",
         description: "Encontro local",
-        timezone: "America/Sao_Paulo",
       });
       expect(m.eq).toHaveBeenCalledWith("id", "fixture-a");
       expect(m.revalidate.mock.calls.map((c) => c[0])).toEqual([
         "/dashboard",
         "/groups/alpha",
         "/groups/alpha/settings",
-        ...["general", "members", "venues", "schedule", "finance"].map(
+        ...["general", "members", "schedule", "finance"].map(
           (section) => `/groups/alpha/settings/${section}`,
         ),
       ]);
@@ -85,17 +84,15 @@ describe("group settings mutations — SDK mocked, not a remote persistence proo
       expect(m.from).not.toHaveBeenCalled();
     },
   );
-  it.each([
-    { name: " " },
-    { description: "x".repeat(1001) },
-    { timezone: "" },
-    { timezone: "invalid-zone" },
-  ])("rejects invalid input before loading a group", async (values) => {
-    expect(
-      (await updateGroupDetails("alpha", {}, form(values))).error,
-    ).toBeTruthy();
-    expect(m.group).not.toHaveBeenCalled();
-  });
+  it.each([{ name: " " }, { description: "x".repeat(1001) }])(
+    "rejects invalid input before loading a group",
+    async (values) => {
+      expect(
+        (await updateGroupDetails("alpha", {}, form(values))).error,
+      ).toBeTruthy();
+      expect(m.group).not.toHaveBeenCalled();
+    },
+  );
   it.each([
     { error: { code: "42501" }, data: null },
     { error: null, data: null },
@@ -123,4 +120,16 @@ describe("group settings mutations — SDK mocked, not a remote persistence proo
     );
     expect(m.update).not.toHaveBeenCalled();
   });
+  it.each([undefined, "UTC", "invalid-zone"])(
+    "does not accept timezone updates: %s",
+    async (timezone) => {
+      const result = await updateGroupDetails("alpha", {}, form({ timezone }));
+      expect(result.message).toBeTruthy();
+      expect(m.update).toHaveBeenCalledWith({
+        name: "Turma sintética",
+        description: "Encontro local",
+      });
+      expect(m.update.mock.calls[0][0]).not.toHaveProperty("timezone");
+    },
+  );
 });

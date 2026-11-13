@@ -13,6 +13,9 @@ const m = vi.hoisted(() => ({
 vi.mock("@/features/groups/server", () => ({ loadManagedGroup: m.load }));
 vi.mock("@/features/groups/actions", () => ({ updateGroupDetails: vi.fn() }));
 vi.mock("next/navigation", () => ({
+  redirect: (path: string) => {
+    throw Error("NEXT_REDIRECT:" + path);
+  },
   notFound: () => {
     throw Error("NEXT_NOT_FOUND");
   },
@@ -67,13 +70,13 @@ describe("settings hub and subpages — synthetic local fixtures only", () => {
       },
     });
   });
-  it("renders five distinct cards, real counts and responsive grid without forms", async () => {
+  it("renders four distinct cards, real counts and responsive grid without forms", async () => {
     const html = renderToStaticMarkup(
       await Settings({ params: Promise.resolve({ slug: "alpha" }) }),
     );
-    for (const path of ["general", "members", "venues", "schedule", "finance"])
+    for (const path of ["general", "members", "schedule", "finance"])
       expect(html).toContain(`/groups/alpha/settings/${path}`);
-    expect(html.match(/<h2/g) ?? []).toHaveLength(5);
+    expect(html.match(/<h2/g) ?? []).toHaveLength(4);
     expect(html).toContain("md:grid-cols-2 lg:grid-cols-3");
     expect(html).toContain("2 integrante(s) ativo(s)");
     expect(html).not.toContain("<form");
@@ -92,14 +95,18 @@ describe("settings hub and subpages — synthetic local fixtures only", () => {
     expect(html).toContain("Indicador indisponível");
     expect(html).not.toContain("private detail");
   });
-  it("keeps general data fields on their own page without unrelated queries", async () => {
+  it("keeps general data fields on their own page without financial or membership queries", async () => {
     const html = renderToStaticMarkup(await section("general"));
-    for (const field of ["name", "description", "timezone"])
+    for (const field of ["name", "description"])
       expect(html).toContain(`name="${field}"`);
     expect(html).toContain("Voltar à administração");
-    expect(m.tables).not.toHaveBeenCalled();
+    expect(m.tables).toHaveBeenCalledWith("venues");
+    expect(html).not.toContain('name="timezone"');
+    expect(html).toContain("Identificação do grupo");
+    expect(html).not.toContain('href="/groups/alpha/settings/venues"');
+    expect(html).toContain("fieldset disabled");
   });
-  it.each(["members", "venues", "schedule", "finance"])(
+  it.each(["members", "schedule", "finance"])(
     "renders the %s subpage with a return link",
     async (name) => {
       const html = renderToStaticMarkup(await section(name));
@@ -142,7 +149,7 @@ describe("settings hub and subpages — synthetic local fixtures only", () => {
     await expect(section("other")).rejects.toThrow("NEXT_NOT_FOUND");
     expect(m.tables).not.toHaveBeenCalled();
   });
-  it.each(["general", "members", "venues", "schedule", "finance"])(
+  it.each(["general", "members", "schedule", "finance"])(
     "preserves the manager guard for %s",
     async (name) => {
       m.load.mockRejectedValue(Error("NEXT_NOT_FOUND"));
@@ -163,5 +170,29 @@ describe("settings hub and subpages — synthetic local fixtures only", () => {
     const html = renderToStaticMarkup(createElement(ParticipationPreparation));
     expect(html).not.toContain("<form");
     expect(html).toContain("Nenhuma alteração pode ser salva");
+  });
+  it("redirects the old venues URL to general without recreating a navigation entry", async () => {
+    await expect(section("venues")).rejects.toThrow(
+      "NEXT_REDIRECT:/groups/alpha/settings/general",
+    );
+    expect(m.tables).not.toHaveBeenCalled();
+  });
+  it("preserves legacy address text without inferring a primary venue or filling structured fields", async () => {
+    m.rows.mockResolvedValue({
+      data: [
+        {
+          id: "legacy",
+          name: "Local sintético",
+          address: "Endereço legado sem estrutura",
+        },
+      ],
+      error: null,
+    });
+    const html = renderToStaticMarkup(await section("general"));
+    expect(html).toContain("Endereço legado sem estrutura");
+    expect(html).toContain("ainda não podem ser salvos");
+    expect(html).not.toContain('value="Endereço legado sem estrutura"');
+    expect(html).toContain('name="postal_code"');
+    expect(html).toContain('name="city"');
   });
 });

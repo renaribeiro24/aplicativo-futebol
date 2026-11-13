@@ -1,7 +1,6 @@
 import Link from "next/link";
 import {
   Users,
-  MapPin,
   CalendarDays,
   Settings2,
   Wallet,
@@ -25,17 +24,12 @@ export default async function GroupSettings({
 }) {
   const { slug } = await params;
   const { db, group, role } = await loadManagedGroup(slug);
-  const [members, venues, schedules, policies] = await Promise.all([
+  const [members, schedules, policies] = await Promise.all([
     db
       .from("group_members")
       .select("id", { head: true, count: "exact" })
       .eq("group_id", group.id)
       .eq("status", "active"),
-    db
-      .from("venues")
-      .select("id", { head: true, count: "exact" })
-      .eq("group_id", group.id)
-      .is("deleted_at", null),
     db
       .from("group_schedules")
       .select("id", { head: true, count: "exact" })
@@ -53,11 +47,10 @@ export default async function GroupSettings({
   const indicators = [
     group.timezone,
     count(members, "integrante(s) ativo(s)"),
-    count(venues, "local(is) ativo(s)"),
     count(schedules, "agenda(s) ativa(s)"),
     count(policies, "política(s) no histórico"),
   ];
-  const icons = [Settings2, Users, MapPin, CalendarDays, Wallet];
+  const icons = [Settings2, Users, CalendarDays, Wallet];
   return (
     <div className="mx-auto min-w-0 max-w-6xl space-y-8">
       <Link href={`/groups/${slug}`} className="text-sm text-primary underline">

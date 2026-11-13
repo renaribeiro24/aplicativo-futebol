@@ -100,16 +100,9 @@ export async function updateGroupDetails(
 ): Promise<AuthState> {
   const name = text(form, "name");
   const description = text(form, "description");
-  const timezone = text(form, "timezone");
-  if (
-    !validName(name) ||
-    description.length > 1000 ||
-    !timezone ||
-    !validTimezone(timezone)
-  )
+  if (!validName(name) || description.length > 1000)
     return {
-      error:
-        "Confira o nome, a descrição (até 1.000 caracteres) e o fuso horário.",
+      error: "Confira o nome e a descrição (até 1.000 caracteres).",
     };
   const { db, group, role } = await loadGroup(slug);
   if (!canManage(role))
@@ -120,7 +113,7 @@ export async function updateGroupDetails(
   try {
     const result = await db
       .from("groups")
-      .update({ name, description, timezone })
+      .update({ name, description })
       .eq("id", group.id)
       .is("deleted_at", null)
       .select("id")
@@ -141,5 +134,5 @@ export async function updateGroupDetails(
   revalidatePath(`/groups/${slug}/settings`);
   for (const section of settingsSections)
     revalidatePath(`/groups/${slug}/settings/${section.path}`);
-  return { message: "Dados do grupo salvos com sucesso." };
+  return { message: "Identificação do grupo salva com sucesso." };
 }

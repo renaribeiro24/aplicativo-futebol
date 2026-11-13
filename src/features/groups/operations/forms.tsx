@@ -179,6 +179,12 @@ export function ScheduleForm({
           Agenda ativa
         </label>
       </div>
+      {!value && (
+        <p className="text-sm text-muted-foreground">
+          A seleção automática do local principal está em preparação; escolha o
+          local desta agenda.
+        </p>
+      )}
       <p className="text-sm text-muted-foreground">
         A data inicial deve cair no dia escolhido e serve de referência para a
         recorrência quinzenal. Horários usam o fuso do grupo. Esta configuração
