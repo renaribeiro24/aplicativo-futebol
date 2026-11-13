@@ -120,3 +120,33 @@ Use exclusivamente grupos sintéticos autorizados e contas técnicas owner/admin
 | Interface e sessão     | Conferir desktop/celular, claro/escuro, teclado e sessão expirada; mensagens legíveis, sem overflow ou acesso após logout.                                                                                                                            | PENDENTE |
 
 Registre SHA local, URL do Codespaces, horário com fuso, cenário, perfil e resultado sanitizado. Não anexe cookies, JWTs, senhas, e-mails ou traces de sessão. Não excluir automaticamente fixtures; preserve manifesto para auditoria. A aprovação destes cenários é independente do relato dos 161 testes de banco. Somente após revisão dos resultados poderá ser solicitada autorização separada para integrar develop/publicar no domínio.
+
+## Reorganização da administração — 13/11/2026
+
+A administração agora abre um painel com cinco cards e destinos próprios, mantendo o controle de acesso por `loadManagedGroup` em cada página:
+
+| Card         | Rota                               | Conteúdo preservado                                                                                                              |
+| ------------ | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Dados gerais | `/groups/[slug]/settings/general`  | Nome, descrição e fuso IANA                                                                                                      |
+| Integrantes  | `/groups/[slug]/settings/members`  | Participantes ativos, função owner/admin/player/guest e seção separada de classificação mensalista/avulso, vigências e histórico |
+| Locais       | `/groups/[slug]/settings/venues`   | Consulta e cadastro dos locais ativos, com o formulário existente                                                                |
+| Agenda       | `/groups/[slug]/settings/schedule` | Cadastro/edição/desativação, recorrência, referência, horário, duração e local                                                   |
+| Financeiro   | `/groups/[slug]/settings/finance`  | Preços, vencimento, vigência, histórico e encerramento independente                                                              |
+
+Todas as áreas oferecem retorno à administração. Segmentos diferentes dos cinco nomes são rejeitados com notFound; a rota dinâmica não aceita nomes arbitrários de recursos. O painel usa 3 colunas a partir de 1.024px, 2 a partir de 768px e 1 abaixo disso, ícones decorativos, links com foco e tokens oficiais. Indicadores consultam contagens reais, filtradas pelo grupo autorizado: integrantes/locais ativos, agendas ativas e políticas cadastradas. Falhas de indicador aparecem como indisponibilidade, nunca zero fictício, sem divulgar detalhes do banco. O fuso é exibido no card Dados gerais.
+
+A função administrativa define permissões e aparece com nome e código do papel. A classificação financeira tem seção própria em Integrantes, com mensalista/avulso, vigência e histórico; não altera papéis nem concede privilégios. A paginação aponta para a subpágina correspondente e preserva os parâmetros das listas. As consultas operacionais só carregam a seção selecionada. Após sucesso confirmado, as ações revalidam também os cinco destinos concretos do mesmo grupo para atualizar imediatamente formulários/listas e indicadores. Regras e validações de gravação permanecem inalteradas.
+
+Não foram acrescentadas edições/exclusões de locais, papéis ou funcionalidades de participação: esta tarefa reorganiza os recursos já implementados. A antiga seção de participação sem persistência não é exposta como sexto card. O componente desabilitado permanece preservado. Encerramento financeiro continua independente, sem sucessão automática.
+
+### Evidências desta reorganização
+
+- 428 testes em 27 arquivos: PASS, incluindo cinco cards, guardas das subpáginas, seção desconhecida, papéis identificados, erros sanitizados dos indicadores/carregamento, consultas limitadas à seção e paginação com retorno correto.
+- Lint, typecheck e build: PASS. Logs locais ignorados `work/stage0042k-reorg-*.log`.
+- Layout isolado sintético em Chromium: 6/6 cenários PASS, desktop 1.280px/3 colunas, tablet 820px/2 colunas, celular 390px/1 coluna, cada um claro e escuro. Cinco cards/links/títulos, sem overflow horizontal ou erro de página, primeiro link alcançável por Tab. Capturas desktop escura e celular clara inspecionadas. Relatório local ignorado `work/settings-reorg-visual/report.json`.
+- Não se trata de autenticação, navegação ou submissão real. Persistência e autorização autenticadas das telas permanecem pendentes no Codespaces/Preview. Nenhum runner remoto foi repetido, nenhuma fixture criada, nenhuma alteração em banco/RLS/grants/migrations. Regressões SQL não foram repetidas nesta reorganização sem mudança de banco; evidências anteriores permanecem registradas.
+- Formatação dos arquivos afetados e `git diff --check`: PASS. A checagem global aponta somente as duas pendências preexistentes em docs/STAGE0032.md e docs/STAGE0032-UI-CHECKLIST.md, mantidas fora do escopo.
+
+Commit e push limitados à `feat/stage0042-operational`, após validação. develop/main e Production preservadas. A URL Preview e o SHA desta reorganização serão informados na resposta de entrega, somente quando localizados na integração Vercel, sem presumir que um Preview anterior contenha o novo código.
+
+Para homologar, use o procedimento de transferência acima, confira o novo SHA e abra a administração de um grupo sintético autorizado. Entre em cada um dos cinco cards e use o retorno. Em Integrantes, confira separadamente função e classificação/validade/histórico; em Financeiro, admin só consulta e owner utiliza os formulários existentes. Reaplique a matriz funcional pendente acima sem alterar grupos reais. Não utilize o domínio Production para conferir a branch de homologação.

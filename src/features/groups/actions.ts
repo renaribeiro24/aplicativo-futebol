@@ -1,6 +1,7 @@
 "use server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { settingsSections } from "@/features/groups/operations/sections";
 import type { AuthState } from "@/types/auth";
 import { loadIdentity } from "@/features/identity/server";
 import { loadGroup } from "./server";
@@ -138,5 +139,7 @@ export async function updateGroupDetails(
   revalidatePath("/dashboard");
   revalidatePath(`/groups/${slug}`);
   revalidatePath(`/groups/${slug}/settings`);
+  for (const section of settingsSections)
+    revalidatePath(`/groups/${slug}/settings/${section.path}`);
   return { message: "Dados do grupo salvos com sucesso." };
 }

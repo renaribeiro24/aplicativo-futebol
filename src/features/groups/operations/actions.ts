@@ -1,5 +1,6 @@
 "use server";
 import { revalidatePath } from "next/cache";
+import { settingsSections } from "@/features/groups/operations/sections";
 import { unstable_rethrow } from "next/navigation";
 import type { AuthState } from "@/types/auth";
 import { loadGroup } from "../server";
@@ -28,6 +29,8 @@ async function context(slug: string, ownerOnly = false) {
 }
 function success(slug: string, message: string): AuthState {
   revalidatePath(`/groups/${slug}/settings`);
+  for (const section of settingsSections)
+    revalidatePath(`/groups/${slug}/settings/${section.path}`);
   revalidatePath(`/groups/${slug}`);
   return { message };
 }

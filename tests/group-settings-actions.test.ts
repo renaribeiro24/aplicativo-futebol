@@ -69,6 +69,9 @@ describe("group settings mutations — SDK mocked, not a remote persistence proo
         "/dashboard",
         "/groups/alpha",
         "/groups/alpha/settings",
+        ...["general", "members", "venues", "schedule", "finance"].map(
+          (section) => `/groups/alpha/settings/${section}`,
+        ),
       ]);
     },
   );

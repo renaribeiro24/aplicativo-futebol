@@ -27,7 +27,10 @@ vi.mock("@/components/forms/action-form", () => ({
       createElement("button", { type: "submit" }, label),
     ),
 }));
-import { OperationsPanel } from "@/features/groups/operations/panel";
+import {
+  SettingsPager,
+  OperationsPanel,
+} from "@/features/groups/operations/panel";
 const group = "00000000-0000-4000-8000-000000000001";
 const rows: Record<string, unknown[]> = {};
 let failed = false;
@@ -128,5 +131,38 @@ describe("operational panel rendering (synthetic local data)", () => {
     await expect(OperationsPanel({ ...props, role: "owner" })).rejects.toThrow(
       "Não foi possível carregar as configurações",
     );
+  });
+  it.each([
+    ["schedule", "group_schedules", "Agenda recorrente"],
+    ["pricing", "group_pricing_policies", "Mensalidades e valores avulsos"],
+    ["billing", "member_billing_terms", "Classificação financeira"],
+  ] as const)(
+    "loads only the selected %s area",
+    async (section, table, title) => {
+      const html = renderToStaticMarkup(
+        await OperationsPanel({ ...props, role: "owner", section }),
+      );
+      expect(html).toContain(title);
+      expect(filters.map((f) => f.table)).toEqual([table]);
+      expect((html.match(/<h2/g) ?? []).length).toBe(1);
+    },
+  );
+  it.each([
+    ["schedulePage", "schedule"],
+    ["pricePage", "finance"],
+    ["billingPage", "members"],
+    ["membersPage", "members"],
+  ] as const)("keeps %s pagination inside its section", (field, area) => {
+    const html = renderToStaticMarkup(
+      createElement(SettingsPager, {
+        slug: "alpha",
+        query: { membersPage: "2" },
+        field,
+        page: 1,
+        count: 25,
+      }),
+    );
+    expect(html).toContain(`/groups/alpha/settings/${area}?`);
+    expect(html).toContain(`${field}=2`);
   });
 });
