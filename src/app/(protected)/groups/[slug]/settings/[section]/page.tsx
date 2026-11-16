@@ -1,3 +1,6 @@
+import { readLocationState } from "@/features/groups/location/server";
+import { PrimaryLocationForm } from "@/features/groups/location/form";
+import { searchConfigured } from "@/features/groups/location/provider";
 import Link from "next/link";
 import { loadManagedGroup } from "@/features/groups/server";
 import { updateGroupDetails } from "@/features/groups/actions";
@@ -32,7 +35,12 @@ export default async function SettingsSection({
   if (section === "venues") redirect(`/groups/${slug}/settings/general`);
   const definition = settingsSections.find((s) => s.path === section);
   if (!definition) notFound();
-  const { db, group, role } = await loadManagedGroup(slug);
+  const context = await loadManagedGroup(slug);
+  const { db, group, role } = context;
+  const location =
+    section === "general" || section === "schedule"
+      ? await readLocationState(context)
+      : null;
   const query = await (searchParams ?? Promise.resolve({} as SettingsQuery));
   const memberPage = pageNumber(query.membersPage);
   const [members, venues] = await Promise.all([
@@ -113,43 +121,19 @@ export default async function SettingsSection({
         <Card>
           <CardHeader>
             <h2 className="text-xl font-semibold">Local do futebol</h2>
-            <CardDescription id="primary-venue-notice">
-              A definição do local principal e o endereço detalhado estão em
-              preparação. Estes campos ainda não podem ser salvos. Nenhum local
-              existente será escolhido ou alterado automaticamente.
+            <CardDescription>
+              Escolha o local principal, pesquise um endereço ou preencha
+              manualmente. O fuso do grupo será preservado.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <fieldset
-              disabled
-              aria-describedby="primary-venue-notice"
-              className="grid min-w-0 gap-5 sm:grid-cols-2"
-            >
-              <legend className="sr-only">Local principal em preparação</legend>
-              <TextField
-                name="venue_name"
-                label="Nome do estabelecimento ou campo"
-                required
-                maxLength={120}
+            {location && (
+              <PrimaryLocationForm
+                state={location}
+                slug={slug}
+                searchEnabled={searchConfigured()}
               />
-              <TextField
-                name="postal_code"
-                label="CEP"
-                required
-                maxLength={9}
-              />
-              <TextField name="street" label="Logradouro" required />
-              <TextField name="street_number" label="Número" required />
-              <TextField name="complement" label="Complemento (opcional)" />
-              <TextField name="neighborhood" label="Bairro" required />
-              <TextField name="city" label="Cidade" required />
-              <TextField
-                name="state"
-                label="Estado (UF)"
-                required
-                maxLength={2}
-              />
-            </fieldset>
+            )}
             <div className="space-y-3">
               <h3 className="font-semibold">Locais existentes preservados</h3>
               {venues.data.length ? (
@@ -177,8 +161,8 @@ export default async function SettingsSection({
               )}
               <p className="text-sm text-muted-foreground">
                 Locais anteriores e vínculos das agendas são preservados. A
-                definição automática de local para novas agendas aguarda
-                configuração do local principal.
+                localização principal será usada nas novas agendas e partidas,
+                com substituição manual permitida.
               </p>
             </div>
           </CardContent>
@@ -246,7 +230,7 @@ export default async function SettingsSection({
           role={role}
           db={db}
           members={members.data}
-          venues={venues.data}
+          venues={location?.ready ? location.venues : venues.data}
           query={query}
           section={
             section === "schedule"

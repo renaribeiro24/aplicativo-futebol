@@ -1,6 +1,13 @@
 import { membershipSeed } from "./stage0042-http-guards.mjs";
 import { spawn, spawnSync } from "node:child_process";
-import { readFileSync, readdirSync } from "node:fs";
+import {
+  readFileSync,
+  readdirSync,
+  mkdirSync,
+  writeFileSync,
+  renameSync,
+} from "node:fs";
+import { createRequire } from "node:module";
 import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -111,6 +118,10 @@ try {
     .filter((name) => /^\d{14}_.+\.sql$/.test(name))
     .sort();
   if (!migrations.length) throw new Error("No versioned migrations found");
+  const primaryMigration = migrations.find((name) =>
+    name.endsWith("_stage0042l_primary_venue.sql"),
+  );
+  // Apply every migration in order; the new rule preserves unconfigured groups.
   for (const name of migrations) {
     if (name.endsWith("_auth_schema_bridge.sql")) {
       // Reproduce hosted Supabase: migration administrator cannot delegate auth USAGE.
@@ -138,6 +149,88 @@ try {
         throw new Error("Failed bridge migration left committed DDL");
       console.log(
         "migration rollback OK: forced postcondition error leaves no bridge; real preconditions recheck all original functions",
+      );
+    }
+    if (name === primaryMigration) {
+      const primarySql = readFileSync(
+        path.join(root, "supabase/migrations", name),
+        "utf8",
+      );
+      const fixtures = readFileSync(
+        path.join(root, "tests/database/fixtures.sql"),
+        "utf8",
+      )
+        .replace(/^begin;\s*$/m, "")
+        .replace(/commit;\s*$/, "");
+      const snapshot = `select jsonb_build_object(
+        'groups',(select jsonb_agg(to_jsonb(g)-'primary_venue_id' order by id) from public.groups g),
+        'venues',(select jsonb_agg(to_jsonb(v)-array['postal_code','street','street_number','complement','neighborhood','city','state','latitude','longitude','location_provider','external_place_id','superseded_at'] order by id) from public.venues v),
+        'schedules',(select jsonb_agg(to_jsonb(s) order by id) from public.group_schedules s),
+        'matches',(select jsonb_agg(to_jsonb(m) order by id) from public.matches m)) as payload`;
+      // Entire synthetic fixture + migration proof is rolled back, then the
+      // migration is applied for the real full post-schema regression suite.
+      sql(`begin;${fixtures}
+        select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000001',true);
+        insert into public.group_schedules(group_id,venue_id,weekday,starts_at_local,duration_minutes,recurrence_type,interval_weeks,starts_on)
+        select g.id,v.id,1,'19:00',90,'weekly',1,'2030-01-07' from public.groups g join public.venues v on v.group_id=g.id where g.slug='test-alpha';
+        insert into public.group_schedules(group_id,weekday,starts_at_local,duration_minutes,recurrence_type,interval_weeks,starts_on)
+        select id,1,'18:00',90,'weekly',1,'2030-01-07' from public.groups where slug='test-alpha';
+        create temporary table stage_l_before as ${snapshot};
+        ${primarySql}
+        do $$ declare after_value jsonb; begin
+          ${snapshot.replace(" as payload", " into after_value")};
+          if after_value is distinct from (select payload from stage_l_before) then raise exception 'Legacy snapshot changed'; end if;
+          if exists(select 1 from public.groups where primary_venue_id is not null) then raise exception 'Unexpected backfill'; end if;
+        end $$;rollback;`);
+      const rejected = docker(
+        sqlArgs,
+        `begin;${primarySql}select 1/0;commit;`,
+        true,
+      );
+      if (
+        rejected.status === 0 ||
+        sql(
+          "select to_regprocedure('private.assign_schedule_primary_venue()') is null and not exists(select 1 from information_schema.columns where table_schema='public' and table_name='groups' and column_name='primary_venue_id');",
+        ).stdout.trim() !== "t"
+      )
+        throw Error("Primary migration DDL rollback failed");
+
+      for (const [drift, expected] of [
+        [
+          "alter table public.groups disable row level security;",
+          "Unexpected table ownership or RLS state",
+        ],
+        [
+          "grant update on public.groups to authenticated;",
+          "Unexpected direct primary pointer grant",
+        ],
+        [
+          "grant insert on public.venues to authenticated;",
+          "Unexpected direct structured venue grant",
+        ],
+      ]) {
+        const rejectedDrift = docker(
+          sqlArgs,
+          `begin;${drift}${primarySql}commit;`,
+          true,
+        );
+        if (
+          rejectedDrift.status === 0 ||
+          !rejectedDrift.stderr.includes(expected)
+        )
+          throw Error("Privilege/RLS drift did not block migration");
+        if (
+          sql(
+            "select to_regprocedure('private.assign_schedule_primary_venue()') is null and not exists(select 1 from information_schema.columns where table_schema='public' and table_name='groups' and column_name='primary_venue_id') and (select relrowsecurity from pg_class where oid='public.groups'::regclass);",
+          ).stdout.trim() !== "t"
+        )
+          throw Error("Rejected drift left DDL or RLS changes");
+      }
+      console.log(
+        "stage0042-L preconditions OK: RLS disabled/broad group update/broad venue insert rejected and rolled back",
+      );
+      console.log(
+        "stage0042-L preservation/rollback OK: legacy rows/timestamps/addresses/schedules/matches unchanged; no backfill or leaked DDL",
       );
     }
     sql(
@@ -439,6 +532,231 @@ try {
   console.log(
     "stage0042 HTTP runner seed OK: generated guarded SQL creates one player link; replay rejected without membership changes (local only, not JWT evidence)",
   );
+  if (primaryMigration) {
+    const result = sql(
+      readFileSync(path.join(root, "tests/database/stage0042l.sql"), "utf8"),
+    );
+    console.log(
+      `stage0042-L OK: ${(result.stderr.match(/NOTICE:\s+ok -/g) ?? []).length} SQL assertions`,
+    );
+    // Re-run unchanged identity/group/settings contracts on the post-migration schema.
+    for (const file of [
+      "development-smoke.sql",
+      "stage003.sql",
+      "stage0042i.sql",
+    ])
+      sql(readFileSync(path.join(root, "tests/database", file), "utf8"));
+    console.log(
+      "stage0042-L post-migration regression OK: identity/groups/guests/settings",
+    );
+    const localSession = (user) =>
+      `begin;set session authorization authenticated;select set_config('request.jwt.claim.sub','${user}',true);`;
+    const callPrimary = (group, venue, expected, version, name, number = "1") =>
+      `select public.save_group_primary_venue('${group}','${name}','01310100','Rua sintética','${number}','Bairro','Cidade','SP',${venue ? `'${venue}'` : "null"},${expected ? `'${expected}'` : "null"},${version ? `'${version}'` : "null"},null);`;
+    const raceGroup = sql(
+      `select set_config('request.jwt.claim.sub','${userA}',false);select public.create_group_once('${randomUUID()}','Concurrent principal','stage42l-race',null,'UTC');`,
+    )
+      .stdout.trim()
+      .split("\n")
+      .at(-1);
+    const createRace = sqlAsync(
+      `${localSession(userA)}${callPrimary(raceGroup, null, null, null, "Winner local")}select pg_sleep(0.5);commit;`,
+    );
+    await sleep(100);
+    const created = await Promise.all([
+      createRace,
+      sqlAsync(
+        `${localSession(userA)}${callPrimary(raceGroup, null, null, null, "Stale local")}commit;`,
+      ),
+    ]);
+    if (
+      created.filter((r) => r.code === 0).length !== 1 ||
+      !created.some((r) => r.stderr.includes("Configuração alterada"))
+    )
+      throw Error("Primary creation race did not reject stale writer");
+    if (
+      sql(
+        `select count(*)=1 from public.venues where group_id='${raceGroup}';`,
+      ).stdout.trim() !== "t"
+    )
+      throw Error("Primary race orphan");
+    const primary = sql(
+      `select primary_venue_id from public.groups where id='${raceGroup}';`,
+    ).stdout.trim();
+    const version = sql(
+      `select updated_at from public.venues where id='${primary}';`,
+    ).stdout.trim();
+    const editRace = sqlAsync(
+      `${localSession(userA)}${callPrimary(raceGroup, primary, primary, version, "Winner local", "2")}select pg_sleep(0.5);commit;`,
+    );
+    await sleep(100);
+    const edited = await Promise.all([
+      editRace,
+      sqlAsync(
+        `${localSession(userA)}${callPrimary(raceGroup, primary, primary, version, "Lost local", "3")}commit;`,
+      ),
+    ]);
+    if (
+      edited.filter((r) => r.code === 0).length !== 1 ||
+      !edited.some((r) => r.stderr.includes("Local alterado"))
+    )
+      throw Error("Venue lost update protection failed");
+    if (
+      sql(
+        `select name='Winner local' and street_number='2' from public.venues where id='${primary}';`,
+      ).stdout.trim() !== "t"
+    )
+      throw Error("Rejected address edit persisted");
+    console.log(
+      "stage0042-L concurrency OK: competing definitions/updates have one winner, no orphan/lost update",
+    );
+    const adminGroup = sql(
+      "select id from public.groups where slug='stage42l-a';",
+    ).stdout.trim();
+    const adminMember = sql(
+      `select m.id from public.group_members m join public.players p on p.id=m.player_id where m.group_id='${adminGroup}' and p.user_id='00000000-0000-4000-8000-000000000004';`,
+    ).stdout.trim();
+    const principal = sql(
+      `select primary_venue_id from public.groups where id='${adminGroup}';`,
+    ).stdout.trim();
+    const demotion = sqlAsync(
+      `${localSession(userA)}select public.set_member_role('${adminGroup}','${adminMember}','player');select pg_sleep(0.5);commit;`,
+    );
+    await sleep(100);
+    const attempt = sqlAsync(
+      `${localSession("00000000-0000-4000-8000-000000000004")}${callPrimary(adminGroup, null, principal, null, "Denied after demotion")}commit;`,
+    );
+    const roles = await Promise.all([demotion, attempt]);
+    if (
+      roles[0].code !== 0 ||
+      roles[1].code === 0 ||
+      !roles[1].stderr.includes("Permissão insuficiente")
+    )
+      throw Error("Waiting demoted manager retained access");
+    if (
+      sql(
+        `select count(*)=0 from public.venues where group_id='${adminGroup}' and name='Denied after demotion';`,
+      ).stdout.trim() !== "t"
+    )
+      throw Error("Demoted admin persisted a venue");
+    console.log(
+      "stage0042-L concurrency OK: role revalidated after tenant lock",
+    );
+    const switching = sqlAsync(
+      `${localSession(userA)}${callPrimary(raceGroup, null, primary, null, "New principal")}select pg_sleep(0.5);commit;`,
+    );
+    await sleep(100);
+    const scheduleInsert = `insert into public.group_schedules(group_id,weekday,starts_at_local,duration_minutes,recurrence_type,interval_weeks,starts_on)values('${raceGroup}',1,'21:00',90,'weekly',1,'2030-01-07');`;
+    const inserted = await Promise.all([
+      switching,
+      sqlAsync(`${localSession(userA)}${scheduleInsert}commit;`),
+    ]);
+    if (inserted.some((r) => r.code !== 0))
+      throw Error("Schedule/primary switch race failed");
+    if (
+      sql(
+        `select s.venue_id=g.primary_venue_id from public.group_schedules s join public.groups g on g.id=s.group_id where s.group_id='${raceGroup}';`,
+      ).stdout.trim() !== "t"
+    )
+      throw Error("Concurrent schedule did not use locked primary");
+    console.log(
+      "stage0042-L concurrency OK: new schedule waits and resolves the committed primary",
+    );
+    // Privileged synthetic maintenance vs client RPC: existing venues_validate
+    // may create a reverse-lock conflict, but never an inactive principal.
+    const inactiveRace = sqlAsync(
+      `begin;select set_config('request.jwt.claim.sub','${userA}',true);select id from public.venues where id='${primary}' for update;select pg_sleep(0.3);update public.venues set deleted_at=now() where id='${primary}';commit;`,
+    );
+    await sleep(100);
+    const currentPointer = sql(
+      `select primary_venue_id from public.groups where id='${raceGroup}';`,
+    ).stdout.trim();
+    const currentOldVersion = sql(
+      `select updated_at from public.venues where id='${primary}';`,
+    ).stdout.trim();
+    const selecting = sqlAsync(
+      `${localSession(userA)}${callPrimary(raceGroup, primary, currentPointer, currentOldVersion, "Select old venue")}commit;`,
+    );
+    const lifecycle = await Promise.all([inactiveRace, selecting]);
+    if (
+      lifecycle.every((r) => r.code === 0) ||
+      lifecycle.every((r) => r.code !== 0) ||
+      !lifecycle.some(
+        (r) =>
+          r.stderr.includes("deadlock detected") ||
+          r.stderr.includes("Local indisponível"),
+      )
+    )
+      throw Error("Unexpected primary/archive contention result");
+    if (
+      sql(
+        "select exists(select 1 from public.groups g join public.venues v on v.id=g.primary_venue_id where v.deleted_at is not null or v.group_id<>g.id);",
+      ).stdout.trim() !== "f"
+    )
+      throw Error("Inactive or foreign primary persisted");
+    console.log(
+      "stage0042-L concurrency OK: archival/selection conflict aborts safely; no inactive principal",
+    );
+    if (process.env.STAGE0042L_GENERATE_TYPES === "1") {
+      if (process.platform !== "linux" || process.arch !== "x64")
+        throw Error("Local typegen currently requires Linux x64 native CLI");
+      const require = createRequire(import.meta.url);
+      const native = path.join(
+        path.dirname(require.resolve("@supabase/cli-linux-x64/package.json")),
+        "bin",
+        "supabase",
+      );
+      docker(["cp", native, `${container}:/tmp/supabase`]);
+      // Loopback INSIDE the network=none disposable container; no host ports,
+      // network egress, real credentials, project ref or remote URL accepted.
+      const generated = docker([
+        "exec",
+        "-e",
+        "DO_NOT_TRACK=1",
+        container,
+        "timeout",
+        "45",
+        "/tmp/supabase",
+        "gen",
+        "types",
+        "--db-url",
+        "postgresql://postgres@127.0.0.1:5432/postgres?sslmode=disable",
+        "--schema",
+        "public",
+      ]);
+      if (!generated.stdout.includes("export type Database"))
+        throw Error("Invalid local type generation");
+      const directory = path.join(root, "src/types");
+      mkdirSync(directory, { recursive: true });
+      const destination = path.join(directory, "database.location.types.ts");
+      const formatted = spawnSync(
+        process.execPath,
+        [
+          path.join(
+            path.dirname(require.resolve("prettier/package.json")),
+            "bin",
+            "prettier.cjs",
+          ),
+          "--parser",
+          "typescript",
+        ],
+        {
+          input:
+            "// Generated officially by Supabase CLI from the disposable LOCAL public schema after stage0042-L validation. Do not edit manually. Application/remote Database types remain unchanged.\n" +
+            generated.stdout,
+          encoding: "utf8",
+          maxBuffer: 8 * 1024 * 1024,
+        },
+      );
+      if (formatted.status !== 0 || formatted.error)
+        throw Error("Prettier failed on official generated types");
+      writeFileSync(destination + ".tmp", formatted.stdout);
+      renameSync(destination + ".tmp", destination);
+      console.log(
+        "stage0042-L official LOCAL types OK: src/types/database.location.types.ts (opt-in schema contract)",
+      );
+    }
+  }
 } finally {
   docker(["rm", "--force", "--volumes", container], undefined, true);
 }

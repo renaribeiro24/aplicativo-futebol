@@ -161,12 +161,24 @@ export function ScheduleForm({
             defaultValue={value?.venue_id ?? ""}
             className="form-control"
           >
-            <option value="">Sem local definido</option>
-            {venues.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.name}
-              </option>
-            ))}
+            <option value="">
+              {value
+                ? "Sem local definido"
+                : "Usar local principal (se configurado)"}
+            </option>
+            {value?.venue_id &&
+              !venues.some((v) => v.id === value.venue_id) && (
+                <option value={value.venue_id}>
+                  Local anterior preservado
+                </option>
+              )}
+            {venues
+              .filter((v) => !v.superseded_at || v.id === value?.venue_id)
+              .map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name}
+                </option>
+              ))}
           </select>
         </label>
         <label className="flex items-center gap-3 text-sm font-medium">
@@ -181,8 +193,8 @@ export function ScheduleForm({
       </div>
       {!value && (
         <p className="text-sm text-muted-foreground">
-          A seleção automática do local principal está em preparação; escolha o
-          local desta agenda.
+          Novas agendas usam o principal quando configurado, com substituição
+          manual permitida. Agendas anteriores mantêm o local.
         </p>
       )}
       <p className="text-sm text-muted-foreground">

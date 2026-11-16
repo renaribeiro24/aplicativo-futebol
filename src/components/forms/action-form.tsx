@@ -7,8 +7,10 @@ export function ActionForm({
   label,
   children,
   requestId,
+  disabled = false,
 }: {
   requestId?: string;
+  disabled?: boolean;
   action: (state: AuthState, form: FormData) => Promise<AuthState>;
   label: string;
   children: React.ReactNode;
@@ -20,7 +22,10 @@ export function ActionForm({
       {stableRequest && (
         <input type="hidden" name="request_id" value={stableRequest} />
       )}
-      <fieldset disabled={pending} className="space-y-5 disabled:opacity-60">
+      <fieldset
+        disabled={pending || disabled}
+        className="space-y-5 disabled:opacity-60"
+      >
         {children}
         <Button type="submit">{pending ? "Salvando…" : label}</Button>
       </fieldset>

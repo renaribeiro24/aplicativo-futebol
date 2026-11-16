@@ -185,3 +185,13 @@ A referência histórica existente é o venue_id: editar o mesmo cadastro pode m
 - Alterações somente na `feat/stage0042-operational`. A publicação da branch de homologação não libera principal/endereço detalhado nem configura novas agendas automaticamente. develop/main/Production e Supabase remoto preservados. Nenhuma migration foi criada ou executada.
 
 Próximo ponto de decisão: autorizar a preparação do patch de modelagem acima para revisão e homologação separada, antes de qualquer execução. A identificação e o painel com quatro cards podem ser conferidos no Preview; os requisitos dependentes do principal permanecem explicitamente **PENDENTES**.
+
+## Preparação autorizada 004.2-L — 13/11/2026
+
+A proposta de Local Principal foi implementada exclusivamente como patch local para revisão/testes, sem SQL remoto ou publicação. SQL, tipos futuros separados, evidências, riscos e plano de aplicação/recuperação estão em [STAGE0042L.md](STAGE0042L.md). As oito migrations anteriores e o contrato atual da aplicação permanecem inalterados.
+
+A transição foi preparada para manter agendas manuais/opcionais enquanto o grupo ainda não tiver principal explicitamente definido; quando definido, novas agendas recebem esse local automaticamente no banco. Nenhuma agenda anterior é reescrita. Isso evita bloquear o aplicativo existente após uma migration sem backfill. A interface de Local Principal desta 004.2-K permanece desabilitada; sua ativação e a substituição dos tipos usados pelo aplicativo dependem de homologação/autorização posterior. Não interpretar o parecer técnico local da 004.2-L como aplicação ou liberação da interface.
+
+## Localização integrada — revisão local de 13/11/2026
+
+Dados gerais passa a reunir formulário manual, seleção de locais existentes e busca opcional com mapa/navegação. A persistência depende da migration L revisada, ainda NÃO APTA para aplicação remota; enquanto ausente, o formulário explica o bloqueio e não salva. Padrão principal em novas agendas/partidas permite substituição manual, sem alterar eventos antigos. Consulte [contrato, testes, custos e pendências](GROUP-LOCATION.md). Nenhum provedor ativado, push ou deploy realizado nesta revisão.

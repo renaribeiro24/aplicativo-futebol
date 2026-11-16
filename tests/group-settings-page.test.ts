@@ -31,6 +31,24 @@ vi.mock("@/features/groups/operations/panel", () => ({
 vi.mock("@/features/groups/operations/forms", () => ({
   VenueForm: () => null,
 }));
+vi.mock("@/features/groups/location/server", () => ({
+  readLocationState: vi.fn(async () => ({
+    ready: false,
+    primaryId: null,
+    venues: [],
+  })),
+}));
+vi.mock("@/features/groups/location/provider", () => ({
+  searchConfigured: () => false,
+}));
+vi.mock("@/features/groups/location/form", () => ({
+  PrimaryLocationForm: () =>
+    createElement(
+      "fieldset",
+      { disabled: true },
+      "Banco de localização pendente",
+    ),
+}));
 import Settings from "@/app/(protected)/groups/[slug]/settings/page";
 import Section from "@/app/(protected)/groups/[slug]/settings/[section]/page";
 import { ParticipationPreparation } from "@/features/groups/operations/participation";
@@ -190,9 +208,7 @@ describe("settings hub and subpages — synthetic local fixtures only", () => {
     });
     const html = renderToStaticMarkup(await section("general"));
     expect(html).toContain("Endereço legado sem estrutura");
-    expect(html).toContain("ainda não podem ser salvos");
+    expect(html).toContain("Banco de localização pendente");
     expect(html).not.toContain('value="Endereço legado sem estrutura"');
-    expect(html).toContain('name="postal_code"');
-    expect(html).toContain('name="city"');
   });
 });

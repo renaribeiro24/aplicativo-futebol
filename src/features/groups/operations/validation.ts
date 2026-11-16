@@ -7,7 +7,7 @@ export type Billing =
 export type Venue = Pick<
   Database["public"]["Tables"]["venues"]["Row"],
   "id" | "name"
->;
+> & { superseded_at?: string | null };
 export type Member = {
   player_id: string;
   role: string;
