@@ -74,6 +74,7 @@ export default async function GroupPage({
             : "Jogador convidado cadastrado com sucesso."}
         </p>
       )}
+      <Link href={`/groups/${slug}/members`} className="inline-flex min-h-11 items-center text-primary underline">Ver integrantes e períodos de participação</Link>
       {canManage(role) && (
         <Link
           href={`/groups/${slug}/settings`}

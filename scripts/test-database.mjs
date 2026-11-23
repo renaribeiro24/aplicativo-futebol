@@ -930,7 +930,48 @@ try {
   if(managementMigration){
    sql("begin;"+readFileSync(path.join(root,"supabase/migrations",managementMigration),"utf8")+";commit;");
    const checked=sql(readFileSync(path.join(root,"tests/database/member-management.sql"),"utf8"));
-   console.log("members management OK: "+(checked.stderr.match(/NOTICE:\\s+ok -/g)??[]).length+" SQL assertions (isolated claims, not real JWT)");
+   console.log("members management OK: "+(checked.stderr.match(/NOTICE:\s+ok -/g)??[]).length+" SQL assertions (isolated claims, not real JWT)");
+
+   const bUser=n=>"00000000-0000-4000-8000-"+String(n).padStart(12,"0");
+   const bSession=n=>"begin;set session authorization authenticated;select set_config('request.jwt.claim.sub','"+bUser(n)+"',true);";
+   const cmd=(op,g,p,request="null")=>"select public.member_command('"+op+"',"+(g?"'"+g+"'":"null")+","+request+",'"+JSON.stringify(p).replaceAll("'","''")+"'::jsonb);";
+   sql("insert into auth.users(id,email,email_confirmed_at) select ('00000000-0000-4000-8000-'||lpad(n::text,12,'0'))::uuid,'synthetic-'||n||'@example.invalid',now() from generate_series(301,308)n;");
+   for(let n=301;n<=308;n++)sql(bSession(n)+"select public.ensure_my_identity('Synthetic concurrency "+n+"');commit;");
+   sql(bSession(301)+"select public.create_group('Synthetic B race','members-b-race');commit;");
+   const gid=sql("select id from public.groups where slug='members-b-race';").stdout.trim();
+   const invite=(email,hash,automatic=false)=>cmd("create_invitation",gid,{email,token_hash:hash,delivery:automatic?"automatic":"manual"},"'"+randomUUID()+"'");
+   const admission=(op,kind,hash)=>cmd(op,null,{kind,token_hash:hash});
+   sql(bSession(301)+invite("synthetic-303@example.invalid","1".repeat(64))+"commit;");
+   sql(bSession(303)+admission("accept","individual","1".repeat(64))+"commit;");
+   const adminId=sql("select m.id from public.group_members m join public.players p on p.id=m.player_id where m.group_id='"+gid+"' and p.user_id='"+bUser(303)+"';").stdout.trim();
+   sql(bSession(301)+"select public.set_member_role('"+gid+"','"+adminId+"','admin');"+cmd("create_link",gid,{label:"Concurrent one approval",max_uses:1,token_hash:"2".repeat(64)},"'"+randomUUID()+"'")+"commit;");
+   for(const n of [304,305])sql(bSession(n)+admission("request","shared","2".repeat(64))+"commit;");
+   const requests=sql("select id from private.member_join_requests where group_id='"+gid+"' order by applicant_id;").stdout.trim().split("\n");
+   const approve=(id)=>cmd("review",gid,{id,decision:"approve"});
+   const winner=sqlAsync(bSession(301)+approve(requests[0])+"select pg_sleep(0.4);commit;");
+   await sleep(100);
+   const races=await Promise.all([winner,sqlAsync(bSession(303)+approve(requests[1])+"commit;")]);
+   if(races.filter(r=>r.code===0).length!==1||!races.some(r=>r.stderr.includes("Link unavailable")))throw Error("B approval race did not enforce maximum");
+   if(sql("select uses_count=1 from private.member_join_links where group_id='"+gid+"';").stdout.trim()!=="t"||sql("select count(*)=1 from private.member_join_requests where group_id='"+gid+"' and state='approved';").stdout.trim()!=="t")throw Error("B approval race persisted invalid counters");
+   console.log("members B concurrency OK: one of two approvals commits at max=1; losing request produces no admission");
+   sql(bSession(301)+invite("synthetic-306@example.invalid","3".repeat(64))+"commit;");
+   const acceptance=sqlAsync(bSession(306)+admission("accept","individual","3".repeat(64))+"select pg_sleep(0.4);commit;");
+   await sleep(100);
+   const accepted=await Promise.all([acceptance,sqlAsync(bSession(306)+admission("accept","individual","3".repeat(64))+"commit;")]);
+   if(accepted.some(r=>r.code!==0)||sql("select count(*)=1 from public.member_participation_periods mp join public.players p on p.id=mp.player_id where mp.group_id='"+gid+"' and p.user_id='"+bUser(306)+"';").stdout.trim()!=="t")throw Error("B acceptance race duplicated membership period");
+   console.log("members B concurrency OK: duplicate acceptance creates one identity, period and casual term");
+   const send=sqlAsync(bSession(301)+invite("synthetic-307@example.invalid","4".repeat(64),true)+"select pg_sleep(0.4);commit;");
+   await sleep(100);
+   const delivery=await Promise.all([send,sqlAsync(bSession(303)+invite("synthetic-307@example.invalid","5".repeat(64),true)+"commit;")]);
+   if(delivery.filter(r=>r.code===0).length!==1||!delivery.some(r=>r.stderr.includes("24 hours")))throw Error("B automatic attempt budget raced");
+   console.log("members B concurrency OK: rolling 24-hour email budget admits only one reservation; no email sent");
+   // A privileged role change can win before a waiting manager, but cannot grant stale authority.
+   const demote=sqlAsync(bSession(301)+"select public.set_member_role('"+gid+"','"+adminId+"','player');select pg_sleep(0.4);commit;");
+   await sleep(100);
+   const stale=await Promise.all([demote,sqlAsync(bSession(303)+cmd("create_link",gid,{label:"Denied stale manager",token_hash:"6".repeat(64)},"'"+randomUUID()+"'")+"commit;")]);
+   if(stale[0].code!==0||stale[1].code===0||!stale[1].stderr.includes("Permissão insuficiente"))throw Error("B waiting demoted manager kept authority");
+   console.log("members B concurrency OK: manager authorization refreshed after group lock");
+
    const require=createRequire(import.meta.url);
    const native=path.join(path.dirname(require.resolve("@supabase/cli-linux-x64/package.json")),"bin","supabase");
    docker(["cp",native,container+":/tmp/supabase"]);
