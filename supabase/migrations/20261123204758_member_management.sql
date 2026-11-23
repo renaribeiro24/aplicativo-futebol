@@ -338,7 +338,7 @@ begin
   if p_request_id is null then raise exception 'Idempotency required' using errcode='22023'; end if;
   -- Same actor across groups is serialized before looking up a receipt.
   perform pg_advisory_xact_lock(hashtextextended('member-request:'||u::text,0));
-  h:=encode(extensions.digest(convert_to(jsonb_build_object('op',p_operation,'group',gid,'payload',p_payload)::text,'UTF8'),'sha256'),'hex');
+  h:=encode(sha256(convert_to(jsonb_build_object('op',p_operation,'group',gid,'payload',p_payload)::text,'UTF8')),'hex');
   select * into receipt from private.member_receipts where actor=u and request_id=p_request_id;
   if found then
    if receipt.payload_hash<>h then raise exception 'Request changed' using errcode='22023'; end if;
@@ -350,9 +350,9 @@ begin
    if recipient is null or char_length(recipient)>254 or recipient!~'^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$' or mode not in ('manual','automatic') or mode is null then raise exception 'Invalid recipient' using errcode='22023'; end if;
    if mode='automatic' then
     perform pg_advisory_xact_lock(hashtextextended('member-email:'||recipient,0));
-    select last_reserved_at into last_try from private.member_email_budget where recipient_hash=encode(extensions.digest(recipient,'sha256'),'hex') for update;
+    select last_reserved_at into last_try from private.member_email_budget where recipient_hash=encode(sha256(convert_to(recipient,'UTF8')),'hex') for update;
     if last_try is not null and last_try>stamp-interval '24 hours' then raise exception 'Automatic email limited to one attempt per 24 hours' using errcode='P4290'; end if;
-    insert into private.member_email_budget(recipient_hash,last_reserved_at) values(encode(extensions.digest(recipient,'sha256'),'hex'),stamp)
+    insert into private.member_email_budget(recipient_hash,last_reserved_at) values(encode(sha256(convert_to(recipient,'UTF8')),'hex'),stamp)
     on conflict(recipient_hash) do update set last_reserved_at=excluded.last_reserved_at;
    end if;
    update public.group_invitations set revoked_at=stamp,revocation_reason=case when expires_at<=stamp then 'expired' else 'rotated' end
