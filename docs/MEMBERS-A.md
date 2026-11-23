@@ -4,7 +4,7 @@
 
 Base operacional preservada: fa88d9e55c8cbdb9ec77b4332daa0f6e3b074106, dez commits à frente de develop 667940c13324782cbc959fb7911f6809c9d0f913 e nenhum atrás. PR #1 continua Draft (develop → main). Branch específica: feat/members-foundation. Não há merge, produção ou aplicação de SQL remoto.
 
-O ambiente gerenciado permanece em inicialização. Sua worktree não pôde ser inspecionada e não foi alterada nem descartada. Código obtido pelo GitHub na base exata, alterações somente na nova branch e testes em checkout limpo de runner isolado, sem secrets. Isso não comprova ausência de trabalho local não publicado.
+O ambiente gerenciado falhou na consulta de capacidades do executor. Sua worktree não pôde ser inspecionada e não foi alterada nem descartada. Código obtido pelo GitHub na base exata, alterações somente na nova branch e testes em checkout limpo de runner isolado, sem secrets. Isso não comprova ausência de trabalho local não publicado.
 
 Dados gerais já oculta coordenadas; os valores internos e mapa/navegação foram preservados na base, com 503 testes e quatro cenários visuais aprovados no run 45250545328. A análise nova não repete homologação remota.
 
@@ -55,18 +55,18 @@ Incremento A pode ser revisado com CI isolada aprovada e limitações registrada
 
 [Run 45257299761](https://github.com/renaribeiro24/aplicativo-futebol/actions/runs/45257299761), código no commit 0858964e28e68f8234fbb44ebd4405b7003fee7d: **SUCCESS**.
 
-| Verificação | Resultado |
-| --- | --- |
-| Lint / typecheck / build | PASS |
-| Unitários e integração de contrato | 515 PASS, 35 arquivos |
-| A sobre oito migrations, sem L | 56 assertions SQL PASS; transação revertida |
-| Regressões legadas | 70 segurança + 109 configuração + 10 settings + 68 L, além de identidade e concorrências existentes, PASS no contrato legado |
-| A após regressões, com L somente local | 56 assertions SQL PASS no contrato novo |
-| Rollback da migration | PASS; tabela nova ausente e definição da RPC antiga restaurada após falha forçada |
-| Concorrência após A | PASS; gestor rebaixado perde autorização após esperar lock; duas inativações fecham um único período |
-| Desktop/celular × claro/escuro | 4/4 PASS no navegador isolado herdado de Dados gerais |
-| Formatação revisada | PASS estrito; global mantém somente dois documentos preexistentes |
-| JWT real / Data API HTTP / Supabase hospedado | NÃO EXECUTADOS; não equivalentes aos testes SQL |
+| Verificação                                   | Resultado                                                                                                                    |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Lint / typecheck / build                      | PASS                                                                                                                         |
+| Unitários e integração de contrato            | 515 PASS, 35 arquivos                                                                                                        |
+| A sobre oito migrations, sem L                | 56 assertions SQL PASS; transação revertida                                                                                  |
+| Regressões legadas                            | 70 segurança + 109 configuração + 10 settings + 68 L, além de identidade e concorrências existentes, PASS no contrato legado |
+| A após regressões, com L somente local        | 56 assertions SQL PASS no contrato novo                                                                                      |
+| Rollback da migration                         | PASS; tabela nova ausente e definição da RPC antiga restaurada após falha forçada                                            |
+| Concorrência após A                           | PASS; gestor rebaixado perde autorização após esperar lock; duas inativações fecham um único período                         |
+| Desktop/celular × claro/escuro                | 4/4 PASS no navegador isolado herdado de Dados gerais                                                                        |
+| Formatação revisada                           | PASS estrito; global mantém somente dois documentos preexistentes                                                            |
+| JWT real / Data API HTTP / Supabase hospedado | NÃO EXECUTADOS; não equivalentes aos testes SQL                                                                              |
 
 [Artefato de interface](https://github.com/renaribeiro24/aplicativo-futebol/actions/runs/45257299761/artifacts/14859900109): screenshots e report de quatro cenários, somente dados sintéticos. Os testes de interface não representam uma nova UI de Integrantes, que pertence a B.
 
@@ -79,6 +79,7 @@ Evidências de ausência de alteração remota: nenhuma ferramenta SQL/DDL, appl
 Fundação do Incremento A **preparada e validada em ambiente isolado para revisão**, no [PR #2 Draft](https://github.com/renaribeiro24/aplicativo-futebol/pull/2), base operacional preservada. Isso não autoriza aplicação remota nem avanço a B.
 
 Pendências explícitas:
+
 - Worktree do ambiente gerenciado não auditada por indisponibilidade; permaneceu intocada. Conferir ao recuperar o ambiente antes de sincronizar trabalho local, sem reset/clean.
 - JWT/Data API reais, Advisors e paridade do schema hospedado não foram reconfirmados. A conexão administrativa havia falhado no diagnóstico anterior; não foram solicitadas credenciais ou alteradas configurações.
 - Revisar os 15 alertas de dependências (14 moderados, um alto), sem presumir aceite. Não houve atualização automática.
