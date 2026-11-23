@@ -31,7 +31,7 @@ As suites legadas rodam primeiro contra o contrato anterior; a suite específica
 
 Primeira execução bem-sucedida: [run 45256584456](https://github.com/renaribeiro24/aplicativo-futebol/actions/runs/45256584456), commit b41c542. **515 testes**, lint, typecheck e build PASS. SQL: **47 assertions** na base de oito migrations, **47** após regressões legadas com L local, rollback DDL e duas concorrências PASS. Interface herdada: **4/4** desktop/celular × claro/escuro, em demonstração isolada e sem escrita/provedor.
 
-Uma execução anterior falhou por estreitamento desnecessário do retorno TypeScript do loader, que impedia um teste negativo existente de guest. O predicado mantém retorno boolean sem mudar o contrato do contexto; a guarda de execução permanece fechada. Novos testes de isolamento de acesso a outro grupo, políticas de agendas/preços/locais e transferência de propriedade foram acrescentados depois desse run e exigem a execução final.
+Uma execução anterior falhou por estreitamento desnecessário do retorno TypeScript do loader, que impedia um teste negativo existente de guest. O predicado mantém retorno boolean sem mudar o contrato do contexto; a guarda de execução permanece fechada. Novos testes de isolamento de acesso a outro grupo, políticas de agendas/preços/locais e transferência de propriedade foram acrescentados depois desse run e passaram na execução final abaixo.
 
 Migration oficial: supabase/migrations/20261123200923_member_foundation.sql, nome gerado por Supabase CLI no runner e registrado no run 45256302827. O arquivo versionado contém exatamente o SQL gerado/preparado e ensaiado. Os arquivos transitórios de geração/proposta foram removidos após registro do nome; não há geração de migration nova a cada execução de CI.
 
@@ -50,3 +50,37 @@ A execução deve ser transacional. Falha antes do COMMIT exige ROLLBACK e inspe
 ## Critério de revisão
 
 Incremento A pode ser revisado com CI isolada aprovada e limitações registradas. Isso não equivale a homologação remota, conclusão da área Integrantes ou autorização de avançar ao Incremento B. Novas tabelas/RPCs ainda não usadas pelo cliente mantêm os tipos remotos atuais intactos; gerar tipos oficiais do esquema isolado validado antes de consumi-las na próxima UI.
+
+## Resultado consolidado para revisão
+
+[Run 45257299761](https://github.com/renaribeiro24/aplicativo-futebol/actions/runs/45257299761), código no commit 0858964e28e68f8234fbb44ebd4405b7003fee7d: **SUCCESS**.
+
+| Verificação | Resultado |
+| --- | --- |
+| Lint / typecheck / build | PASS |
+| Unitários e integração de contrato | 515 PASS, 35 arquivos |
+| A sobre oito migrations, sem L | 56 assertions SQL PASS; transação revertida |
+| Regressões legadas | 70 segurança + 109 configuração + 10 settings + 68 L, além de identidade e concorrências existentes, PASS no contrato legado |
+| A após regressões, com L somente local | 56 assertions SQL PASS no contrato novo |
+| Rollback da migration | PASS; tabela nova ausente e definição da RPC antiga restaurada após falha forçada |
+| Concorrência após A | PASS; gestor rebaixado perde autorização após esperar lock; duas inativações fecham um único período |
+| Desktop/celular × claro/escuro | 4/4 PASS no navegador isolado herdado de Dados gerais |
+| Formatação revisada | PASS estrito; global mantém somente dois documentos preexistentes |
+| JWT real / Data API HTTP / Supabase hospedado | NÃO EXECUTADOS; não equivalentes aos testes SQL |
+
+[Artefato de interface](https://github.com/renaribeiro24/aplicativo-futebol/actions/runs/45257299761/artifacts/14859900109): screenshots e report de quatro cenários, somente dados sintéticos. Os testes de interface não representam uma nova UI de Integrantes, que pertence a B.
+
+A instalação preserva o proprietário único. Testes confirmam ainda: promoção somente pelo owner, inativação sem apagar presença/classificação, conta global e acesso a outro grupo preservados, retorno direto negado, guest sem elenco/agenda/preços/locais/presenças, projeção sem e-mail/Auth ID e ator de período sem grant direto.
+
+Evidências de ausência de alteração remota: nenhuma ferramenta SQL/DDL, apply_migration ou Auth do Supabase foi chamada nesta execução. O workflow usa checkout limpo sem secrets; o runner aceita somente Docker via socket local, cria PostgreSQL --network none sem portas e não recebe URL remota. O único comando do CLI na preparação foi migration new, que gera arquivo. Nenhum envio Resend, rotina remota ou deploy Production foi executado.
+
+## Parecer e pendências
+
+Fundação do Incremento A **preparada e validada em ambiente isolado para revisão**, no [PR #2 Draft](https://github.com/renaribeiro24/aplicativo-futebol/pull/2), base operacional preservada. Isso não autoriza aplicação remota nem avanço a B.
+
+Pendências explícitas:
+- Worktree do ambiente gerenciado não auditada por indisponibilidade; permaneceu intocada. Conferir ao recuperar o ambiente antes de sincronizar trabalho local, sem reset/clean.
+- JWT/Data API reais, Advisors e paridade do schema hospedado não foram reconfirmados. A conexão administrativa havia falhado no diagnóstico anterior; não foram solicitadas credenciais ou alteradas configurações.
+- Revisar os 15 alertas de dependências (14 moderados, um alto), sem presumir aceite. Não houve atualização automática.
+- Antes de qualquer aplicação remota futura: autorização específica, backup recuperável, reconciliação do histórico e exclusão efetiva de private da Data API. A 004.2-L continua sem autorização.
+- B deverá implementar aceite transacional antes de habilitar retorno, integração de contatos e tipos oficiais novos; A não fornece bypass provisório de reativação.
