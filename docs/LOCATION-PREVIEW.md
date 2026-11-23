@@ -48,3 +48,11 @@ Depois do push, conferir commit, target Preview e estado READY do deployment ant
 - Formatação dos arquivos da entrega e `git diff --check`: **PASS**. Formatação global mantém apenas as duas falhas documentais preexistentes citadas acima.
 - Evidências locais ignoradas: `work/location-transfer-visual/report.json`, imagens, logs `work/location-transfer-*.log`. Nenhum desses artefatos entra no commit.
 - Homologação JWT/Data API da nova migration, persistência remota e busca real: **NÃO EXECUTADAS**, deliberadamente fora desta autorização.
+
+## Ajuste visual aprovado — 23/11/2026
+
+Latitude e longitude deixam de aparecer como campos editáveis. Os valores continuam em estado interno e inputs hidden, preservando a seleção de locais, o payload validado e a visualização/navegação quando disponíveis. Endereço manual não exige coordenadas; sem ponto conhecido, a navegação usa o endereço e não se inventa posição para apresentar mapa.
+
+O teste de renderização cobre coordenadas zero preservadas internamente, ausência de campos técnicos editáveis e manutenção do link/mapa. O navegador isolado cobre desktop/celular, temas claro/escuro, validação manual e ausência de gravações/provedor. O teste de mapa injeta somente um ponto sintético nos campos internos da demonstração e intercepta a requisição OSM; isso não representa geocodificação ou persistência real.
+
+Este ajuste não aplica SQL, não ativa Geoapify e não envia e-mails. O ambiente local gerenciado estava indisponível; a execução das verificações é delegada ao workflow isolado, sem secrets. O resultado deve ser conferido no respectivo run, sem tratar teste preparado como aprovado.

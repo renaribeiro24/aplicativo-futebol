@@ -365,26 +365,11 @@ export function LocationEditor({
           </select>
         </label>
         {(["latitude", "longitude"] as const).map((key) => (
-          <label key={key} className="grid gap-2 text-sm font-medium">
-            {key === "latitude" ? "Latitude" : "Longitude"} (opcional)
-            <Input
-              name={key}
-              inputMode="decimal"
-              value={values[key]}
-              onChange={(e) => {
-                setValues((v) => ({
-                  ...v,
-                  [key]: e.target.value,
-                  location_provider: "",
-                  external_place_id: "",
-                }));
-              }}
-            />
-          </label>
+          <input key={key} type="hidden" name={key} value={values[key]} />
         ))}
       </div>
       <p className="text-sm text-muted-foreground">
-        Informe nome e logradouro/cidade/UF, ou nome e coordenadas. Não preencha
+        Informe o nome e o endereço do local. Não preencha
         dados desconhecidos com valores fictícios. Edições de locais já
         utilizados criam uma versão nova; agendas e partidas anteriores ficam
         preservadas.
