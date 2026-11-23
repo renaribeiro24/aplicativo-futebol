@@ -87,4 +87,38 @@ reset session authorization;
 set session authorization anon;
 select pg_temp.denied(format('select public.member_command(''data'',%L)',:'ga'),'42501','anonymous RPC denied');
 reset session authorization;
+-- Privacy of peers and rejected/revoked/expired flows.
+set session authorization authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000204',true);
+select pg_temp.ok(not exists(select 1 from jsonb_array_elements(public.member_command('data',:'ga')->'members') m where m->>'email' is not null),'player sees no peer contact');
+select pg_temp.ok(not exists(select 1 from jsonb_array_elements(public.member_command('data',:'ga')->'members') m where m->>'id'<> (select id::text from public.group_members where group_id=:'ga' and player_id=(select id from public.players where user_id='00000000-0000-4000-8000-000000000204')) and jsonb_array_length(m->'terms')>0),'player sees no peer modality history');
+select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000201',true);
+select public.member_command('create_link',:'ga',gen_random_uuid(),jsonb_build_object('label','Revocable synthetic','token_hash',repeat('7',64))) as revlink \gset
+select public.member_command('create_link',:'ga',gen_random_uuid(),jsonb_build_object('label','Reject synthetic','token_hash',repeat('8',64)));
+select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000206',true);
+select public.member_command('request',null,null,jsonb_build_object('kind','shared','token_hash',repeat('8',64))) as rejectedrequest \gset
+select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000201',true);
+select public.member_command('review',:'ga',null,jsonb_build_object('id',:'rejectedrequest'::jsonb->>'id','decision','reject'));
+select public.member_command('revoke_link',:'ga',null,jsonb_build_object('id',:'revlink'::jsonb->>'id'));
+select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000206',true);
+select pg_temp.denied(format('select public.member_command(''data'',%L)',:'ga'),'42501','rejection grants no access');
+select pg_temp.denied(format('select public.member_command(''request'',null,null,%L::jsonb)',jsonb_build_object('kind','shared','token_hash',repeat('7',64))),'42501','revoked shared link denied');
+select pg_temp.denied(format('select public.member_command(''accept'',null,null,%L::jsonb)',jsonb_build_object('kind','shared','token_hash',repeat('8',64))),'22023','shared link cannot directly admit');
+select pg_temp.denied('select public.member_command(''unknown'',null,null,''{}'')','22023','unknown commands rejected');
+select pg_temp.denied('select public.member_command(''preview'',null,null,''[]'')','22023','array payload rejected');
+select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000201',true);
+select public.member_command('create_invitation',:'ga',gen_random_uuid(),jsonb_build_object('email','synthetic-207@example.invalid','delivery','manual','token_hash',repeat('9',64)));
+reset session authorization;
+update public.group_invitations set expires_at=clock_timestamp()-interval '1 second' where group_id=:'ga' and token_hash=repeat('9',64);
+select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000201',true);
+insert into public.group_members(group_id,player_id,role,status) select :'ga',id,'guest','active' from public.players where user_id='00000000-0000-4000-8000-000000000208';
+set session authorization authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000207',true);
+select pg_temp.denied(format('select public.member_command(''accept'',null,null,%L::jsonb)',jsonb_build_object('kind','individual','token_hash',repeat('9',64))),'42501','expired individual invite denied');
+select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000208',true);
+select pg_temp.denied(format('select public.member_command(''data'',%L)',:'ga'),'42501','guest private projection denied');
+select pg_temp.ok((select count(*)=0 from public.groups where id=:'ga'),'guest direct group read denied');
+select pg_temp.denied(format('select public.member_command(''review'',%L,null,%L::jsonb)',:'ga',jsonb_build_object('id',:'rejectedrequest'::jsonb->>'id','decision','approve')),'42501','guest cannot approve');
+reset session authorization;
+
 rollback;

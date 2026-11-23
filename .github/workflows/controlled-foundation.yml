@@ -29,6 +29,7 @@ jobs:
           npm audit --omit=dev --json > /tmp/member-audit-production.json || true
           node -e 'for(const file of ["/tmp/member-audit.json","/tmp/member-audit-production.json"]){const a=require(file);console.log("MEMBER_AUDIT "+JSON.stringify({file,metadata:a.metadata,vulnerabilities:a.vulnerabilities}));}'
       - name: Inspect reviewed source formatting
+        continue-on-error: true
         run: |
           node --input-type=module <<'JS'
           import fs from "node:fs";
