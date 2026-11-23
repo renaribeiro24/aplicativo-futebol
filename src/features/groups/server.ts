@@ -24,7 +24,8 @@ export async function loadGroup(slug: string) {
     .maybeSingle();
   if (membership.error)
     throw new Error("Não foi possível verificar seu vínculo.");
-  if (!membership.data || !hasPrivateGroupAccess(membership.data.role)) notFound();
+  if (!membership.data || !hasPrivateGroupAccess(membership.data.role))
+    notFound();
   return { ...identity, group: result.data, role: membership.data.role };
 }
 
