@@ -65,7 +65,7 @@ select pg_temp.ok((select role='player' and status='active' from public.group_me
 select pg_temp.ok((select count(*)=2 and bool_and(billing_type='casual') from public.member_billing_terms where group_id=:'ga'),'past/current terms preserved without overlap');
 select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000201',true);
 select public.member_command('create_invitation',:'ga',gen_random_uuid(),jsonb_build_object('email','synthetic-205@example.invalid','delivery','automatic','token_hash',repeat('d',64)));
-select pg_temp.ok((public.member_command('data',:'ga')->'invitations'->0->>'delivery')='blocked','no email marked delivered');
+select pg_temp.ok((select v->>'delivery'='blocked' from jsonb_array_elements(public.member_command('data',:'ga')->'invitations') v where v->>'email'='synthetic-205@example.invalid'),'no email marked delivered');
 select pg_temp.denied(format('select public.member_command(''create_invitation'',%L,gen_random_uuid(),%L::jsonb)',:'ga',jsonb_build_object('email','synthetic-205@example.invalid','delivery','automatic','token_hash',repeat('e',64))),'P4290','24h automated attempt limit');
 select public.member_command('create_invitation',:'ga',gen_random_uuid(),jsonb_build_object('email','synthetic-205@example.invalid','delivery','manual','token_hash',repeat('f',64)));
 select pg_temp.denied(format('select public.member_command(''create_invitation'',%L,gen_random_uuid(),%L::jsonb)',:'ga',jsonb_build_object('email','synthetic-205@example.invalid','delivery','automatic','token_hash',repeat('e',64))),'P4290','manual rotation does not reset email budget');
