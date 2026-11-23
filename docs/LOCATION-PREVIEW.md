@@ -56,3 +56,9 @@ Latitude e longitude deixam de aparecer como campos editáveis. Os valores conti
 O teste de renderização cobre coordenadas zero preservadas internamente, ausência de campos técnicos editáveis e manutenção do link/mapa. O navegador isolado cobre desktop/celular, temas claro/escuro, validação manual e ausência de gravações/provedor. O teste de mapa injeta somente um ponto sintético nos campos internos da demonstração e intercepta a requisição OSM; isso não representa geocodificação ou persistência real.
 
 Este ajuste não aplica SQL, não ativa Geoapify e não envia e-mails. O ambiente local gerenciado estava indisponível; a execução das verificações é delegada ao workflow isolado, sem secrets. O resultado deve ser conferido no respectivo run, sem tratar teste preparado como aprovado.
+
+### Evidência do ajuste de coordenadas
+
+[Execução isolada 45250545328](https://github.com/renaribeiro24/aplicativo-futebol/actions/runs/45250545328): **PASS**, 503 testes unitários, lint, typecheck, build, regressões SQL e quatro combinações desktop/celular × claro/escuro. Confirmados campos hidden, endereço manual sem coordenadas, mapa/navegação com metadados internos sintéticos, ausência de overflow/erros JS e nenhum acesso ao Supabase/Geoapify. Screenshots e resumo no artifact isolado de interface do run.
+
+A primeira execução falhou porque um teste legado pressupunha a existência de work/. O teste agora trata diretório ausente como lista vazia, sem criar manifestos e sem flexibilizar os guards do runner. npm ci informou 15 alertas (14 moderados e um alto); versões não foram alteradas e a classificação detalhada permanece pendente. Nenhum e-mail enviado ou banco remoto modificado.

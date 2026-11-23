@@ -369,10 +369,9 @@ export function LocationEditor({
         ))}
       </div>
       <p className="text-sm text-muted-foreground">
-        Informe o nome e o endereço do local. Não preencha
-        dados desconhecidos com valores fictícios. Edições de locais já
-        utilizados criam uma versão nova; agendas e partidas anteriores ficam
-        preservadas.
+        Informe o nome e o endereço do local. Não preencha dados desconhecidos
+        com valores fictícios. Edições de locais já utilizados criam uma versão
+        nova; agendas e partidas anteriores ficam preservadas.
       </p>
       <LocationPreview value={values} />
     </>
