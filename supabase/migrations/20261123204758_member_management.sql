@@ -164,6 +164,7 @@ begin
     if tg_op='UPDATE' and new.participation_period_id is distinct from old.participation_period_id then
       raise exception 'Billing period immutable' using errcode='42501';
     end if;
+    if tg_op='INSERT' and new.participation_period_id is null and exists(select 1 from public.member_participation_periods p where p.group_id=new.group_id and p.player_id=new.player_id and p.ended_at is null and p.source<>'observed_at_migration') then raise exception 'Participation scope required' using errcode='23514'; end if;
     if new.participation_period_id is not null and not exists(
       select 1 from public.member_participation_periods p where p.id=new.participation_period_id
       and p.group_id=new.group_id and p.player_id=new.player_id and p.ended_at is null) then
@@ -378,6 +379,7 @@ begin
   if inv.recipient_email<>e then raise exception 'Invitation unavailable' using errcode='42501'; end if;
   if inv.accepted_by is not null then
    if inv.accepted_by<>u then raise exception 'Invitation unavailable' using errcode='42501'; end if;
+   if not exists(select 1 from public.group_members where id=inv.accepted_member_id and group_id=gid and status='active' and role in ('owner','admin','player')) then raise exception 'Return requires new invitation' using errcode='P4092'; end if;
    return jsonb_build_object('accepted',true,'member',inv.accepted_member_id);
   end if;
   if inv.revoked_at is not null or inv.expires_at<=stamp or inv.role<>'player' or inv.uses_count<>0 or inv.max_uses<>1 then raise exception 'Invitation unavailable' using errcode='42501'; end if;
@@ -431,7 +433,7 @@ begin
   if scope is null or p_payload->>'type' not in ('monthly','casual') or (p_payload->>'from')::date<=today then raise exception 'Future date required' using errcode='23514'; end if;
   -- End current period classification independently; never rewrite previous periods/charges.
   update public.member_billing_terms set effective_until=(p_payload->>'from')::date
-   where group_id=gid and player_id=pid and participation_period_id=scope and effective_from<(p_payload->>'from')::date and effective_until is null;
+   where group_id=gid and player_id=pid and (participation_period_id=scope or (participation_period_id is null and exists(select 1 from public.member_participation_periods p where p.id=scope and p.source='observed_at_migration'))) and effective_from<(p_payload->>'from')::date and effective_until is null;
   insert into public.member_billing_terms(group_id,player_id,billing_type,effective_from,participation_period_id)
    values(gid,pid,p_payload->>'type',(p_payload->>'from')::date,scope) returning id into rid;
   result:=jsonb_build_object('id',rid);

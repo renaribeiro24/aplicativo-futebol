@@ -59,6 +59,7 @@ select pg_temp.denied(format('select public.set_member_status(%L,%L,''active'')'
 select public.member_command('create_invitation',:'ga',gen_random_uuid(),jsonb_build_object('email','synthetic-203@example.invalid','delivery','manual','token_hash',repeat('c',64)));
 select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000203',true);
 select pg_temp.denied(format('select public.member_command(''data'',%L)',:'ga'),'42501','inactive private access denied');
+select pg_temp.denied(format('select public.member_command(''accept'',null,null,%L::jsonb)',jsonb_build_object('kind','individual','token_hash',repeat('a',64))),'P4092','old accepted invite never reactivates');
 select pg_temp.ok(public.member_command('accept',null,null,jsonb_build_object('kind','individual','token_hash',repeat('c',64)))->>'member'=:'member','return reuses identity');
 select pg_temp.ok((select count(*)=2 and count(*) filter(where ended_at is null)=1 from public.member_participation_periods where member_id=:'member'),'return opens new period');
 select pg_temp.ok((select role='player' and status='active' from public.group_members where id=:'member'),'return never restores admin');

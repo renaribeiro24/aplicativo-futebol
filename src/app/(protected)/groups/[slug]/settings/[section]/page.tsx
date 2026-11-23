@@ -37,7 +37,18 @@ export default async function SettingsSection({
   const definition = settingsSections.find((s) => s.path === section);
   if (!definition) notFound();
   const context = await loadManagedGroup(slug);
-  if(section==="members") return <div className="space-y-6"><Link href={`/groups/${slug}/settings`} className="text-sm text-primary underline">← Voltar à administração</Link>{await MembersPage({params:Promise.resolve({slug})})}</div>;
+  if (section === "members")
+    return (
+      <div className="space-y-6">
+        <Link
+          href={`/groups/${slug}/settings`}
+          className="text-sm text-primary underline"
+        >
+          ← Voltar à administração
+        </Link>
+        {await MembersPage({ params: Promise.resolve({ slug }) })}
+      </div>
+    );
   const { db, group, role } = context;
   const location =
     section === "general" || section === "schedule"

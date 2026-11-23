@@ -151,6 +151,12 @@ try {
             .length +
           " SQL assertions; location L not installed",
       );
+      if(managementMigration){
+       const bSql=readFileSync(path.join(root,"supabase/migrations",managementMigration),"utf8");
+       const bTests=readFileSync(path.join(root,"tests/database/member-management.sql"),"utf8").replace("\nbegin;","\n").replace(/\nrollback;\s*$/,"\n");
+       const bChecked=sql("begin;"+proposed+";"+bSql+";"+bTests+";rollback;");
+       console.log("members B baseline-8 OK: "+(bChecked.stderr.match(/NOTICE:\s+ok -/g)??[]).length+" SQL assertions; no location L dependency");
+      }
       if (
         sql(
           "select to_regclass('public.member_participation_periods') is null;",
@@ -928,7 +934,14 @@ try {
     );
   }
   if(managementMigration){
-   sql("begin;"+readFileSync(path.join(root,"supabase/migrations",managementMigration),"utf8")+";commit;");
+   const bSql=readFileSync(path.join(root,"supabase/migrations",managementMigration),"utf8");
+   const snapshot=()=>sql("select md5(jsonb_build_object('members',(select jsonb_agg(to_jsonb(t) order by id) from public.group_members t),'terms',(select jsonb_agg(to_jsonb(t)-'participation_period_id' order by id) from public.member_billing_terms t),'periods',(select jsonb_agg(to_jsonb(t) order by id) from public.member_participation_periods t))::text);").stdout.trim();
+   const beforeB=snapshot();
+   const bRejected=docker(sqlArgs,"begin;"+bSql+";select 1/0;commit;",true);
+   if(bRejected.status===0||snapshot()!==beforeB||sql("select to_regprocedure('public.member_command(text,uuid,uuid,jsonb)') is null;").stdout.trim()!=="t")throw Error("B DDL rollback failed");
+   sql("begin;"+bSql+";commit;");
+   if(snapshot()!==beforeB)throw Error("B migration changed historical rows");
+   console.log("members B DDL rollback/preservation OK: prior members, terms and periods unchanged");
    const checked=sql(readFileSync(path.join(root,"tests/database/member-management.sql"),"utf8"));
    console.log("members management OK: "+(checked.stderr.match(/NOTICE:\s+ok -/g)??[]).length+" SQL assertions (isolated claims, not real JWT)");
 

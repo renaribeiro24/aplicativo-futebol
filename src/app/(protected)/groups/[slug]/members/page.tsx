@@ -1,5 +1,39 @@
-import {randomBytes,randomUUID} from "node:crypto";
-import {MembersPanel} from "@/features/members/panel";
-import {loadMembers} from "@/features/members/server";
-export const metadata={title:"Integrantes"};
-export default async function MembersPage({params}:{params:Promise<{slug:string}>}){const {slug}=await params;const context=await loadMembers(slug);return <div className="mx-auto max-w-5xl space-y-6"><h1 className="text-3xl font-semibold">Integrantes · {context.group.name}</h1>{context.members?<MembersPanel data={context.members} slug={slug} individual={{requestId:randomUUID(),token:randomBytes(32).toString("hex")}} shared={{requestId:randomUUID(),token:randomBytes(32).toString("hex")}}/>:<p role="status">A gestão de integrantes está em preparação neste ambiente. As migrations A e B precisam ser homologadas e autorizadas antes da ativação. Nenhuma alteração foi salva.</p>}</div>;}
+import { randomBytes, randomUUID } from "node:crypto";
+import { MembersPanel } from "@/features/members/panel";
+import { loadMembers } from "@/features/members/server";
+export const metadata = { title: "Integrantes" };
+export default async function MembersPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const context = await loadMembers(slug);
+  return (
+    <div className="mx-auto max-w-5xl space-y-6">
+      <h1 className="text-3xl font-semibold">
+        Integrantes · {context.group.name}
+      </h1>
+      {context.members ? (
+        <MembersPanel
+          data={context.members}
+          slug={slug}
+          individual={{
+            requestId: randomUUID(),
+            token: randomBytes(32).toString("hex"),
+          }}
+          shared={{
+            requestId: randomUUID(),
+            token: randomBytes(32).toString("hex"),
+          }}
+        />
+      ) : (
+        <p role="status">
+          A gestão de integrantes está em preparação neste ambiente. As
+          migrations A e B precisam ser homologadas e autorizadas antes da
+          ativação. Nenhuma alteração foi salva.
+        </p>
+      )}
+    </div>
+  );
+}
