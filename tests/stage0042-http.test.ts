@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { readdirSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import {
   configuration,
@@ -228,7 +228,7 @@ describe("004.2 CLI fail-closed checks (no network or real credentials)", () => 
   });
   it("refuses --prepare before creating a manifest when synthetic attestation is absent", () => {
     const manifests = () =>
-      readdirSync("work")
+      (existsSync("work") ? readdirSync("work") : [])
         .filter((name) => /^stage0042-http-[0-9a-f-]{36}\.json$/.test(name))
         .sort();
     const before = manifests();

@@ -19,6 +19,19 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci
+      - name: Inspect reviewed source formatting
+        run: |
+          node --input-type=module <<'JS'
+          import fs from "node:fs";
+          import prettier from "prettier";
+          const files = ["src/features/groups/location/form.tsx", "tests/location-form.test.ts", "tests/stage0042-http.test.ts", "scripts/test-location-visual.mjs", ".github/workflows/controlled-foundation.yml"];
+          for (const path of files) {
+            const original = fs.readFileSync(path, "utf8");
+            const config = await prettier.resolveConfig(path);
+            const content = await prettier.format(original, { ...config, filepath: path });
+            if (original !== content) console.log("REVIEWED_FORMAT " + JSON.stringify({ path, content }));
+          }
+          JS
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
