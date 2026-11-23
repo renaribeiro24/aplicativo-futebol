@@ -124,10 +124,11 @@ try {
   const memberMigration = migrations.find((name) =>
     name.endsWith("_member_foundation.sql"),
   );
+  const managementMigration=migrations.find(name=>name.endsWith("_member_management.sql"));
   // Apply legacy contract regressions before checking intentionally changed contracts.
   // Apply every migration in order; the new rule preserves unconfigured groups.
   for (const name of migrations) {
-    if (name === memberMigration) continue;
+    if (name === memberMigration || name === managementMigration) continue;
     if (memberMigration && name === primaryMigration) {
       const proposed = readFileSync(
         path.join(root, "supabase/migrations", memberMigration),
@@ -925,6 +926,17 @@ try {
     console.log(
       "members foundation concurrency OK: demoted manager denied after lock; repeated inactivation closes exactly one period",
     );
+  }
+  if(managementMigration){
+   sql("begin;"+readFileSync(path.join(root,"supabase/migrations",managementMigration),"utf8")+";commit;");
+   const checked=sql(readFileSync(path.join(root,"tests/database/member-management.sql"),"utf8"));
+   console.log("members management OK: "+(checked.stderr.match(/NOTICE:\\s+ok -/g)??[]).length+" SQL assertions (isolated claims, not real JWT)");
+   const require=createRequire(import.meta.url);
+   const native=path.join(path.dirname(require.resolve("@supabase/cli-linux-x64/package.json")),"bin","supabase");
+   docker(["cp",native,container+":/tmp/supabase"]);
+   const generated=docker(["exec","-e","DO_NOT_TRACK=1",container,"timeout","45","/tmp/supabase","gen","types","--db-url","postgresql://postgres@127.0.0.1:5432/postgres?sslmode=disable","--schema","public"]);
+   if(!generated.stdout.includes("export type Database"))throw Error("Official local typegen failed");
+   console.log("GENERATED_MEMBER_TYPES "+JSON.stringify({content:generated.stdout}));
   }
 } finally {
   docker(["rm", "--force", "--volumes", container], undefined, true);

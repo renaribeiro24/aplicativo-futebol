@@ -4,6 +4,7 @@ on:
     branches:
       - feat/stage0042-operational
       - feat/members-foundation
+      - feat/members-management
 permissions:
   contents: read
 jobs:
@@ -19,6 +20,15 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci
+      - name: Prepare CLI-named migration
+        run: node scripts/prepare-member-management.mjs
+      - name: Database-first isolated review
+        run: npm run db:test
+      - name: Dependency inventory
+        run: |
+          npm audit --json > /tmp/member-audit.json || true
+          npm audit --omit=dev --json > /tmp/member-audit-production.json || true
+          node -e 'for(const file of ["/tmp/member-audit.json","/tmp/member-audit-production.json"]){const a=require(file);console.log("MEMBER_AUDIT "+JSON.stringify({file,metadata:a.metadata,vulnerabilities:a.vulnerabilities}));}'
       - name: Inspect reviewed source formatting
         run: |
           node --input-type=module <<'JS'
