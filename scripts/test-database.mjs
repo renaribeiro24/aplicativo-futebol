@@ -121,8 +121,20 @@ try {
   const primaryMigration = migrations.find((name) =>
     name.endsWith("_stage0042l_primary_venue.sql"),
   );
+  const memberMigration = migrations.find((name) => name.endsWith("_member_foundation.sql"));
+  // Apply legacy contract regressions before checking intentionally changed contracts.
   // Apply every migration in order; the new rule preserves unconfigured groups.
   for (const name of migrations) {
+    if (name === memberMigration) continue;
+    if (memberMigration && name === primaryMigration) {
+      const proposed = readFileSync(path.join(root, "supabase/migrations", memberMigration), "utf8");
+      const assertions = readFileSync(path.join(root, "tests/database/member-foundation.sql"), "utf8")
+        .replace("\nbegin;", "\n").replace(/\nrollback;\s*$/, "\n");
+      const checked = sql("begin;" + proposed + ";" + assertions + ";rollback;");
+      console.log("members foundation baseline-8 OK: " + checked.stderr.split("\n").filter(line => line.includes("NOTICE:") && line.includes("ok -")).length + " SQL assertions; location L not installed");
+      if (sql("select to_regclass('public.member_participation_periods') is null;").stdout.trim() !== "t")
+        throw Error("Baseline-8 test did not roll back");
+    }
     if (name.endsWith("_auth_schema_bridge.sql")) {
       // Reproduce hosted Supabase: migration administrator cannot delegate auth USAGE.
       sql("revoke usage on schema auth from app_executor;");
@@ -756,6 +768,41 @@ try {
         "stage0042-L official LOCAL types OK: src/types/database.location.types.ts (opt-in schema contract)",
       );
     }
+  }
+  if (memberMigration) {
+    const proposed = readFileSync(path.join(root, "supabase/migrations", memberMigration), "utf8");
+    const before = sql("select md5(pg_get_functiondef('private.set_member_status_impl(uuid,uuid,text)'::regprocedure));").stdout.trim();
+    const rejected = docker(sqlArgs, "begin;" + proposed + ";do $begin raise exception 'foundation forced rollback';end$;commit;", true);
+    if (rejected.status === 0 || !rejected.stderr.includes("foundation forced rollback"))
+      throw Error("Expected DDL rollback");
+    if (sql("select to_regclass('public.member_participation_periods') is null;").stdout.trim() !== "t" ||
+        sql("select md5(pg_get_functiondef('private.set_member_status_impl(uuid,uuid,text)'::regprocedure));").stdout.trim() !== before)
+      throw Error("Rollback changed schema or legacy RPC");
+    sql("begin;" + proposed + ";commit;");
+    const members = sql(readFileSync(path.join(root, "tests/database/member-foundation.sql"), "utf8"));
+    console.log("members foundation OK: " + members.stderr.split("\n").filter(line => line.includes("NOTICE:") && line.includes("ok -")).length + " SQL assertions after legacy regressions");
+    const owner = "00000000-0000-4000-8000-000000000001";
+    const admin = "00000000-0000-4000-8000-000000000004";
+    const session = actor => "begin;set session authorization authenticated;select set_config('request.jwt.claim.sub','" + actor + "',true);";
+    sql(session(owner) + "select public.create_group('Synthetic members concurrency','members-foundation-race');commit;");
+    const group = sql("select id from public.groups where slug='members-foundation-race';").stdout.trim();
+    sql("begin;select set_config('request.jwt.claim.sub','" + owner + "',true);insert into public.group_members(group_id,player_id,role,status) select '" + group + "',id,case when user_id='" + admin + "' then 'admin' else 'player' end,'active' from public.players where user_id in ('00000000-0000-4000-8000-000000000003','" + admin + "');commit;");
+    const target = sql("select m.id from public.group_members m join public.players p on p.id=m.player_id where m.group_id='" + group + "' and p.user_id='00000000-0000-4000-8000-000000000003';").stdout.trim();
+    const adminMember = sql("select m.id from public.group_members m join public.players p on p.id=m.player_id where m.group_id='" + group + "' and p.user_id='" + admin + "';").stdout.trim();
+    const demotion = sqlAsync(session(owner) + "select public.set_member_role('" + group + "','" + adminMember + "','player');select pg_sleep(0.5);commit;");
+    await sleep(100);
+    const stale = sqlAsync(session(admin) + "select public.set_member_status('" + group + "','" + target + "','suspended');commit;");
+    const results = await Promise.all([demotion, stale]);
+    if (results[0].code !== 0 || results[1].code === 0 || !results[1].stderr.includes("Permissão insuficiente"))
+      throw Error("Demoted manager retained access");
+    const one = sqlAsync(session(owner) + "select public.set_member_status('" + group + "','" + target + "','suspended');select pg_sleep(0.5);commit;");
+    await sleep(100);
+    const two = sqlAsync(session(owner) + "select public.set_member_status('" + group + "','" + target + "','suspended');commit;");
+    if ((await Promise.all([one,two])).some(result => result.code !== 0))
+      throw Error("Repeated concurrent inactivation failed");
+    if (sql("select count(*)=1 and bool_and(ended_at is not null) from public.member_participation_periods where member_id='" + target + "';").stdout.trim() !== "t")
+      throw Error("Concurrent inactivation duplicated or reopened a period");
+    console.log("members foundation concurrency OK: demoted manager denied after lock; repeated inactivation closes exactly one period");
   }
 } finally {
   docker(["rm", "--force", "--volumes", container], undefined, true);

@@ -1,6 +1,7 @@
 import "server-only";
 import { notFound } from "next/navigation";
 import { loadIdentity } from "@/features/identity/server";
+import { hasPrivateGroupAccess } from "./access";
 import { validSlug } from "./validation";
 export async function loadGroup(slug: string) {
   if (!validSlug(slug)) notFound();
@@ -23,7 +24,7 @@ export async function loadGroup(slug: string) {
     .maybeSingle();
   if (membership.error)
     throw new Error("Não foi possível verificar seu vínculo.");
-  if (!membership.data) notFound();
+  if (!membership.data || !hasPrivateGroupAccess(membership.data.role)) notFound();
   return { ...identity, group: result.data, role: membership.data.role };
 }
 
