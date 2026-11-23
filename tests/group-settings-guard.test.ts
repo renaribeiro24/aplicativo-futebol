@@ -7,7 +7,7 @@ vi.mock("next/navigation", () => ({
     throw Error("not-found");
   },
 }));
-import { loadManagedGroup } from "@/features/groups/server";
+import { loadGroup, loadManagedGroup } from "@/features/groups/server";
 describe("administration route guard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -36,6 +36,18 @@ describe("administration route guard", () => {
       .mockResolvedValueOnce({ data: { id: "fixture-a" }, error: null })
       .mockResolvedValueOnce({ data: { role }, error: null });
     await expect(loadManagedGroup("alpha")).rejects.toThrow("not-found");
+  });
+  it("denies authenticated guest at the group boundary on the legacy schema", async () => {
+    m.single
+      .mockResolvedValueOnce({ data: { id: "fixture-a" }, error: null })
+      .mockResolvedValueOnce({ data: { role: "guest" }, error: null });
+    await expect(loadGroup("alpha")).rejects.toThrow("not-found");
+  });
+  it("denies inactive or missing membership", async () => {
+    m.single
+      .mockResolvedValueOnce({ data: { id: "fixture-a" }, error: null })
+      .mockResolvedValueOnce({ data: null, error: null });
+    await expect(loadGroup("alpha")).rejects.toThrow("not-found");
   });
   it("denies a foreign group invisible under RLS", async () => {
     m.single.mockResolvedValueOnce({ data: null, error: null });

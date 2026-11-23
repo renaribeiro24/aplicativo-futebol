@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { hasPrivateGroupAccess } from "@/features/groups/access";
 import { Users, Plus, UserRound } from "lucide-react";
 import { loadIdentity } from "@/features/identity/server";
 import { canManage, roleLabels } from "@/features/groups/validation";
@@ -31,7 +32,9 @@ export default async function Dashboard({
   if (result.error)
     throw new Error("Não foi possível carregar seus grupos. Tente novamente.");
   const groups = result.data.flatMap((m) =>
-    m.groups ? [{ ...m.groups, role: m.role }] : [],
+    m.groups && hasPrivateGroupAccess(m.role)
+      ? [{ ...m.groups, role: m.role }]
+      : [],
   );
   return (
     <div className="space-y-8">

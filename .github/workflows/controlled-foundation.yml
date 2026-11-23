@@ -24,14 +24,16 @@ jobs:
           node --input-type=module <<'JS'
           import fs from "node:fs";
           import prettier from "prettier";
-          const files = ["src/features/groups/location/form.tsx", "tests/location-form.test.ts", "tests/stage0042-http.test.ts", "scripts/test-location-visual.mjs", ".github/workflows/controlled-foundation.yml"];
+          const files = ["src/features/groups/access.ts","src/features/groups/server.ts","src/app/(protected)/dashboard/page.tsx","tests/group-settings-guard.test.ts","tests/member-access.test.ts","scripts/test-database.mjs","docs/MEMBERS-A.md",".github/workflows/controlled-foundation.yml"];
           for (const path of files) {
             const original = fs.readFileSync(path, "utf8");
             const config = await prettier.resolveConfig(path);
             const content = await prettier.format(original, { ...config, filepath: path });
-            if (original !== content) console.log("REVIEWED_FORMAT " + JSON.stringify({ path, content }));
+            if (original !== content) { console.log("REVIEWED_FORMAT " + JSON.stringify({ path, content })); process.exitCode = 1; }
           }
           JS
+      - run: npm run format:check
+        continue-on-error: true
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
@@ -50,4 +52,10 @@ jobs:
         with:
           name: isolated-location-ui
           path: work/location-ui/
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: isolated-member-foundation
+          path: work/member-foundation/
           if-no-files-found: ignore
