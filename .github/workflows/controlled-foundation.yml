@@ -19,20 +19,17 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci
-      - name: Generate migration locally using the official CLI
-        if: github.ref_name == 'feat/members-foundation'
-        run: node scripts/prepare-member-migration.mjs
       - name: Inspect reviewed source formatting
         run: |
           node --input-type=module <<'JS'
           import fs from "node:fs";
           import prettier from "prettier";
-          const files = ["src/features/groups/access.ts","src/features/groups/server.ts","src/app/(protected)/dashboard/page.tsx","tests/group-settings-guard.test.ts","tests/member-access.test.ts","scripts/test-database.mjs","scripts/prepare-member-migration.mjs","docs/MEMBERS-A.md",".github/workflows/controlled-foundation.yml"];
+          const files = ["src/features/groups/access.ts","src/features/groups/server.ts","src/app/(protected)/dashboard/page.tsx","tests/group-settings-guard.test.ts","tests/member-access.test.ts","scripts/test-database.mjs","docs/MEMBERS-A.md",".github/workflows/controlled-foundation.yml"];
           for (const path of files) {
             const original = fs.readFileSync(path, "utf8");
             const config = await prettier.resolveConfig(path);
             const content = await prettier.format(original, { ...config, filepath: path });
-            if (original !== content) console.log("REVIEWED_FORMAT " + JSON.stringify({ path, content }));
+            if (original !== content) { console.log("REVIEWED_FORMAT " + JSON.stringify({ path, content })); process.exitCode = 1; }
           }
           JS
       - run: npm run format:check

@@ -29,7 +29,13 @@ As suites legadas rodam primeiro contra o contrato anterior; a suite específica
 
 ## Testes e evidências
 
-Aguardando execução do workflow específico. Não considerar fonte preparada como PASS.
+Primeira execução bem-sucedida: [run 45256584456](https://github.com/renaribeiro24/aplicativo-futebol/actions/runs/45256584456), commit b41c542. **515 testes**, lint, typecheck e build PASS. SQL: **47 assertions** na base de oito migrations, **47** após regressões legadas com L local, rollback DDL e duas concorrências PASS. Interface herdada: **4/4** desktop/celular × claro/escuro, em demonstração isolada e sem escrita/provedor.
+
+Uma execução anterior falhou por estreitamento desnecessário do retorno TypeScript do loader, que impedia um teste negativo existente de guest. O predicado mantém retorno boolean sem mudar o contrato do contexto; a guarda de execução permanece fechada. Novos testes de isolamento de acesso a outro grupo, políticas de agendas/preços/locais e transferência de propriedade foram acrescentados depois desse run e exigem a execução final.
+
+Migration oficial: supabase/migrations/20261123200923_member_foundation.sql, nome gerado por Supabase CLI no runner e registrado no run 45256302827. O arquivo versionado contém exatamente o SQL gerado/preparado e ensaiado. Os arquivos transitórios de geração/proposta foram removidos após registro do nome; não há geração de migration nova a cada execução de CI.
+
+A formatação global mantém duas falhas preexistentes em STAGE0032.md e STAGE0032-UI-CHECKLIST.md. O workflow valida separadamente os arquivos revisados. npm ci informa 15 alertas (14 moderados e um alto); não houve alteração de dependências nem aceite presumido desses riscos.
 
 Cobertura preparada: papéis autenticados SQL e anon, guest com conta, isolamento entre dois grupos, promoção, inativação, reativação direta recusada, conservação de presenças/classificação, projeção sem contatos/atores, imutabilidade, FK composta, sobreposição, rollback DDL e concorrência com gestor rebaixado. Claims sintéticas SQL NÃO são JWTs reais. Nenhuma conta técnica hospedada ou e-mail real é usado.
 
