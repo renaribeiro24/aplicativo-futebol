@@ -107,9 +107,9 @@ select pg_temp.denied(format('select public.member_command(''accept'',null,null,
 select pg_temp.denied('select public.member_command(''unknown'',null,null,''{}'')','22023','unknown commands rejected');
 select pg_temp.denied('select public.member_command(''preview'',null,null,''[]'')','22023','array payload rejected');
 select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000201',true);
-select public.member_command('create_invitation',:'ga',gen_random_uuid(),jsonb_build_object('email','synthetic-207@example.invalid','delivery','manual','token_hash',repeat('9',64)));
 reset session authorization;
-update public.group_invitations set expires_at=clock_timestamp()-interval '1 second' where group_id=:'ga' and token_hash=repeat('9',64);
+-- Privileged synthetic setup only: born expired, never mutate immutable expiry.
+insert into public.group_invitations(group_id,token_hash,role,expires_at,created_at,max_uses,created_by,recipient_email) values(:'ga',repeat('9',64),'player',clock_timestamp()-interval '1 second',clock_timestamp()-interval '2 days',1,'00000000-0000-4000-8000-000000000201','synthetic-207@example.invalid');
 select set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000201',true);
 insert into public.group_members(group_id,player_id,role,status) select :'ga',id,'guest','active' from public.players where user_id='00000000-0000-4000-8000-000000000208';
 set session authorization authenticated;
