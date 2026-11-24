@@ -71,6 +71,7 @@ export function MembersPanel({
             <label className="grid gap-2 text-sm">
               Situação
               <select
+                aria-label="Situação"
                 className="form-control"
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
@@ -87,6 +88,7 @@ export function MembersPanel({
             <label className="grid gap-2 text-sm">
               Função
               <select
+                aria-label="Função"
                 className="form-control"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
@@ -101,6 +103,7 @@ export function MembersPanel({
               <label className="grid gap-2 text-sm">
                 Modalidade financeira
                 <select
+                  aria-label="Modalidade financeira"
                   className="form-control"
                   value={billing}
                   onChange={(e) => setBilling(e.target.value)}
