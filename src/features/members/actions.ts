@@ -128,8 +128,8 @@ export async function manageMember(
     }
   }
   revalidatePath("/groups/" + slug);
-      revalidatePath("/groups/" + slug + "/members");
-      revalidatePath("/groups/" + slug + "/settings/members");
+  revalidatePath("/groups/" + slug + "/members");
+  revalidatePath("/groups/" + slug + "/settings/members");
   return { message: "Operação confirmada e salva." };
 }
 export async function processAdmission(

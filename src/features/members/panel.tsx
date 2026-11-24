@@ -333,7 +333,8 @@ export function MembersPanel({
                         ? "Aceito"
                         : i.revoked
                           ? "Revogado"
-                          : new Date(i.expires).getTime() < Date.parse(observedAt)
+                          : new Date(i.expires).getTime() <
+                              Date.parse(observedAt)
                             ? "Expirado"
                             : "Pendente"}{" "}
                       · validade {date(i.expires)}

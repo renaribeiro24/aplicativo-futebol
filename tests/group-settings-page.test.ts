@@ -9,7 +9,9 @@ const m = vi.hoisted(() => ({
   filters: vi.fn(),
   select: vi.fn(),
   tables: vi.fn(),
+  members: vi.fn(),
 }));
+vi.mock("@/app/(protected)/groups/[slug]/members/page",()=>({default:async({params}:{params:Promise<{slug:string}>})=>m.members(await params)}));
 vi.mock("@/features/groups/server", () => ({ loadManagedGroup: m.load }));
 vi.mock("@/features/groups/actions", () => ({ updateGroupDetails: vi.fn() }));
 vi.mock("next/navigation", () => ({
@@ -57,6 +59,7 @@ const section = (name: string) =>
 describe("settings hub and subpages — synthetic local fixtures only", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    m.members.mockResolvedValue(createElement('section',null,'Gestão de integrantes'));
     m.head.mockResolvedValue({ data: null, error: null, count: 2 });
     m.rows.mockResolvedValue({ data: [], error: null, count: 0 });
     const from = (table: string) => {
@@ -130,8 +133,8 @@ describe("settings hub and subpages — synthetic local fixtures only", () => {
       const html = renderToStaticMarkup(await section(name));
       expect(html).toContain('href="/groups/alpha/settings"');
       expect(m.load).toHaveBeenCalledWith("alpha");
-      if (name === "members") expect(html).toContain("Funções no grupo");
-      if (name === "schedule" || name === "finance" || name === "members")
+      if (name === "members") {expect(html).toContain("Gestão de integrantes");expect(m.members).toHaveBeenCalledWith({slug:"alpha"});expect(m.panel).not.toHaveBeenCalled();}
+      if (name === "schedule" || name === "finance")
         expect(m.panel).toHaveBeenCalledWith(
           expect.objectContaining({
             section:
@@ -145,24 +148,7 @@ describe("settings hub and subpages — synthetic local fixtures only", () => {
         );
     },
   );
-  it("identifies the administrative role explicitly", async () => {
-    m.rows.mockResolvedValue({
-      data: [
-        {
-          id: "member",
-          role: "guest",
-          player_id: "synthetic",
-          players: { name: "Convidado sintético", nickname: null },
-        },
-      ],
-      error: null,
-      count: 1,
-    });
-    const html = renderToStaticMarkup(await section("members"));
-    expect(html).toContain("Função: ");
-    expect(html).toContain("guest");
-    expect(html).not.toContain('name="role"');
-  });
+  it("delegates members to its guarded page without legacy member queries", async()=>{const html=renderToStaticMarkup(await section("members"));expect(html).toContain("Gestão de integrantes");expect(m.members).toHaveBeenCalledWith({slug:"alpha"});expect(m.tables).not.toHaveBeenCalled();});
   it("rejects an unknown area before querying", async () => {
     await expect(section("other")).rejects.toThrow("NEXT_NOT_FOUND");
     expect(m.tables).not.toHaveBeenCalled();
@@ -175,15 +161,7 @@ describe("settings hub and subpages — synthetic local fixtures only", () => {
       expect(m.tables).not.toHaveBeenCalled();
     },
   );
-  it("propagates section load errors without upstream details", async () => {
-    m.rows.mockResolvedValue({
-      data: null,
-      error: { message: "private detail" },
-    });
-    await expect(section("members")).rejects.toThrow(
-      "Não foi possível carregar a administração",
-    );
-  });
+  it("propagates sanitized member page errors",async()=>{m.members.mockRejectedValue(Error("Não foi possível carregar os integrantes."));await expect(section("members")).rejects.toThrow("Não foi possível carregar os integrantes.");});
   it("retains the disabled participation component without an invented persistence contract", () => {
     const html = renderToStaticMarkup(createElement(ParticipationPreparation));
     expect(html).not.toContain("<form");
