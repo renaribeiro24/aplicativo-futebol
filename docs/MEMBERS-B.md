@@ -51,7 +51,17 @@ Não há rotina remota/cron ativada. Validade pendente de 30 dias é aplicada no
 
 ## Testes e evidências
 
-Resultados finais e links de execução serão acrescentados após a revisão isolada. Testes SQL usam sessões authenticated/anon reais do PostgreSQL com claims sintéticas, NÃO JWTs emitidos pelo Auth. Testes visuais são demonstração sintética explicitamente rotulada, com gravações desativadas; não equivalem à homologação autenticada hospedada.
+Retomada em 24/11/2026. Os seis commits anteriores até d75c0be foram preservados. A fixture de convite expirado passou a ser inserida já vencida, com created_at anterior a expires_at, apenas no PostgreSQL descartável. Não há UPDATE de expires_at nem desativação de guard/trigger. Convites válidos e expirados são exercitados na mesma suíte.
+
+A revisão também corrigiu o relógio de expiração após a aquisição do lock: um convite que vence durante a espera não pode ser aceito. A mudança está exclusivamente na migration B preparada, sem aplicação remota.
+
+Evidência da interface: [execução 45425937335](https://github.com/renaribeiro24/aplicativo-futebol/actions/runs/45425937335), commit 8cbf299. Artefato isolated-members-b-ui, com relatório e screenshots. Foram quatro combinações (desktop/celular, claro/escuro), três papéis em cada uma: 12 cenários. Controles de convite/revogação, decisões, modalidade, inativos e orientação de retorno são conferidos sem gravações. O cenário player não recebe contatos/filas/controles administrativos. Esta evidência é de apresentação sintética, não persistência nem autorização real de navegador.
+
+Resultados da suíte isolada: 567 testes unitários em 39 arquivos; 52 asserções SQL de B na base de oito migrations sem L e 52 na base com L; 56 asserções de A em cada combinação. Regressões anteriores e preservação/rollback DDL passam. [Execução 45427330040](https://github.com/renaribeiro24/aplicativo-futebol/actions/runs/45427330040), commit b8cc579: cinco corridas de B cobrem aprovação simultânea com limite de uso, aceite duplicado, reserva automática de 24 horas, gestor rebaixado aguardando lock e expiração durante a espera. Asserções de autorização usam sessões PostgreSQL authenticated/anon e os checks de invariantes privilegiados ficam identificados.
+
+Lint, typecheck e build validam Next 16.4.6. A formatação dos arquivos revisados é obrigatória no workflow; o diagnóstico global permanece separado porque docs/STAGE0032.md e docs/STAGE0032-UI-CHECKLIST.md têm diferenças de formatação preexistentes, fora deste escopo. Não classificá-lo como PASS global.
+
+Cada push executa o workflow Controlled foundation checks no SHA correspondente. O relatório visual registra GITHUB_SHA; o resultado definitivo e os artefatos devem ser consultados na execução do commit final, sem atribuir resultados de uma execução histórica a outra. Testes SQL usam sessões authenticated/anon reais do PostgreSQL com claims sintéticas, NÃO JWTs emitidos pelo Auth. Testes visuais são demonstração sintética explicitamente rotulada, com gravações desativadas; não equivalem à homologação autenticada hospedada.
 
 ## Limitações e homologação posterior
 
@@ -60,3 +70,13 @@ Resultados finais e links de execução serão acrescentados após a revisão is
 - Não ativar env de e-mail nem publicar mudanças em produção antes da revisão.
 - Demonstração `/dev/members-preview` existe somente com NODE_ENV diferente de production e MEMBERS_UI_DEMO=1. Não consulta Supabase nem aceita gravações. Em build/next start a rota é not-found.
 - Preservados dados, migrations anteriores, develop/main e branches A/operacional. Nenhum acesso ao Supabase remoto, envio Resend ou alteração administrativa foi realizado.
+
+## Entrega para revisão
+
+Desenvolvimento controlado do Incremento B concluído no escopo isolado, sujeito ao CI do commit final. Não significa homologação hospedada, autorização de merge, aplicação remota ou produção. PR Draft deve apontar de feat/members-management para feat/members-foundation. O Incremento C não foi iniciado.
+
+Correções da retomada: fixture imutável; expiração revalidada após lock; nomes acessíveis explícitos nos filtros; relógio de referência fornecido pelo servidor; revalidação das duas entradas da área após gravação; adaptação dos testes antigos de Configurações e testes adicionais de ações/loader SSR com mocks explícitos.
+
+Next.js e eslint-config-next atualizados em commit próprio 6c167c8. Inventário histórico de 15 alertas preservado em MEMBERS-B-DEPENDENCIES.md; audit atual tem 14 de desenvolvimento (13 moderados, um alto) e zero em omit=dev. O aplicativo publicado não foi atualizado. Risco residual de tooling permanece para revisão, sem aceite presumido.
+
+Nenhum banco remoto, migration A/L/B remota, dado real, Resend, Auth produtivo, domínio ou DNS foi modificado. Sem deploy produtivo, merge, força no Git ou descarte de arquivos locais. O executor local indisponível impediu conferir a worktree do Codespaces; ela não foi acessada nem alterada. Trabalho realizado via branch remota e CI descartável.

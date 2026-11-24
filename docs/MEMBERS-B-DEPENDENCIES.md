@@ -1,6 +1,6 @@
 # Dependências — Integrantes B
 
-Auditoria de 23/11/2026 no runner isolado: **15 pacotes afetados, 14 moderados e 1 alto; nenhum crítico.** Com `--omit=dev`: **1 moderado (Next.js)**. Contagem de pacotes não é contagem de CVEs. Nenhuma dependência/lockfile alterada neste incremento.
+Auditoria de 23/11/2026 no runner isolado: **15 pacotes afetados, 14 moderados e 1 alto; nenhum crítico.** Com `--omit=dev`: **1 moderado (Next.js)**. Contagem de pacotes não é contagem de CVEs. Nenhuma dependência/lockfile havia sido alterada na auditoria inicial; a correção posterior está registrada separadamente abaixo.
 
 | Pacote instalado                            | Severidade | Alcance         | Caminho e tratamento proposto                                                                                                                                                                                   |
 | ------------------------------------------- | ---------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -34,4 +34,6 @@ Preservado acima o inventário histórico de 15 alertas. Preparada atualização
 
 O npm resolveu o lock em runner isolado. Foram incorporadas somente as entradas Next/@next/eslint-config-next e a raiz; acréscimos incidentais da cadeia opcional Tailwind foram excluídos do patch para preservar o escopo. Nenhum downgrade, override ou audit fix --force.
 
-A auditoria do candidato encontrou 14 alertas totais e 0 com omit=dev. A versão final com lock restrito será novamente instalada por npm ci e validada. Isso não atualiza o aplicativo publicado: develop e produção permanecem intactas. Auth/SSR hospedados continuam pendentes; regressões isoladas não substituem JWT real.
+A auditoria do candidato encontrou 14 alertas totais e 0 com omit=dev. O lockfile restrito também passou por npm ci e confirmou 14 alertas de desenvolvimento (13 moderados e um alto) e zero em omit=dev; as regressões estão vinculadas ao CI do commit final. Isso não atualiza o aplicativo publicado: develop e produção permanecem intactas. Auth/SSR hospedados continuam pendentes; regressões isoladas não substituem JWT real.
+
+Revisão das APIs oficiais em 24/11/2026: [Server Actions](https://nextjs.org/docs/app/api-reference/config/next-config-js/serverActions) e [cookies](https://nextjs.org/docs/app/api-reference/functions/cookies). Nenhuma origem adicional, relaxamento de CSRF, alteração do fluxo PKCE ou troca de flags de cookies foi introduzida pela atualização. Os testes isolados existentes e novos cobrem configuração Codespaces/Vercel, autenticação/redirects, sessão/SSR, callbacks e ações com mocks; Auth real e SSR hospedado permanecem pendentes, sem atribuir equivalência a esses mocks.
