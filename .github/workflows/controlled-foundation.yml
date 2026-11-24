@@ -20,6 +20,8 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci
+      - name: Prepare isolated compatible Next security candidate
+        run: node scripts/prepare-next-security.mjs
       - name: Database-first isolated review
         run: npm run db:test
       - name: Dependency inventory
