@@ -29,12 +29,14 @@ export function MembersPanel({
   individual,
   shared,
   demo = false,
+  observedAt,
 }: {
   data: MemberData;
   slug: string;
   individual: { requestId: string; token: string };
   shared: { requestId: string; token: string };
   demo?: boolean;
+  observedAt: string;
 }) {
   const manager = isManager(data.role);
   const [status, setStatus] = useState("active");
@@ -331,7 +333,7 @@ export function MembersPanel({
                         ? "Aceito"
                         : i.revoked
                           ? "Revogado"
-                          : new Date(i.expires).getTime() < Date.now()
+                          : new Date(i.expires).getTime() < Date.parse(observedAt)
                             ? "Expirado"
                             : "Pendente"}{" "}
                       · validade {date(i.expires)}

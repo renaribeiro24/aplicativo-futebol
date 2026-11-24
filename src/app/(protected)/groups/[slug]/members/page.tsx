@@ -18,6 +18,7 @@ export default async function MembersPage({
         <MembersPanel
           data={context.members}
           slug={slug}
+          observedAt={new Date().toISOString()}
           individual={{
             requestId: randomUUID(),
             token: randomBytes(32).toString("hex"),

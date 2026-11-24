@@ -116,6 +116,8 @@ export async function manageMember(
     if (result.error) return { error: memberError(result.error.code) };
     if (link) {
       revalidatePath("/groups/" + slug);
+      revalidatePath("/groups/" + slug + "/members");
+      revalidatePath("/groups/" + slug + "/settings/members");
       return {
         link,
         message:
@@ -126,6 +128,8 @@ export async function manageMember(
     }
   }
   revalidatePath("/groups/" + slug);
+      revalidatePath("/groups/" + slug + "/members");
+      revalidatePath("/groups/" + slug + "/settings/members");
   return { message: "Operação confirmada e salva." };
 }
 export async function processAdmission(
