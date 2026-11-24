@@ -757,7 +757,17 @@ try {
     if (process.env.STAGE0042L_GENERATE_TYPES === "1") {
       if (process.platform !== "linux" || process.arch !== "x64")
         throw Error("Local typegen currently requires Linux x64 native CLI");
-      const require = createRequire(import.meta.url);
+  
+    // Immutable expiry is assigned at fixture INSERT, never modified or bypassed.
+    sql("insert into public.group_invitations(group_id,token_hash,role,expires_at,created_by,recipient_email) values('"+gid+"','"+ "7".repeat(64)+"','player',clock_timestamp()+interval '2 seconds','"+bUser(301)+"','synthetic-308@example.invalid');");
+    const expiryLock=sqlAsync(bSession(301)+"select id from public.groups where id='"+gid+"' for update;select pg_sleep(3);commit;");
+    await sleep(100);
+    const expiring=await Promise.all([expiryLock,sqlAsync(bSession(308)+admission("accept","individual","7".repeat(64))+"commit;")]);
+    if(expiring[0].code!==0||expiring[1].code===0||!expiring[1].stderr.includes("Invitation unavailable"))throw Error("Invitation expiry was not refreshed after tenant lock");
+    if(sql("select count(*)=0 from public.group_members m join public.players p on p.id=m.player_id where m.group_id='"+gid+"' and p.user_id='"+bUser(308)+"';").stdout.trim()!=="t")throw Error("Expired waiting admission persisted");
+    console.log("members B concurrency OK: token expiring during group-lock wait is rejected without membership");
+
+    const require = createRequire(import.meta.url);
       const native = path.join(
         path.dirname(require.resolve("@supabase/cli-linux-x64/package.json")),
         "bin",

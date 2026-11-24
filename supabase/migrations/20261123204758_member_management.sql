@@ -301,6 +301,8 @@ begin
  -- Every mutating path shares tenant-first lock order and revalidates afterwards.
  perform 1 from public.groups where id=gid and deleted_at is null for update;
  if not found then raise exception 'Group unavailable' using errcode='42501'; end if;
+ -- A waiter must not accept a token that expired while another transaction held the group.
+ stamp:=clock_timestamp();
  r:=private.group_role(gid);
  select (stamp at time zone timezone)::date into today from public.groups where id=gid;
  if p_operation not in ('preview','accept','request','data') then perform private.require_manager(gid); end if;
