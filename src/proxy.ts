@@ -21,6 +21,7 @@ export const config = {
     "/login",
     "/signup",
     "/auth/:path*",
+    "/admissoes/:path*",
     "/api/:path*",
   ],
 };
